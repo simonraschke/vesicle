@@ -29,7 +29,9 @@ namespace enhance
     void History<SIZE,T>::append(Args&& ... args)
     {
         if(storage[position] == nullptr)
-            *storage[position] = std::make_unique<T>(std::forward<Args>(args)...);
+            storage[position] = std::make_unique<T>(std::forward<Args>(args)...);
+        // else
+            // *storage[position] = std::move(args);
     }
 
     // template<typename T>
