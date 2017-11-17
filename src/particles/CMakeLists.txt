@@ -1,9 +1,12 @@
 set(particles_source_files
     particle_base.cpp
-    particle_base.hpp
-    particle_frame.hpp
     particle_mobile.cpp
+
+    particle_base.hpp
     particle_mobile.hpp
+    particle_frame.hpp
+
+    generator_interface.hpp
 )
 
 find_package(Eigen3 REQUIRED NO_MODULE)

@@ -10,10 +10,10 @@ namespace enhance
     {
         RandomEngineInit();
         int getSeed() const;
-        std::mt19937_64 pseudo_engine;
+        std::mt19937_64 pseudo_engine {};
 
     private:
-        std::random_device true_engine;
+        std::random_device true_engine {};
         const int seed;
 
     }RandomEngine;

@@ -8,7 +8,10 @@
 class ParticleInterface
 {
 public:
-    typedef Eigen::Vector3f cartesian;
+    virtual ~ParticleInterface() {};
+    
+    typedef float real;
+    typedef Eigen::Matrix<real,3,1,0,3,1> cartesian;
 
     virtual void updateCoords(cartesian&&) = 0;
     virtual void updateOrientation(cartesian&&) = 0;
@@ -19,7 +22,6 @@ public:
 
 protected:
     ParticleInterface() = default;
-    virtual ~ParticleInterface() {};
 
     std::unique_ptr<cartesian> currentCoords {std::make_unique<cartesian>()};
     std::unique_ptr<cartesian> oldCoords {std::make_unique<cartesian>()};
