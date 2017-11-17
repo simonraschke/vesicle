@@ -21,3 +21,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "~/bin/")
 # Link
 set( CMAKE_EXE_LINKER_FLAGS "" )
 target_link_libraries( vesicle particles ${CMAKE_EXE_LINKER_FLAGS} )
+
+
+install( TARGETS vesicle RUNTIME DESTINATION ~/bin )

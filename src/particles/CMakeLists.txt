@@ -7,6 +7,6 @@ set(particles_source_files
 )
 
 find_package(Eigen3 REQUIRED NO_MODULE)
-add_library(particles ${particles_source_files})
+add_library(particles STATIC ${particles_source_files})
 
 target_link_libraries(particles enhance Eigen3::Eigen)
