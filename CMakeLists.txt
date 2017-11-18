@@ -17,13 +17,8 @@ set(CMAKE_CXX_STANDARD 14)
 # set_target_properties(enhance PROPERTIES LINKER_LANGUAGE CXX)
 
 # Linking the libraries
-add_subdirectory(src)
 add_subdirectory(enhance)
-
-# Where the header files are
-include_directories(${CMAKE_SOURCE_DIR}/enhance)
-include_directories(${CMAKE_SOURCE_DIR}/src/particles)
-include_directories(${CMAKE_SOURCE_DIR}/src/systems)
+add_subdirectory(src)
 
 # Build executable from main
 set(vesicle_source_files src/vesicle.cpp)
@@ -34,7 +29,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "~/bin/")
 
 # Link
 set( CMAKE_EXE_LINKER_FLAGS "-ltbb" )
-target_link_libraries( vesicle particles ${CMAKE_EXE_LINKER_FLAGS} )
-
+target_link_libraries( vesicle enhance particles simulations systems ${CMAKE_EXE_LINKER_FLAGS} )
 
 install( TARGETS vesicle RUNTIME DESTINATION ~/bin )

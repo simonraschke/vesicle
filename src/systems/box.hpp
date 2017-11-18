@@ -2,7 +2,7 @@
 
 #include <eigen3/Eigen/Geometry>
 #include <memory>
-#include "../particles/particle_base.hpp"
+#include "particles/particle_base.hpp"
 
 
 enum class PERIODIC : bool { ON=true, OFF=false};
@@ -22,8 +22,15 @@ public:
     void unsetLengthY();
     void unsetLengthZ();
 
-    real distance(const ParticleInterface&, const ParticleInterface&);
+    real getLengthX() const;
+    real getLengthY() const;
+    real getLengthZ() const;
+
     real distance(const cartesian&, const cartesian&);
+    real distance(const ParticleInterface&, const ParticleInterface&);
+
+    cartesian scaleDown(cartesian);
+    cartesian scaleDown(const ParticleInterface&);
 
 protected:
     void check_for_aligned_box_setup();
@@ -108,6 +115,33 @@ void Box<P>::unsetLengthZ()
 
 
 template<PERIODIC P>
+typename Box<P>::real Box<P>::getLengthX() const
+{
+    assert(x);
+    return x;
+}
+
+
+
+template<PERIODIC P>
+typename Box<P>::real Box<P>::getLengthY() const
+{
+    assert(y);
+    return y;
+}
+
+
+
+template<PERIODIC P>
+typename Box<P>::real Box<P>::getLengthZ() const
+{
+    assert(z);
+    return z;
+}
+
+
+
+template<PERIODIC P>
 void Box<P>::check_for_aligned_box_setup()
 {
     if( x && y && z )
@@ -148,7 +182,7 @@ Box<PERIODIC::OFF>::real Box<PERIODIC::OFF>::distance(const cartesian& c1, const
 template<>
 Box<PERIODIC::ON>::real Box<PERIODIC::ON>::distance(const ParticleInterface& p1, const ParticleInterface& p2)
 {
-    return distance(p1.coords(),p2.coords());
+    return distance(p2.coords(), p1.coords());
 }
 
 
@@ -157,4 +191,23 @@ template<>
 Box<PERIODIC::OFF>::real Box<PERIODIC::OFF>::distance(const ParticleInterface& p1, const ParticleInterface& p2)
 {
     return distance(p1.coords(),p2.coords());
+}
+
+
+
+template<PERIODIC P>
+typename Box<P>::cartesian Box<P>::scaleDown(cartesian c)
+{
+    c(0) = c(0) - (*x) * std::round(c(0)/(*x));
+    c(1) = c(1) - (*y) * std::round(c(1)/(*y));
+    c(2) = c(2) - (*z) * std::round(c(2)/(*z));
+    return c;
+}
+
+
+
+template<PERIODIC P>
+typename Box<P>::cartesian Box<P>::scaleDown(const ParticleInterface& p)
+{
+    return scaleDown(p.coords());
 }

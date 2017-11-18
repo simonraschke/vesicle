@@ -20,7 +20,7 @@ int main()
     std::cout << box.distance(p1.coords(),p2.coords()) << std::endl;
 
     System sys;
-    sys.addParticles(ParticleGenerator<ParticleMobile>(5));
+    sys.addParticles(ParticleFactory<ParticleMobile>(5));
 
     return EXIT_SUCCESS;
 }

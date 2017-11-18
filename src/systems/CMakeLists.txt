@@ -1,3 +1,5 @@
+message(${CMAKE_CURRENT_SOURCE_DIR})
+
 set(systems_source_files
     system.cpp
 
@@ -7,4 +9,5 @@ set(systems_source_files
 
 add_library(systems STATIC ${systems_source_files})
 
-target_link_libraries(systems particles enhance)
+target_link_libraries(systems particles enhance simulations)
+target_include_directories(systems PUBLIC ${PROJECT_SOURCE_DIR}/src)

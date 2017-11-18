@@ -4,5 +4,6 @@
 
 void System::clear()
 {
+    algorithm.reset(nullptr);
     particles.clear();
 }
