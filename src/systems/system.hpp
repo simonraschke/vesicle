@@ -14,13 +14,14 @@
 
 class System
     : Box<PERIODIC::ON>
+    , ParameterDependentComponent
 {
 public:
     // reset the system
     void clear();
 
     // System setup
-    void setParameters(Parameters);
+    // void setParameters(Parameters);
 
     template<typename T>
     void addParticles(ParticleFactory<T>&&);
@@ -38,7 +39,6 @@ protected:
 
 private:
     std::unique_ptr<Algorithm> algorithm {nullptr};
-    std::unique_ptr<Parameters> parameters {nullptr};
     // std::vector<std::unique_ptr<ParticleInterface>, tbb::cache_aligned_allocator<ParticleInterface>> particles {};
     std::vector<std::unique_ptr<ParticleInterface>> particles {};
 
@@ -62,7 +62,7 @@ void System::setAlgorithm()
     assert(!algorithm);
     algorithm = std::make_unique<A>();
     assert(algorithm);
-    algorithm->setParameters(*parameters);
+    algorithm->setParameters(getParameters());
 
     algorithm->step();
 }   

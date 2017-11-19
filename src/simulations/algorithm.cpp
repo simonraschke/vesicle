@@ -17,7 +17,7 @@ void Algorithm::setTarget(std::initializer_list<target_type> list)
 
 
 
-void Algorithm::setParameters(Parameters prms)
-{
-    parameters = std::make_unique<Parameters>(prms);
-}
+// void Algorithm::setParameters(Parameters prms)
+// {
+//     parameters = std::make_unique<Parameters>(prms);
+// }

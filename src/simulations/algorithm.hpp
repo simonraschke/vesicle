@@ -5,13 +5,14 @@
 
 
 class Algorithm
+    : public ParameterDependentComponent
 {
 public:
     typedef std::unique_ptr<ParticleInterface> target_type;
 
     // set Parameters
     void setTarget(std::initializer_list<target_type>);
-    void setParameters(Parameters);
+    // void setParameters(Parameters);
 
     // execute
     virtual void step(const unsigned long& = 1) = 0;
@@ -28,6 +29,6 @@ protected:
 
     std::initializer_list<target_type> target_range ;
 private:  
-    std::unique_ptr<Parameters> parameters {nullptr};
+    // std::unique_ptr<Parameters> parameters {nullptr};
 
 };

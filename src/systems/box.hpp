@@ -32,6 +32,8 @@ public:
     cartesian scaleDown(cartesian);
     cartesian scaleDown(const ParticleInterface&);
 
+    virtual ~Box() = default;
+
 protected:
     void check_for_aligned_box_setup();
 

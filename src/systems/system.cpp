@@ -10,7 +10,7 @@ void System::clear()
 
 
 
-void System::setParameters(Parameters prms)
-{
-    parameters = std::make_unique<Parameters>(prms);
-}
+// void System::setParameters(Parameters prms)
+// {
+//     parameters = std::make_unique<Parameters>(prms);
+// }
