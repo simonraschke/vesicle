@@ -29,6 +29,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "~/bin/")
 
 # Link
 set( CMAKE_EXE_LINKER_FLAGS "-ltbb" )
-target_link_libraries( vesicle enhance particles simulations systems ${CMAKE_EXE_LINKER_FLAGS} )
+target_link_libraries( vesicle enhance particles simulations systems IO interactions ${CMAKE_EXE_LINKER_FLAGS} )
 
 install( TARGETS vesicle RUNTIME DESTINATION ~/bin )

@@ -1,10 +1,13 @@
 message(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(simulations_source_files
-    langevuin.cpp
-
+    algorithm.cpp
+    verlet.cpp
+    langevin.cpp
+    
     algorithm.hpp
-    langevuin.hpp
+    verlet.hpp
+    langevin.hpp
 )
 
 add_library(simulations STATIC ${simulations_source_files})

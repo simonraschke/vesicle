@@ -6,7 +6,9 @@
 #include <tbb/cache_aligned_allocator.h>
 #include "box.hpp"
 #include "particles/particle_factory.hpp"
-#include "simulations/langevuin.hpp"
+#include "simulations/verlet.hpp"
+#include "simulations/langevin.hpp"
+#include "vesicleIO/parameters.hpp"
 
 
 
@@ -18,6 +20,8 @@ public:
     void clear();
 
     // System setup
+    void setParameters(Parameters);
+
     template<typename T>
     void addParticles(ParticleFactory<T>&&);
 
@@ -34,8 +38,10 @@ protected:
 
 private:
     std::unique_ptr<Algorithm> algorithm {nullptr};
+    std::unique_ptr<Parameters> parameters {nullptr};
     // std::vector<std::unique_ptr<ParticleInterface>, tbb::cache_aligned_allocator<ParticleInterface>> particles {};
     std::vector<std::unique_ptr<ParticleInterface>> particles {};
+
 };
 
 
@@ -56,5 +62,7 @@ void System::setAlgorithm()
     assert(!algorithm);
     algorithm = std::make_unique<A>();
     assert(algorithm);
+    algorithm->setParameters(*parameters);
+
     algorithm->step();
 }   

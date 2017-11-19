@@ -1,6 +1,6 @@
 #pragma once
 
-// #include "enhance/observer_ptr.hpp"
+#include "vesicleIO/parameters.hpp"
 #include "particles/particle_base.hpp"
 
 
@@ -11,6 +11,7 @@ public:
 
     // set Parameters
     void setTarget(std::initializer_list<target_type>);
+    void setParameters(Parameters);
 
     // execute
     virtual void step(const unsigned long& = 1) = 0;
@@ -19,17 +20,14 @@ public:
     virtual ~Algorithm() = default;
 
 protected:
-    Algorithm() : target_range({}) {};
+    Algorithm();
+
+    virtual void updateForces() = 0;
+    virtual void updateCoords() = 0;
+    virtual void updateOrientations() = 0;
 
     std::initializer_list<target_type> target_range ;
-
 private:  
+    std::unique_ptr<Parameters> parameters {nullptr};
 
 };
-
-
-
-void Algorithm::setTarget(std::initializer_list<target_type> list)
-{
-    target_range = list;
-}
