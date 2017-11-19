@@ -22,5 +22,7 @@ int main()
     System sys;
     sys.addParticles(ParticleFactory<ParticleMobile>(5));
 
+    sys.setAlgorithm<Langevuin>();
+
     return EXIT_SUCCESS;
 }

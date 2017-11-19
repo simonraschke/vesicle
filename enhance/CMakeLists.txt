@@ -12,6 +12,7 @@ set(enhance_source_files
     singleton.hpp
     math_utility.hpp
     parallel.hpp
+    observer_ptr.hpp
 )
 
 add_library(enhance STATIC ${enhance_source_files})
