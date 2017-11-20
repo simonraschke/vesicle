@@ -1,6 +1,7 @@
 message(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(systems_source_files
+    box.cpp
     system.cpp
 
     box.hpp

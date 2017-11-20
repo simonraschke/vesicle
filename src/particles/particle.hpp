@@ -5,23 +5,24 @@
 
 
 
-class ParticleInterface
+class Particle
 {
 public:
-    virtual ~ParticleInterface() {};
+    virtual ~Particle() {};
     
     typedef float real;
     typedef Eigen::Matrix<real,3,1,0,3,1> cartesian;
 
-    virtual void updateCoords(cartesian&&) = 0;
-    virtual void updateOrientation(cartesian&&) = 0;
+    virtual void updateCoords(const cartesian&) = 0;
+    virtual void updateOrientation(const cartesian&) = 0;
+
     const cartesian& coords() const;
     const cartesian& orientation() const;
     const cartesian& coordsOld() const;
     const cartesian& orientationOld() const;
 
 protected:
-    ParticleInterface() = default;
+    Particle() = default;
 
     std::unique_ptr<cartesian> currentCoords {std::make_unique<cartesian>()};
     std::unique_ptr<cartesian> oldCoords {std::make_unique<cartesian>()};

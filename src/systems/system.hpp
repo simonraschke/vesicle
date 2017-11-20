@@ -3,54 +3,69 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
-#include <tbb/cache_aligned_allocator.h>
+// #include <tbb/cache_aligned_allocator.h>
+#include "definitions.hpp"
 #include "box.hpp"
 #include "particles/particle_factory.hpp"
+#include "particles/particle_distributor.hpp"
 #include "simulations/verlet.hpp"
 #include "simulations/langevin.hpp"
 #include "vesicleIO/parameters.hpp"
+#include "enhance/range_to_initializer_list.hpp"
 
 
 
 class System
-    : Box<PERIODIC::ON>
-    , ParameterDependentComponent
+    : public Box<PERIODIC::ON>
+    , public virtual ParameterDependentComponent
 {
 public:
     // reset the system
     void clear();
 
-    // System setup
-    // void setParameters(Parameters);
-
+    // control
     template<typename T>
     void addParticles(ParticleFactory<T>&&);
+
+    template<typename D,typename ENABLER = typename std::enable_if<std::is_base_of<Distributor,D>::value>::type>
+    void distributeParticles();
 
     template<typename A,typename ENABLER = typename std::enable_if<std::is_base_of<Algorithm,A>::value>::type>
     void setAlgorithm();
 
-    // void setParameters(std::unique_ptr<Parameters>)
-
-    // control
-    // void 
+    void startSimulation();
 
 protected:
     using Box<PERIODIC::ON>::distance;
+    using Box<PERIODIC::ON>::squared_distance;
+    using ParameterDependentComponent::getParameters;
 
 private:
     std::unique_ptr<Algorithm> algorithm {nullptr};
-    // std::vector<std::unique_ptr<ParticleInterface>, tbb::cache_aligned_allocator<ParticleInterface>> particles {};
-    std::vector<std::unique_ptr<ParticleInterface>> particles {};
+    PARTICLERANGE particles {};
 
 };
 
 
 
 template<typename T>
-void System::addParticles(ParticleFactory<T>&& gen)
+void System::addParticles(ParticleFactory<T>&& factory)
 {
-    particles.reserve(particles.size()+gen.size());
-    std::move(gen.begin(),gen.end(), std::back_inserter(particles));
+    particles.reserve(particles.size()+factory.size());
+    while(factory)
+    {
+        particles.push_back(factory.createParticle());
+    }
+}
+
+
+
+template<typename D,typename ENABLER = typename std::enable_if<std::is_base_of<Distributor,D>::value>::type>
+void System::distributeParticles()
+{
+    D dist;
+    dist.setParameters(getParameters());
+    dist(&particles);
 }
 
 
@@ -63,6 +78,5 @@ void System::setAlgorithm()
     algorithm = std::make_unique<A>();
     assert(algorithm);
     algorithm->setParameters(getParameters());
-
-    algorithm->step();
+    algorithm->setTarget(&particles);
 }   

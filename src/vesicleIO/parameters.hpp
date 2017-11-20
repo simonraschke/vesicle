@@ -12,7 +12,11 @@
 struct Parameters
 {
     float dt = 0.1;
-    
+    float x = 10;
+    float y = 10;
+    float z = 10;
+
+// protected:
 };
 
 
@@ -26,6 +30,7 @@ struct ParameterDependentComponent
     virtual ~ParameterDependentComponent() = default;
 
 protected:
+    Parameters& mutableAccess();
     ParameterDependentComponent() = default;
 
 private:

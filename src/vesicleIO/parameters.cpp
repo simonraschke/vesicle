@@ -13,10 +13,32 @@ void ParameterDependentComponent::setParameters(Parameters prms)
 
 const Parameters& ParameterDependentComponent::getParameters() const
 {
-    assert(parameters);
     if(!parameters)
     {
         throw std::invalid_argument("parameters is nullptr");
     }
     return *parameters;
 }
+
+
+
+Parameters& ParameterDependentComponent::mutableAccess()
+{
+    if(!parameters)
+    {
+        throw std::invalid_argument("parameters is nullptr");
+    }
+    return *parameters;
+}
+
+
+
+// Parameters ParameterDependentComponent::getParameters()
+// {
+//     assert(parameters);
+//     if(!parameters)
+//     {
+//         throw std::invalid_argument("parameters is nullptr");
+//     }
+//     return *parameters;
+// }

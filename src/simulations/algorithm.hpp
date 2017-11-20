@@ -1,17 +1,18 @@
 #pragma once
 
+#include "definitions.hpp"
+#include "enhance/observer_ptr.hpp"
 #include "vesicleIO/parameters.hpp"
-#include "particles/particle_base.hpp"
+#include "particles/particle.hpp"
 
 
 class Algorithm
     : public ParameterDependentComponent
 {
 public:
-    typedef std::unique_ptr<ParticleInterface> target_type;
 
     // set Parameters
-    void setTarget(std::initializer_list<target_type>);
+    void setTarget(PARTICLERANGE*);
     // void setParameters(Parameters);
 
     // execute
@@ -21,13 +22,14 @@ public:
     virtual ~Algorithm() = default;
 
 protected:
-    Algorithm();
+    Algorithm() = default;
 
     virtual void updateForces() = 0;
     virtual void updateCoords() = 0;
     virtual void updateOrientations() = 0;
 
-    std::initializer_list<target_type> target_range ;
+    enhance::observer_ptr<PARTICLERANGE> target_range {nullptr};
+
 private:  
     // std::unique_ptr<Parameters> parameters {nullptr};
 

@@ -10,6 +10,13 @@ void System::clear()
 
 
 
+void System::startSimulation()
+{
+    algorithm->step();
+}
+
+
+
 // void System::setParameters(Parameters prms)
 // {
 //     parameters = std::make_unique<Parameters>(prms);

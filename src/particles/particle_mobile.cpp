@@ -2,20 +2,20 @@
 
 
 
-void ParticleMobile::updateCoords(cartesian&& newCoords)
+void ParticleMobile::updateCoords(const cartesian& newCoords)
 {
     assert(oldCoords);
     assert(currentCoords);
     std::swap(currentCoords,oldCoords);
-    *currentCoords = std::move(newCoords);
+    *currentCoords = newCoords;
 }
 
 
 
-void ParticleMobile::updateOrientation(cartesian&& newOrientation)
+void ParticleMobile::updateOrientation(const cartesian& newOrientation)
 {
     assert(oldOrientation);
     assert(currentOrientation);
     std::swap(currentOrientation,oldOrientation);
-    *currentOrientation = std::move(newOrientation);
+    *currentOrientation = newOrientation;
 }

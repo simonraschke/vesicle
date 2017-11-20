@@ -1,13 +1,13 @@
 #pragma once
 
-#include "particle_base.hpp"
+#include "particle.hpp"
 
 
 
 class ParticleMobile 
-    : public ParticleInterface
+    : public Particle
 {
 public:
-    virtual void updateCoords(cartesian&&) override;
-    virtual void updateOrientation(cartesian&&) override;
+    virtual void updateCoords(const cartesian&) override;
+    virtual void updateOrientation(const cartesian&) override;
 };

@@ -6,9 +6,13 @@ void Verlet::step(const unsigned long& steps)
 {
     for(unsigned long step = 0; step < steps; ++step)
     {
-        for(auto& target : target_range)
+        assert(target_range);
+        // std::cout << "target range" << std::endl;
+        for(auto& target : *target_range)
         {
-            std::cout << target->coords() << std::endl << std::endl;
+            assert(target);
+            // std::cout << "target " << target->coords() << std::endl << std::endl;
+            
         }
     }
 }

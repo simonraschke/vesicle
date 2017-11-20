@@ -1,18 +1,9 @@
 #include "algorithm.hpp"
 
 
-
-Algorithm::Algorithm ()
-    : target_range({}) 
+void Algorithm::setTarget(PARTICLERANGE* range)
 {
-
-}
-
-
-
-void Algorithm::setTarget(std::initializer_list<target_type> list)
-{
-    target_range = list;
+    target_range = enhance::make_observer<PARTICLERANGE>(range);
 }
 
 

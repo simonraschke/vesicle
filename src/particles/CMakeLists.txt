@@ -1,14 +1,15 @@
 message(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(particles_source_files
-    particle_base.cpp
+    particle.cpp
     particle_mobile.cpp
 
-    particle_base.hpp
+    particle.hpp
     particle_mobile.hpp
     particle_frame.hpp
 
     particle_factory.hpp
+    particle_distributor.hpp
 )
 
 find_package(Eigen3 REQUIRED NO_MODULE)
