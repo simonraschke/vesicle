@@ -33,6 +33,7 @@ public:
 
     template<typename A,typename ENABLER = typename std::enable_if<std::is_base_of<Algorithm,A>::value>::type>
     void setAlgorithm();
+    Algorithm& getAlgorithm() const;
 
     template<typename I,typename ENABLER = typename std::enable_if<std::is_base_of<Interaction,I>::value>::type>
     void setInteraction();
@@ -49,9 +50,9 @@ protected:
     using ParameterDependentComponent::getParameters;
 
 private:
+    PARTICLERANGE particles {};
     std::unique_ptr<Algorithm> algorithm {nullptr};
     std::unique_ptr<TrajectoryWriter> trajectory_writer {nullptr};
-    PARTICLERANGE particles {};
 
 };
 

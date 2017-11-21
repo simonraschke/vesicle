@@ -10,18 +10,23 @@ void System::clear()
 
 
 
+Algorithm& System::getAlgorithm() const
+{
+    return *algorithm;
+}
+
+
+
+
+TrajectoryWriter& System::getTrajectoryWriter() const
+{
+    return *trajectory_writer;
+}
+
+
+
 void System::startSimulation()
 {
-    int i = 0;
-    while(true)
-    {
-        algorithm->step();
-        std::cout << i++ << std::endl;
-        std::cout << distance( *particles[0], *particles[1]) << std::endl;
-        trajectory_writer->write();
-
-        if(i>=1000) break;
-    }
 }
 
 
