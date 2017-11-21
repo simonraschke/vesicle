@@ -110,4 +110,8 @@ void System::setTrajectoryWriter()
     trajectory_writer->setParameters(getParameters());
     trajectory_writer->setFilename("trajectory");
     trajectory_writer->setTarget(&particles);
+
+
+    particles[0]->setCoords(cartesian(1,1,1));
+    particles[1]->setCoords(cartesian(2.5,1,1));
 }   

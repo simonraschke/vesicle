@@ -35,7 +35,7 @@ void SimulationControl::start()
         start_node->try_put(tbb::flow::continue_msg());
         flow.wait_for_all();
         std::cout << i++ << std::endl;
-        if(i>=1000) break;
+        if(i>=100000) break;
     }
 }
 

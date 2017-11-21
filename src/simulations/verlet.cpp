@@ -15,17 +15,25 @@ void Verlet::step(const unsigned long& steps)
             target->save();
         }
 
-        // calculate new positions
-        for(auto& target : *target_range)
-        {
-            assert(target);
-            target->setCoords( target->coords() + target->velocity()*getParameters().dt + target->force()*0.5f*getParameters().dt*getParameters().dt);
-        }
+        updateCoords();
 
         // calculate new forces
         updateForces();
 
+        updateVelocities();
     }
+}
+
+
+
+void Verlet::updateCoords()
+{
+    tbb::parallel_for_each(target_range->begin(), target_range->end(), [&](auto& target) 
+    {
+        assert(target);
+        // std::cout << target->velocity().norm() << std::endl;
+        target->setCoords( target->coords() + target->velocity()*getParameters().dt + target->force()*0.5f*getParameters().dt*getParameters().dt);
+    });
 }
 
 
@@ -34,16 +42,13 @@ void Verlet::updateForces()
 {
     // first set to 0
     tbb::parallel_for_each(target_range->begin(), target_range->end(), [](auto& target) 
-    // for(auto& target : *target_range)
     {
         assert(target);
         target->clearForce();
-    }
-    );
+    });
 
     // second do calculation
     tbb::parallel_for_each(target_range->begin(), target_range->end(), [&](auto& target1) 
-    // for(auto& target1 : *target_range)
     {
         for(auto& target2 : *target_range)
         {
@@ -56,20 +61,16 @@ void Verlet::updateForces()
             target1->addForce(force_cartesian);
             target2->addForce((-1.f)*force_cartesian);
         }
-    }
-    );
+    });
 }
 
 
 
-void Verlet::updateCoords()
+void Verlet::updateVelocities()
 {
-
-}
-
-
-
-void Verlet::updateOrientations()
-{
-
+    tbb::parallel_for_each(target_range->begin(), target_range->end(), [&](auto& target) 
+    {
+        assert(target);
+        target->addVelocity( (target->forceOld() + target->force())*0.5f*getParameters().dt );
+    });
 }

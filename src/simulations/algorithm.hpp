@@ -29,7 +29,7 @@ protected:
 
     virtual void updateForces() = 0;
     virtual void updateCoords() = 0;
-    virtual void updateOrientations() = 0;
+    virtual void updateVelocities() = 0;
 
     std::unique_ptr<Interaction> interaction {nullptr};
     enhance::observer_ptr<PARTICLERANGE> target_range {nullptr};

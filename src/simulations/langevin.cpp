@@ -31,7 +31,7 @@ void Langevin::updateCoords()
 
 
 
-void Langevin::updateOrientations()
+void Langevin::updateVelocities()
 {
 
 }
