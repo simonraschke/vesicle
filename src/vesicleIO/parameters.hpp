@@ -11,10 +11,10 @@
 
 struct Parameters
 {
-    float dt = 0.1;
-    float x = 10;
-    float y = 10;
-    float z = 10;
+    float dt = 0.01;
+    float x = 7;
+    float y = 7;
+    float z = 7;
 
 // protected:
 };

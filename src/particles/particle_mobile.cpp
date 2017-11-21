@@ -2,20 +2,39 @@
 
 
 
-void ParticleMobile::updateCoords(const cartesian& newCoords)
+void ParticleMobile::setCoords(const cartesian& newCoords)
 {
-    assert(oldCoords);
     assert(currentCoords);
-    std::swap(currentCoords,oldCoords);
     *currentCoords = newCoords;
 }
 
 
 
-void ParticleMobile::updateOrientation(const cartesian& newOrientation)
+void ParticleMobile::setVelocity(const cartesian& newVelocity)
 {
-    assert(oldOrientation);
+    assert(currentVelocity);
+    *currentVelocity = newVelocity;
+}
+
+
+
+void ParticleMobile::setForce(const cartesian& newForce)
+{
+    assert(currentForce);
+    *currentForce = newForce;
+}
+
+
+
+void ParticleMobile::setOrientation(const cartesian& newOrientation)
+{
     assert(currentOrientation);
-    std::swap(currentOrientation,oldOrientation);
     *currentOrientation = newOrientation;
+}
+
+
+
+std::string ParticleMobile::name() const
+{
+    return "MOBIL";
 }

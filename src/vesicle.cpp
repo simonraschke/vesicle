@@ -8,9 +8,11 @@ int main()
 {
     System sys;
     sys.setParameters(Parameters());
-    sys.addParticles(ParticleFactory<ParticleMobile>(100));
+    sys.addParticles(ParticleFactory<ParticleMobile>(2));
     sys.distributeParticles<RandomDistributor>();
     sys.setAlgorithm<Verlet>();
+    sys.setInteraction<LennardJones>();
+    sys.setTrajectoryWriter<TrajectoryWriterGro>();
     
     sys.startSimulation();
 

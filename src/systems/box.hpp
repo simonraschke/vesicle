@@ -6,7 +6,10 @@
 #include "vesicleIO/parameters.hpp"
 
 
+
 enum class PERIODIC : bool { ON=true, OFF=false};
+
+
 
 template<PERIODIC P>
 class Box
@@ -23,6 +26,9 @@ public:
     real getLengthX() const;
     real getLengthY() const;
     real getLengthZ() const;
+
+    cartesian distance_vector(const cartesian&, const cartesian&) const;
+    cartesian distance_vector(const Particle&, const Particle&) const;
 
     real distance(const cartesian&, const cartesian&) const;
     real distance(const Particle&, const Particle&) const;
@@ -47,7 +53,6 @@ private:
 
     std::unique_ptr<Eigen::AlignedBox<real,3>> bounding_box {nullptr};
 };
-
 
 
 
@@ -115,51 +120,104 @@ void Box<P>::check_for_aligned_box_setup()
 
 
 
-// template<>
-// Box<PERIODIC::ON>::real Box<PERIODIC::ON>::squared_distance(const cartesian& c1, const cartesian& c2) const 
-// {
-//     cartesian distance_cartesian;
-//     distance_cartesian = c2-c1;
-//     distance_cartesian(0) = distance_cartesian(0) - getParameters().x * std::round(distance_cartesian(0)/(getParameters().x));
-//     distance_cartesian(1) = distance_cartesian(1) - getParameters().y * std::round(distance_cartesian(1)/(getParameters().y));
-//     distance_cartesian(2) = distance_cartesian(2) - getParameters().z * std::round(distance_cartesian(2)/(getParameters().z));
-//     return distance_cartesian.squaredNorm();
-// }
+template<>
+inline Box<PERIODIC::ON>::cartesian Box<PERIODIC::ON>::distance_vector(const cartesian& c1, const cartesian& c2) const
+{
+    cartesian distance_cartesian;
+    distance_cartesian = c2-c1;
+    distance_cartesian(0) = distance_cartesian(0) - getParameters().x * std::round(distance_cartesian(0)/(getParameters().x));
+    distance_cartesian(1) = distance_cartesian(1) - getParameters().y * std::round(distance_cartesian(1)/(getParameters().y));
+    distance_cartesian(2) = distance_cartesian(2) - getParameters().z * std::round(distance_cartesian(2)/(getParameters().z));
+    return distance_cartesian;
+}
 
 
 
-// template<>
-// Box<PERIODIC::OFF>::real Box<PERIODIC::OFF>::squared_distance(const cartesian& c1, const cartesian& c2) const;
+template<>
+inline Box<PERIODIC::ON>::cartesian Box<PERIODIC::ON>::distance_vector(const Particle& p1, const Particle& p2) const
+{
+    return distance_vector(p1.coords(),p2.coords());
+}
 
 
 
-// template<>
-// Box<PERIODIC::ON>::real Box<PERIODIC::ON>::squared_distance(const Particle& p1, const Particle& p2) const;
+template<>
+inline Box<PERIODIC::OFF>::cartesian Box<PERIODIC::OFF>::distance_vector(const cartesian& c1, const cartesian& c2) const
+{
+    return (c2-c1);
+}
 
 
 
-// template<>
-// Box<PERIODIC::OFF>::real Box<PERIODIC::OFF>::squared_distance(const Particle& p1, const Particle& p2) const;
+template<>
+inline Box<PERIODIC::OFF>::cartesian Box<PERIODIC::OFF>::distance_vector(const Particle&p1, const Particle& p2) const
+{
+    return distance_vector(p1.coords(),p2.coords());
+}
 
 
 
-// template<>
-// Box<PERIODIC::ON>::real Box<PERIODIC::ON>::distance(const cartesian& c1, const cartesian& c2) const;
+template<>
+inline Box<PERIODIC::ON>::real Box<PERIODIC::ON>::squared_distance(const cartesian& c1, const cartesian& c2) const 
+{
+    return distance_vector(c1,c2).squaredNorm();
+}
 
 
 
-// template<>
-// Box<PERIODIC::OFF>::real Box<PERIODIC::OFF>::distance(const cartesian& c1, const cartesian& c2) const;
+template<>
+inline Box<PERIODIC::OFF>::real Box<PERIODIC::OFF>::squared_distance(const cartesian& c1, const cartesian& c2) const 
+{
+    return (c2-c1).squaredNorm();
+}
 
 
 
-// template<>
-// Box<PERIODIC::ON>::real Box<PERIODIC::ON>::distance(const Particle& p1, const Particle& p2) const;
+template<>
+inline Box<PERIODIC::ON>::real Box<PERIODIC::ON>::squared_distance(const Particle& p1, const Particle& p2) const 
+{
+    return squared_distance(p2.coords(), p1.coords());
+}
 
 
 
-// template<>
-// Box<PERIODIC::OFF>::real Box<PERIODIC::OFF>::distance(const Particle& p1, const Particle& p2) const;
+template<>
+inline Box<PERIODIC::OFF>::real Box<PERIODIC::OFF>::squared_distance(const Particle& p1, const Particle& p2) const 
+{
+    return squared_distance(p1.coords(),p2.coords());
+}
+
+
+
+template<>
+inline Box<PERIODIC::ON>::real Box<PERIODIC::ON>::distance(const cartesian& c1, const cartesian& c2) const 
+{
+    return std::sqrt(squared_distance(c1,c2));
+}
+
+
+
+template<>
+inline Box<PERIODIC::OFF>::real Box<PERIODIC::OFF>::distance(const cartesian& c1, const cartesian& c2) const 
+{
+    return (c2-c1).norm();
+}
+
+
+
+template<>
+inline Box<PERIODIC::ON>::real Box<PERIODIC::ON>::distance(const Particle& p1, const Particle& p2) const 
+{
+    return distance(p2.coords(), p1.coords());
+}
+
+
+
+template<>
+inline Box<PERIODIC::OFF>::real Box<PERIODIC::OFF>::distance(const Particle& p1, const Particle& p2) const 
+{
+    return distance(p1.coords(),p2.coords());
+}
 
 
 

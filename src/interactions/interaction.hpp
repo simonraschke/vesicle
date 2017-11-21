@@ -13,15 +13,17 @@ struct Interaction
     , virtual public ParameterDependentComponent
 {
     using Box<PERIODIC::ON>::distance;
+    using Box<PERIODIC::ON>::distance_vector;
     using Box<PERIODIC::ON>::squared_distance;
+    typedef Particle::cartesian cartesian;
 
     virtual ~Interaction() = default;
 
     float value(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
     virtual float value(const Particle&, const Particle&) const = 0 ;
 
-    float derivative(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
-    virtual float derivative(const Particle&, const Particle&) const = 0 ;
+    cartesian force(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
+    virtual cartesian force(const Particle&, const Particle&) const = 0 ;
 
 protected:
     Interaction() = default;
@@ -38,7 +40,7 @@ inline float Interaction::value(const std::unique_ptr<Particle>& ptr1, const std
 
 
 
-inline float Interaction::derivative(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
+inline Interaction::cartesian Interaction::force(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
 {
-    return derivative(*ptr1,*ptr2);
+    return force(*ptr1,*ptr2);
 }

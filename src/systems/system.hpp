@@ -10,8 +10,9 @@
 #include "particles/particle_distributor.hpp"
 #include "simulations/verlet.hpp"
 #include "simulations/langevin.hpp"
+#include "interactions/lennard_jones.hpp"
 #include "vesicleIO/parameters.hpp"
-#include "enhance/range_to_initializer_list.hpp"
+#include "vesicleIO/trajectory.hpp"
 
 
 
@@ -33,6 +34,13 @@ public:
     template<typename A,typename ENABLER = typename std::enable_if<std::is_base_of<Algorithm,A>::value>::type>
     void setAlgorithm();
 
+    template<typename I,typename ENABLER = typename std::enable_if<std::is_base_of<Interaction,I>::value>::type>
+    void setInteraction();
+
+    template<typename W,typename ENABLER = typename std::enable_if<std::is_base_of<TrajectoryWriter,W>::value>::type>
+    void setTrajectoryWriter();
+    TrajectoryWriter& getTrajectoryWriter() const;
+
     void startSimulation();
 
 protected:
@@ -42,6 +50,7 @@ protected:
 
 private:
     std::unique_ptr<Algorithm> algorithm {nullptr};
+    std::unique_ptr<TrajectoryWriter> trajectory_writer {nullptr};
     PARTICLERANGE particles {};
 
 };
@@ -60,7 +69,7 @@ void System::addParticles(ParticleFactory<T>&& factory)
 
 
 
-template<typename D,typename ENABLER = typename std::enable_if<std::is_base_of<Distributor,D>::value>::type>
+template<typename D,typename ENABLER>
 void System::distributeParticles()
 {
     D dist;
@@ -70,7 +79,7 @@ void System::distributeParticles()
 
 
 
-template<typename A,typename ENABLER = typename std::enable_if<std::is_base_of<Algorithm,A>::value>::type>
+template<typename A,typename ENABLER>
 void System::setAlgorithm()
 {
     algorithm.reset(nullptr);
@@ -79,4 +88,25 @@ void System::setAlgorithm()
     assert(algorithm);
     algorithm->setParameters(getParameters());
     algorithm->setTarget(&particles);
+}   
+
+
+
+template<typename I,typename ENABLER>
+void System::setInteraction()
+{
+    assert(algorithm);
+    algorithm->setInteraction<I>();
+}   
+
+
+
+template<typename W,typename ENABLER>
+void System::setTrajectoryWriter()
+{
+    trajectory_writer = std::make_unique<W>();
+    assert(trajectory_writer);
+    trajectory_writer->setParameters(getParameters());
+    trajectory_writer->setFilename("trajectory");
+    trajectory_writer->setTarget(&particles);
 }   

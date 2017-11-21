@@ -4,6 +4,7 @@
 #include "enhance/observer_ptr.hpp"
 #include "vesicleIO/parameters.hpp"
 #include "particles/particle.hpp"
+#include "interactions/interaction.hpp"
 
 
 class Algorithm
@@ -13,7 +14,9 @@ public:
 
     // set Parameters
     void setTarget(PARTICLERANGE*);
-    // void setParameters(Parameters);
+
+    template<typename I>
+    void setInteraction();
 
     // execute
     virtual void step(const unsigned long& = 1) = 0;
@@ -28,9 +31,18 @@ protected:
     virtual void updateCoords() = 0;
     virtual void updateOrientations() = 0;
 
+    std::unique_ptr<Interaction> interaction {nullptr};
     enhance::observer_ptr<PARTICLERANGE> target_range {nullptr};
 
 private:  
-    // std::unique_ptr<Parameters> parameters {nullptr};
 
 };
+
+
+
+template<typename I>
+void Algorithm::setInteraction()
+{
+    interaction = std::make_unique<I>();
+    interaction->setParameters(getParameters());
+}

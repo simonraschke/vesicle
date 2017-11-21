@@ -8,6 +8,10 @@ class ParticleMobile
     : public Particle
 {
 public:
-    virtual void updateCoords(const cartesian&) override;
-    virtual void updateOrientation(const cartesian&) override;
+    virtual void setCoords(const cartesian&) override;
+    virtual void setVelocity(const cartesian&) override;
+    virtual void setForce(const cartesian&) override;
+    virtual void setOrientation(const cartesian&) override;
+
+    virtual std::string name() const override;
 };

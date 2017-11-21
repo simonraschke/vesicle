@@ -2,6 +2,7 @@
 
 #include "algorithm.hpp"
 #include <iostream>
+#include <tbb/tbb.h>
 
 
 
@@ -11,6 +12,7 @@ class Verlet
 public:
     
     virtual void step(const unsigned long& = 1) override;
+    
     
 protected:
     virtual void updateForces() override;

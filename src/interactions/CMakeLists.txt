@@ -4,7 +4,7 @@ set(interactions_source_files
     lennard_jones.cpp
 
     lennard_jones.hpp
-    interaction_interface.hpp
+    interaction.hpp
 )
 
 add_library(interactions STATIC ${interactions_source_files})

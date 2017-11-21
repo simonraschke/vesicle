@@ -13,7 +13,6 @@ set(enhance_source_files
     math_utility.hpp
     parallel.hpp
     observer_ptr.hpp
-    range_to_initializer_list.hpp
 )
 
 add_library(enhance STATIC ${enhance_source_files})

@@ -37,16 +37,17 @@ struct RandomDistributor
                 vec(1) = enhance::random<cartesian::Scalar>(0.f,getLengthY());
                 vec(2) = enhance::random<cartesian::Scalar>(0.f,getLengthZ());
                 assert(p);
-                p->updateCoords(vec);
+                p->setCoords(vec);
+                // p->save();
             }
-            {
-                cartesian vec = p->coords();
-                vec(0) += enhance::random<cartesian::Scalar>(-getParameters().dt,getParameters().dt);
-                vec(1) += enhance::random<cartesian::Scalar>(-getParameters().dt,getParameters().dt);
-                vec(2) += enhance::random<cartesian::Scalar>(-getParameters().dt,getParameters().dt);
-                assert(p);
-                p->updateCoords(vec);
-            }
+            // {
+            //     cartesian vec = p->coords();
+            //     vec(0) += enhance::random<cartesian::Scalar>(-getParameters().dt,getParameters().dt);
+            //     vec(1) += enhance::random<cartesian::Scalar>(-getParameters().dt,getParameters().dt);
+            //     vec(2) += enhance::random<cartesian::Scalar>(-getParameters().dt,getParameters().dt);
+            //     assert(p);
+            //     p->updateCoords(vec);
+            // }
         }
     }
 };
