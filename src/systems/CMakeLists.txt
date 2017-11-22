@@ -12,5 +12,5 @@ set(systems_source_files
 
 add_library(systems STATIC ${systems_source_files})
 
-target_link_libraries(systems particles enhance simulations)
+target_link_libraries(systems particles enhance simulations thermostats)
 target_include_directories(systems PUBLIC ${PROJECT_SOURCE_DIR}/src)

@@ -18,7 +18,7 @@ void SimulationControl::setup()
     flow.reset();
 
     system.setParameters(Parameters());
-    system.addParticles(ParticleFactory<ParticleMobile>(2));
+    system.addParticles(ParticleFactory<ParticleMobile>(100));
     system.distributeParticles<RandomDistributor>();
     system.setAlgorithm<Verlet>();
     system.setInteraction<LennardJones>();

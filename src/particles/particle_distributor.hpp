@@ -5,6 +5,7 @@
 #include "vesicleIO/parameters.hpp"
 #include "enhance/random.hpp"
 #include "systems/box.hpp"
+#include "geometries/grid.hpp"
 #include <tbb/parallel_for_each.h>
 #include <atomic>
 #include <iostream>
@@ -21,6 +22,8 @@ struct Distributor
 
 protected:
     Distributor() = default;
+
+    bool conflicting_placement(PARTICLERANGE*, PARTICLERANGE::value_type&);
 };
 
 
@@ -33,6 +36,17 @@ struct RandomDistributor
     virtual void operator()(PARTICLERANGE*) override;
 
 protected:
-    bool conflicting_placement(PARTICLERANGE*, PARTICLERANGE::value_type&);
     cartesian randomCoords() const;
+};
+
+
+
+struct GridDistributor
+    : public Distributor
+{
+    typedef PARTICLERANGE::value_type::element_type::cartesian cartesian;
+
+    virtual void operator()(PARTICLERANGE*) override;
+
+protected:
 };

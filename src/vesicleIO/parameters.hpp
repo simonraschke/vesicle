@@ -12,10 +12,10 @@
 struct Parameters
 {
     float dt = 0.01;
-    float x = 2500;
-    float y = 2500;
-    float z = 2500;
-
+    float x = 12;
+    float y = 12;
+    float z = 12;
+    float temperature = 0.5;
 // protected:
 };
 

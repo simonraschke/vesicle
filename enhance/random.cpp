@@ -41,3 +41,12 @@ unsigned int enhance::random(const unsigned int& a, const unsigned int& b)
     std::uniform_int_distribution<unsigned int> dist(a,b);
     return dist(enhance::RandomEngine.pseudo_engine);
 }
+
+
+
+template<>
+std::size_t enhance::random(const std::size_t& a, const std::size_t& b)
+{
+    std::uniform_int_distribution<std::size_t> dist(a,b);
+    return dist(enhance::RandomEngine.pseudo_engine);
+}
