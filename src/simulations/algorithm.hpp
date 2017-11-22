@@ -17,6 +17,7 @@ public:
 
     template<typename I>
     void setInteraction();
+    Interaction& getInteraction() const;
 
     // execute
     virtual void step(const unsigned long& = 1) = 0;

@@ -13,6 +13,7 @@
 #include "interactions/lennard_jones.hpp"
 #include "vesicleIO/parameters.hpp"
 #include "vesicleIO/trajectory.hpp"
+#include "thermostats/andersen.hpp"
 
 
 
@@ -38,11 +39,16 @@ public:
     template<typename I,typename ENABLER = typename std::enable_if<std::is_base_of<Interaction,I>::value>::type>
     void setInteraction();
 
+    template<typename T,typename ENABLER = typename std::enable_if<std::is_base_of<Thermostat,T>::value>::type>
+    void setThermostat();
+    Thermostat& getThermostat() const;
+
     template<typename W,typename ENABLER = typename std::enable_if<std::is_base_of<TrajectoryWriter,W>::value>::type>
     void setTrajectoryWriter();
     TrajectoryWriter& getTrajectoryWriter() const;
 
-    void startSimulation();
+    float kineticEnergy() const;
+    float potentialEnergy() const;
 
 protected:
     using Box<PERIODIC::ON>::distance;
@@ -52,6 +58,7 @@ protected:
 private:
     PARTICLERANGE particles {};
     std::unique_ptr<Algorithm> algorithm {nullptr};
+    std::unique_ptr<Thermostat> thermostat {nullptr};
     std::unique_ptr<TrajectoryWriter> trajectory_writer {nullptr};
 
 };
@@ -93,6 +100,19 @@ void System::setAlgorithm()
 
 
 
+template<typename T,typename ENABLER>
+void System::setThermostat()
+{
+    thermostat.reset(nullptr);
+    assert(!thermostat);
+    thermostat = std::make_unique<T>();
+    assert(thermostat);
+    thermostat->setParameters(getParameters());
+    thermostat->setTarget(&particles);
+}   
+
+
+
 template<typename I,typename ENABLER>
 void System::setInteraction()
 {
@@ -112,6 +132,6 @@ void System::setTrajectoryWriter()
     trajectory_writer->setTarget(&particles);
 
 
-    // particles[0]->setCoords(cartesian(1,1,1));
-    // particles[1]->setCoords(cartesian(2.5,1,1));
+    particles[0]->setCoords(cartesian(1,1,1));
+    particles[1]->setCoords(cartesian(2.12246204831,1,1));
 }   

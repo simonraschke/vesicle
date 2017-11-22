@@ -10,7 +10,7 @@ void Langevin::step(const unsigned long& steps)
         for(auto& target : *target_range)
         {
             assert(target);
-            std::cout << target->coords() << std::endl << std::endl;
+            // std::cout << target->coords() << std::endl << std::endl;
         }
     }
 }

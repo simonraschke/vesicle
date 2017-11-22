@@ -6,6 +6,8 @@ set(IO_source_files
     
     parameters.hpp
     trajectory.hpp
+
+    result_storage.hpp
 )
 
 add_library(IO STATIC ${IO_source_files})

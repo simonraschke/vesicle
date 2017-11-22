@@ -2,11 +2,12 @@
 
 
 
-// float LennardJones::value(const Particle& p1, const Particle& p2) const 
-// {
-//     const float power6_reciprocal = power6_term_reciprocal(p1,p2);
-//     return 4.f*(power6_reciprocal*power6_reciprocal-power6_reciprocal);
-// }
+float LennardJones::value(const Particle& p1, const Particle& p2) const 
+{
+    const float r2 = 1.f/squared_distance(p1,p2);
+    const float r6 = r2*r2*r2;
+    return 4.f*(r6*r6-r6);
+}
 
 
 

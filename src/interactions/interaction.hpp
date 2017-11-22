@@ -19,8 +19,8 @@ struct Interaction
 
     virtual ~Interaction() = default;
 
-    // float value(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
-    // virtual float value(const Particle&, const Particle&) const = 0 ;
+    float value(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
+    virtual float value(const Particle&, const Particle&) const = 0 ;
 
     cartesian force(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
     virtual cartesian force(const Particle&, const Particle&) const = 0 ;
@@ -33,10 +33,10 @@ private:
 
 
 
-// inline float Interaction::value(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
-// {
-//     return value(*ptr1,*ptr2);
-// }
+inline float Interaction::value(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
+{
+    return value(*ptr1,*ptr2);
+}
 
 
 

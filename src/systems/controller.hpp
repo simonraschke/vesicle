@@ -1,6 +1,7 @@
 #pragma once
 
 #include "systems/system.hpp"
+#include "vesicleIO/result_storage.hpp"
 #include <tbb/flow_graph.h>
 #include <csignal>
 
@@ -33,9 +34,13 @@ struct SimulationControl
     virtual void setup() override;
     virtual void start() override;
     virtual void pause() override;
-
+    
 private:
+    HistoryStorage history_storage {};
+
     std::unique_ptr<tbb::flow::broadcast_node<tbb::flow::continue_msg>> start_node{nullptr};
     std::unique_ptr<tbb::flow::continue_node<tbb::flow::continue_msg>> step_node{nullptr};
+    std::unique_ptr<tbb::flow::continue_node<tbb::flow::continue_msg>> thermostat_node{nullptr};
+    std::unique_ptr<tbb::flow::continue_node<tbb::flow::continue_msg>> history_node{nullptr};
     std::unique_ptr<tbb::flow::continue_node<tbb::flow::continue_msg>> trajectory_node{nullptr};
 };

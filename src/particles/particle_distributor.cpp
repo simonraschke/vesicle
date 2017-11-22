@@ -30,7 +30,7 @@ void RandomDistributor::operator()(PARTICLERANGE* range)
     int i = 0;
     for(auto& p : *range)
     {
-        std::cout << i++ << '\n';
+        // std::cout << i++ << '\n';
         while(conflicting_placement(range,p))
         {
             assert(p);
@@ -63,7 +63,7 @@ void GridDistributor::operator()(PARTICLERANGE* range)
     GridGeometry grid(maxX,maxY,maxZ);
     grid.scale(cartesian(1.122f,1.122f,1.122f));
     std::uniform_int_distribution<std::size_t> dist(0,range->size()-1);
-    std::cout << maxX << " " << maxY << " " << maxZ << " = " << grid.points.size() << std::endl;
+    // std::cout << maxX << " " << maxY << " " << maxZ << " = " << grid.points.size() << std::endl;
     
     // first set all to random point
     assert(range);
@@ -74,7 +74,7 @@ void GridDistributor::operator()(PARTICLERANGE* range)
         p->setCoords(random_point);
     });
 
-    std::cout << "grid from: " << grid.points[0].format(ROWFORMAT) << "  to: " << grid.points.back().format(ROWFORMAT) << std::endl;
+    // std::cout << "grid from: " << grid.points[0].format(ROWFORMAT) << "  to: " << grid.points.back().format(ROWFORMAT) << std::endl;
 
     // if grid has the same size as range populate all points
     if(range->size() == grid.points.size())
