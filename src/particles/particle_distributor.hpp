@@ -5,6 +5,9 @@
 #include "vesicleIO/parameters.hpp"
 #include "enhance/random.hpp"
 #include "systems/box.hpp"
+#include <tbb/parallel_for_each.h>
+#include <atomic>
+#include <iostream>
 
 
 
@@ -27,27 +30,9 @@ struct RandomDistributor
 {
     typedef PARTICLERANGE::value_type::element_type::cartesian cartesian;
 
-    virtual void operator()(PARTICLERANGE* range) override
-    {
-        for(const auto& p : *range)
-        {
-            {
-                cartesian vec;
-                vec(0) = enhance::random<cartesian::Scalar>(0.f,getLengthX());
-                vec(1) = enhance::random<cartesian::Scalar>(0.f,getLengthY());
-                vec(2) = enhance::random<cartesian::Scalar>(0.f,getLengthZ());
-                assert(p);
-                p->setCoords(vec);
-                // p->save();
-            }
-            // {
-            //     cartesian vec = p->coords();
-            //     vec(0) += enhance::random<cartesian::Scalar>(-getParameters().dt,getParameters().dt);
-            //     vec(1) += enhance::random<cartesian::Scalar>(-getParameters().dt,getParameters().dt);
-            //     vec(2) += enhance::random<cartesian::Scalar>(-getParameters().dt,getParameters().dt);
-            //     assert(p);
-            //     p->updateCoords(vec);
-            // }
-        }
-    }
+    virtual void operator()(PARTICLERANGE*) override;
+
+protected:
+    bool conflicting_placement(PARTICLERANGE*, PARTICLERANGE::value_type&);
+    cartesian randomCoords() const;
 };

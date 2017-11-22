@@ -2,6 +2,7 @@
 
 #include "systems/system.hpp"
 #include <tbb/flow_graph.h>
+#include <csignal>
 
 
 
@@ -12,12 +13,16 @@ struct Controller
     virtual void setup() = 0;
     virtual void start() = 0;
     virtual void pause() = 0;
+    
+    static void signal(int SIG);
 
 protected:
     Controller() = default;
 
     System system {};
     tbb::flow::graph flow {};
+
+    static std::atomic<int> SIGNAL;
 };
 
 

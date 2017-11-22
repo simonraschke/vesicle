@@ -2,6 +2,17 @@
 
 
 
+std::atomic<int> Controller::SIGNAL = {0};
+
+
+
+void Controller::signal(int SIG)
+{
+    SIGNAL.store(SIG);
+}
+
+
+
 void SimulationControl::setup()
 {   
     flow.reset();
@@ -30,7 +41,7 @@ void SimulationControl::setup()
 void SimulationControl::start()
 {
     int i = 0;
-    while(true)
+    while(SIGNAL.load() == 0)
     {
         start_node->try_put(tbb::flow::continue_msg());
         flow.wait_for_all();

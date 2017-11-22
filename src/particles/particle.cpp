@@ -42,6 +42,7 @@ void Particle::clearOrientation()
 
 void Particle::addCoords(const cartesian& c)
 {
+    tbb::spin_mutex::scoped_lock lock(mutex);
     *currentCoords += c;
 }
 
@@ -49,6 +50,7 @@ void Particle::addCoords(const cartesian& c)
 
 void Particle::addVelocity(const cartesian& c)
 {
+    tbb::spin_mutex::scoped_lock lock(mutex);
     *currentVelocity += c;
 }
 
@@ -56,6 +58,7 @@ void Particle::addVelocity(const cartesian& c)
 
 void Particle::addForce(const cartesian& c)
 {
+    tbb::spin_mutex::scoped_lock lock(mutex);
     *currentForce += c;
 }
 
@@ -63,6 +66,7 @@ void Particle::addForce(const cartesian& c)
 
 void Particle::addOrientation(const cartesian& c)
 {
+    tbb::spin_mutex::scoped_lock lock(mutex);
     *currentOrientation += c;
 }
 

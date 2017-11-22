@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <eigen3/Eigen/Core>
+#include <tbb/spin_mutex.h>
 
 
 
@@ -54,5 +55,7 @@ protected:
 
     std::unique_ptr<cartesian> currentOrientation {std::make_unique<cartesian>()};
     std::unique_ptr<cartesian> oldOrientation {std::make_unique<cartesian>()};
+
+    tbb::spin_mutex mutex {};
 private:
 };
