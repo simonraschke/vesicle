@@ -11,6 +11,7 @@
 #include "simulations/verlet.hpp"
 #include "simulations/langevin.hpp"
 #include "interactions/lennard_jones.hpp"
+#include "interactions/angular_lennard_jones.hpp"
 #include "vesicleIO/parameters.hpp"
 #include "vesicleIO/trajectory.hpp"
 #include "thermostats/andersen.hpp"
@@ -22,6 +23,7 @@ class System
     , public virtual ParameterDependentComponent
 {
 public:
+
     // reset the system
     void clear();
 
@@ -50,17 +52,21 @@ public:
     float kineticEnergy() const;
     float potentialEnergy() const;
 
+    void addTime(float);
+    float getTime() const;
+
+    using ParameterDependentComponent::getParameters;
+    
 protected:
     using Box<PERIODIC::ON>::distance;
     using Box<PERIODIC::ON>::squared_distance;
-    using ParameterDependentComponent::getParameters;
 
 private:
     PARTICLERANGE particles {};
     std::unique_ptr<Algorithm> algorithm {nullptr};
     std::unique_ptr<Thermostat> thermostat {nullptr};
     std::unique_ptr<TrajectoryWriter> trajectory_writer {nullptr};
-
+    float time_elapsed {0.0};
 };
 
 
@@ -96,7 +102,7 @@ void System::setAlgorithm()
     assert(algorithm);
     algorithm->setParameters(getParameters());
     algorithm->setTarget(&particles);
-}   
+}
 
 
 
@@ -109,7 +115,7 @@ void System::setThermostat()
     assert(thermostat);
     thermostat->setParameters(getParameters());
     thermostat->setTarget(&particles);
-}   
+}
 
 
 
@@ -118,7 +124,7 @@ void System::setInteraction()
 {
     assert(algorithm);
     algorithm->setInteraction<I>();
-}   
+}
 
 
 
@@ -132,6 +138,8 @@ void System::setTrajectoryWriter()
     trajectory_writer->setTarget(&particles);
 
 
-    particles[0]->setCoords(cartesian(1,1,1));
-    particles[1]->setCoords(cartesian(2.12246204831,1,1));
-}   
+    // particles[0]->setCoords(cartesian(1,1,1));
+    // particles[1]->setCoords(cartesian(2.12246204831,1,1));
+    // particles[0]->setOrientation(cartesian(-1,1,0));
+    // particles[1]->setOrientation(cartesian(1,1,0));
+}

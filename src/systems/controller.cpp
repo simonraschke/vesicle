@@ -3,11 +3,13 @@
 
 
 std::atomic<int> Controller::SIGNAL = {0};
+tbb::mutex Controller::signal_mutex {};
 
 
 
 void Controller::signal(int SIG)
 {
+    tbb::mutex::scoped_lock lock(Controller::signal_mutex);
     SIGNAL.store(SIG);
 }
 
@@ -22,8 +24,9 @@ void SimulationControl::setup()
     system.distributeParticles<RandomDistributor>();
     system.setAlgorithm<Verlet>();
     system.setThermostat<AndersenThermostat>();
-    system.setInteraction<LennardJones>();
+    system.setInteraction<AngularLennardJones>();
     system.setTrajectoryWriter<TrajectoryWriterGro>();
+    system.getTrajectoryWriter().setSkip(system.getParameters().trajectory_skip);
 
     start_node = std::make_unique<tbb::flow::broadcast_node<tbb::flow::continue_msg>>(flow);
 
@@ -36,15 +39,23 @@ void SimulationControl::setup()
     history_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
         (flow, [&](tbb::flow::continue_msg)
         { 
+            system.addTime(system.getParameters().dt); 
             HistoryBuffer buffer;
-            buffer.time = std::make_unique<float>(0); 
-            buffer.kineticEnergy = std::make_unique<float>(system.kineticEnergy()); 
-            buffer.potentialEnergy = std::make_unique<float>(system.potentialEnergy()); 
+            buffer.time = std::make_unique<float>(system.getTime()); 
+            try
+            {
+                tbb::parallel_invoke
+                (
+                    [&]{ buffer.kineticEnergy = std::make_unique<float>(system.kineticEnergy()); },
+                    [&]{ buffer.potentialEnergy = std::make_unique<float>(system.potentialEnergy()); }
+                );
+            }
+            catch(...){}
             history_storage.flush(buffer);
         });
 
     trajectory_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
-        (flow, [&](tbb::flow::continue_msg){ system.getTrajectoryWriter().write(); });
+        (flow, [&](tbb::flow::continue_msg){ system.getTrajectoryWriter().write(history_storage); });
 
     tbb::flow::make_edge(*start_node,*step_node);
     tbb::flow::make_edge(*step_node,*thermostat_node);
@@ -61,9 +72,10 @@ void SimulationControl::start()
     {
         start_node->try_put(tbb::flow::continue_msg());
         flow.wait_for_all();
-        // if(i%100==0) std::cout << i << std::endl;
+        if(i%system.getParameters().trajectory_skip==0) std::cout << i << std::endl;
         if(i++>=100000) break;
     }
+    history_storage.dumpToFile("history.dat");
 }
 
 

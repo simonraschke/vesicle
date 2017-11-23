@@ -29,7 +29,23 @@ void ParticleMobile::setForce(const cartesian& newForce)
 void ParticleMobile::setOrientation(const cartesian& newOrientation)
 {
     assert(currentOrientation);
-    *currentOrientation = newOrientation;
+    *currentOrientation = newOrientation.normalized();
+}
+
+
+
+void ParticleMobile::setCircularVelocity(const cartesian& newCircularVelocity)
+{
+    assert(currentCircularVelocity);
+    *currentCircularVelocity = newCircularVelocity;
+}
+
+
+
+void ParticleMobile::setTorque(const cartesian& newTorque)
+{
+    assert(currentTorque);
+    *currentTorque = newTorque;
 }
 
 

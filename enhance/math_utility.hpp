@@ -20,24 +20,7 @@ namespace enhance
         }
         return digits;
     }
-    
-    
-    
-    template <typename T>
-    std::uint16_t numDigits(std::atomic<T> number)
-    {
-        std::uint16_t digits = 0;
-        T helper = number.load();
-        if (helper < 0) digits = 1; // remove this line if '-' counts as a digit
-        std::uint32_t helper2 = static_cast<int>(helper);
-        while (helper2) 
-        {
-            helper2 /= 10;
-            digits++;
-        }
-        return digits;
-    }
-    
+        
     
     
     template<typename T>

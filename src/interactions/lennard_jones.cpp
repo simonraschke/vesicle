@@ -19,7 +19,7 @@ LennardJones::cartesian LennardJones::force(const Particle& p1, const Particle& 
     const float r6 = r2*r2*r2;
     const float value = -24.f*r2*r6*(r6*2-1.f);
 
-    return distance_vector(p1.coordsOld(),p2.coordsOld())*value;
+    return distance_vector(p1,p2)*value;
 }
 
 

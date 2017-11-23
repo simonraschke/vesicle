@@ -1,5 +1,6 @@
 #pragma once
 
+#include "enhance/math_utility.hpp"
 #include <memory>
 #include <exception>
 #include <cassert>
@@ -16,7 +17,11 @@ struct Parameters
     float y = 12;
     float z = 12;
     float temperature = 0.5;
-// protected:
+    unsigned int trajectory_skip = 100;
+
+    // AngularLennardJones
+    float kappa = 1.0;
+    float gamma = enhance::deg_to_rad(11.5);
 };
 
 

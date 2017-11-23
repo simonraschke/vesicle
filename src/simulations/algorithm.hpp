@@ -28,8 +28,9 @@ public:
 protected:
     Algorithm() = default;
 
-    virtual void updateForces() = 0;
     virtual void updateCoords() = 0;
+    virtual void updateOrientations() = 0;
+    virtual void updateForces() = 0;
     virtual void updateVelocities() = 0;
 
     std::unique_ptr<Interaction> interaction {nullptr};
@@ -46,4 +47,5 @@ void Algorithm::setInteraction()
 {
     interaction = std::make_unique<I>();
     interaction->setParameters(getParameters());
+    interaction->setup();
 }

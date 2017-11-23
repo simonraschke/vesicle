@@ -40,11 +40,11 @@ void Particle::clearOrientation()
 
 
 
-void Particle::addCoords(const cartesian& c)
-{
-    tbb::spin_mutex::scoped_lock lock(mutex);
-    *currentCoords += c;
-}
+// void Particle::addCoords(const cartesian& c)
+// {
+//     tbb::spin_mutex::scoped_lock lock(mutex);
+//     *currentCoords += c;
+// }
 
 
 
@@ -64,11 +64,11 @@ void Particle::addForce(const cartesian& c)
 
 
 
-void Particle::addOrientation(const cartesian& c)
-{
-    tbb::spin_mutex::scoped_lock lock(mutex);
-    *currentOrientation += c;
-}
+// void Particle::addOrientation(const cartesian& c)
+// {
+//     tbb::spin_mutex::scoped_lock lock(mutex);
+//     *currentOrientation += c;
+// }
 
 
 
@@ -124,4 +124,46 @@ const Particle::cartesian& Particle::orientation() const
 const Particle::cartesian& Particle::orientationOld() const
 {
     return *oldOrientation;
+}
+
+
+
+const Particle::cartesian& Particle::circularVelocity() const
+{
+    return *currentCircularVelocity;
+}
+
+
+
+const Particle::cartesian& Particle::circularVelocityOld() const
+{
+    return *oldCircularVelocity;
+}
+
+
+
+const Particle::cartesian& Particle::torque() const
+{
+    return *currentTorque;
+}
+
+
+
+const Particle::cartesian& Particle::torqueOld() const
+{
+    return *oldTorque;
+}
+
+
+
+void Particle::setMass(float m)
+{
+    mass = m;
+}
+
+
+
+float Particle::getMass() const
+{
+    return mass;
 }

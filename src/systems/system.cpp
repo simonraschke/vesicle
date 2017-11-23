@@ -37,23 +37,35 @@ float System::potentialEnergy() const
     std::atomic<float> energy_sum;
     tbb::parallel_for(std::size_t(0),particles.size(), std::size_t(1), [&](const std::size_t& i)
     {
+        float pre_sum = 0;
         for(std::size_t j = 0; j<i; ++j)
-        {
-            const auto& target1 = particles[i];
-            const auto& target2 = particles[j];
-            auto value = algorithm->getInteraction().value(target1,target2);
-            auto current = energy_sum.load();
-            while (!energy_sum.compare_exchange_weak(current, current + value))
-            {
-                current = energy_sum.load();
-            }
-        }
+            pre_sum += algorithm->getInteraction().value(particles[i],particles[j]);
+
+        auto current = energy_sum.load();
+        while (!energy_sum.compare_exchange_weak(current, current + pre_sum))
+            current = energy_sum.load();
+        
     });
-    return energy_sum;
+    return !std::isnan(energy_sum.load()) ? energy_sum.load() : throw std::runtime_error("potential Energy is NAN");
 }
 
 
 float System::kineticEnergy() const
+{   
+    float value = PARALLEL_ACCUMULATE(particles,[&](float f, auto& p){ assert(p); return f + 0.5f*p->velocity().squaredNorm(); });
+    return !std::isnan(value) ? value : throw std::runtime_error("kinetic Energy is NAN");
+}
+
+
+
+void System::addTime(float t)
 {
-    return PARALLEL_ACCUMULATE(particles,[&](float f, auto& p){ return f + 0.5f*p->velocity().squaredNorm(); });
+    time_elapsed += t;
+}
+
+
+
+float System::getTime() const
+{
+    return time_elapsed;
 }

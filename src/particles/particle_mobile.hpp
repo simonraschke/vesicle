@@ -12,6 +12,8 @@ public:
     virtual void setVelocity(const cartesian&) override;
     virtual void setForce(const cartesian&) override;
     virtual void setOrientation(const cartesian&) override;
+    virtual void setCircularVelocity(const cartesian&) override;
+    virtual void setTorque(const cartesian&) override;
 
     virtual std::string name() const override;
 };

@@ -24,13 +24,12 @@ void RandomDistributor::operator()(PARTICLERANGE* range)
     {
         assert(p);
         p->setCoords(randomCoords());
+        p->setOrientation(randomOrientation());
     });
 
     assert(range);
-    int i = 0;
     for(auto& p : *range)
     {
-        // std::cout << i++ << '\n';
         while(conflicting_placement(range,p))
         {
             assert(p);
@@ -40,6 +39,7 @@ void RandomDistributor::operator()(PARTICLERANGE* range)
 }
 
 
+
 RandomDistributor::cartesian RandomDistributor::randomCoords() const
 {
     return cartesian
@@ -47,6 +47,18 @@ RandomDistributor::cartesian RandomDistributor::randomCoords() const
         enhance::random<cartesian::Scalar>(0.f,getLengthX()),
         enhance::random<cartesian::Scalar>(0.f,getLengthY()),
         enhance::random<cartesian::Scalar>(0.f,getLengthZ())
+    );
+}
+
+
+
+RandomDistributor::cartesian RandomDistributor::randomOrientation() const
+{
+    return cartesian
+    (
+        enhance::random<cartesian::Scalar>(0.f,1.f),
+        enhance::random<cartesian::Scalar>(0.f,1.f),
+        enhance::random<cartesian::Scalar>(0.f,1.f)
     );
 }
 

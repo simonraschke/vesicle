@@ -25,6 +25,8 @@ struct Interaction
     cartesian force(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
     virtual cartesian force(const Particle&, const Particle&) const = 0 ;
 
+    virtual void setup();
+
 protected:
     Interaction() = default;
 
@@ -43,4 +45,11 @@ inline float Interaction::value(const std::unique_ptr<Particle>& ptr1, const std
 inline Interaction::cartesian Interaction::force(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
 {
     return force(*ptr1,*ptr2);
+}
+
+
+
+inline void Interaction::setup()
+{
+    return;
 }

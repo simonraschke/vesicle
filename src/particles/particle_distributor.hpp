@@ -37,6 +37,7 @@ struct RandomDistributor
 
 protected:
     cartesian randomCoords() const;
+    cartesian randomOrientation() const;
 };
 
 

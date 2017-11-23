@@ -27,6 +27,20 @@ void TrajectoryWriter::setTarget(PARTICLERANGE* range)
 
 
 
+void TrajectoryWriter::setSkip(unsigned int s)
+{
+    skip = s;
+}
+
+
+
+bool TrajectoryWriter::isSkip()
+{
+    return skip_counter < skip;
+}
+
+
+
 TrajectoryWriterGro::TrajectoryWriterGro()
     : TrajectoryWriter()
 {
@@ -50,25 +64,38 @@ void TrajectoryWriterGro::setFilename(std::string name)
 }
 
 
-void TrajectoryWriterGro::write()
+void TrajectoryWriterGro::write(const HistoryStorage& history)
 {
+    if(likely(isSkip()))
+    {
+        ++skip_counter;
+        return;
+    }
+    else
+    {
+        skip_counter = 0;
+    }
+    
     assert(FILE.is_open());
     assert(filename);
     assert(target_range);
 
-    FILE << "PLACEHOLDER" << '\n';
-    FILE << target_range->size() << '\n';
+    FILE << "t=" << history.getTime().back() << '\n';
+    FILE << target_range->size()*2 << '\n';
 
-    for(unsigned long i = 0; i < target_range->size(); ++i)
+    unsigned long atom = 0;
+    for(unsigned long residue = 0; residue < target_range->size(); ++residue)
     {
-        const auto& target = target_range->operator[](i);
+        const auto& target = target_range->operator[](residue);
         const cartesian& coords = scaleDown(target->coords());
-        const cartesian& velocity = target->velocity();
+        const cartesian orientation = target->orientation().normalized();
+        // const cartesian& velocity = target->velocity();
+        const cartesian velocity = cartesian::Zero();
 
-        FILE << std::setw(5) <<  i+1;
+        FILE << std::setw(5) <<  residue+1;
         FILE << std::setw(5) <<  target->name();
         FILE << std::setw(5) <<  "A";
-        FILE << std::setw(5) <<  i+1;
+        FILE << std::setw(5) <<  atom+1;
         FILE << std::setprecision(3);
         FILE << std::setw(8) <<  coords(0);
         FILE << std::setw(8) <<  coords(1);
@@ -78,6 +105,22 @@ void TrajectoryWriterGro::write()
         FILE << std::setw(8) <<  velocity(1);
         FILE << std::setw(8) <<  velocity(2);
         FILE << '\n';
+        ++atom;
+
+        FILE << std::setw(5) <<  residue+1;
+        FILE << std::setw(5) <<  target->name();
+        FILE << std::setw(5) <<  "B";
+        FILE << std::setw(5) <<  atom+1;
+        FILE << std::setprecision(3);
+        FILE << std::setw(8) <<  coords(0) + orientation(0)*getParameters().kappa/2.f;
+        FILE << std::setw(8) <<  coords(1) + orientation(1)*getParameters().kappa/2.f;
+        FILE << std::setw(8) <<  coords(2) + orientation(2)*getParameters().kappa/2.f;
+        FILE << std::setprecision(4);
+        FILE << std::setw(8) <<  velocity(0);
+        FILE << std::setw(8) <<  velocity(1);
+        FILE << std::setw(8) <<  velocity(2);
+        FILE << '\n';
+        ++atom;
     }
 
     FILE << getLengthX() << ' ' << getLengthY() << ' ' << getLengthZ();

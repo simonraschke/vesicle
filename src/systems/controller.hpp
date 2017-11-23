@@ -1,7 +1,8 @@
 #pragma once
 
 #include "systems/system.hpp"
-#include "vesicleIO/result_storage.hpp"
+#include "vesicleIO/history.hpp"
+#include <tbb/parallel_invoke.h>
 #include <tbb/flow_graph.h>
 #include <csignal>
 
@@ -24,6 +25,7 @@ protected:
     tbb::flow::graph flow {};
 
     static std::atomic<int> SIGNAL;
+    static tbb::mutex signal_mutex;
 };
 
 
