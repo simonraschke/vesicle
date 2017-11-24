@@ -53,6 +53,8 @@ public:
 
     void setMass(float);
     float getMass() const;
+    
+    float anisotropic_scalar {0.0};
 
 protected:
     Particle() = default;

@@ -21,7 +21,6 @@ int main()
     control.setup();
     control.start();
 
-    // std::cout << sizeof(ParticleMobile)*8 << std::endl;
     // AngularLennardJones interaction;
     // interaction.setParameters(Parameters());
     // interaction.setup();
@@ -30,8 +29,8 @@ int main()
 
     // p1.setCoords(Eigen::Vector3f(1,1,1));
     // p2.setCoords(Eigen::Vector3f(1.9,1,1));
-    // p1.setOrientation(Eigen::Vector3f(+1.0,0,0));
-    // p2.setOrientation(Eigen::Vector3f(-1.0,0,0));
+    // p1.setOrientation(Eigen::Vector3f(-0.2,1,0));
+    // p2.setOrientation(Eigen::Vector3f(+0.2,1,0));
     // for( int i = 0; i < 500; ++i)
     // {
     //     p1.save();

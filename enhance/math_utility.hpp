@@ -23,6 +23,15 @@ namespace enhance
         
     
     
+    template<typename DERIVED>
+    constexpr float angle(const DERIVED& v1, const DERIVED& v2)
+    {
+        // return std::atan2(v1.cross(v2), v1.dot(v2));
+        return std::acos(v1.dot(v2)/std::sqrt(v1.norm()*v2.norm()));
+    }
+        
+    
+    
     template<typename T>
     constexpr T deg_to_rad(const T& __deg) noexcept
     {

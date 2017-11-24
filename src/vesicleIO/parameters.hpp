@@ -12,12 +12,12 @@
 
 struct Parameters
 {
-    float dt = 0.01;
-    float x = 12;
-    float y = 12;
-    float z = 12;
-    float temperature = 0.5;
-    unsigned int trajectory_skip = 100;
+    float dt = 0.001;
+    float x = 10;
+    float y = 10;
+    float z = 10;
+    float temperature = 0.01;
+    unsigned int trajectory_skip = 10;
 
     // AngularLennardJones
     float kappa = 1.0;

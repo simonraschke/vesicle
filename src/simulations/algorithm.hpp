@@ -29,7 +29,7 @@ protected:
     Algorithm() = default;
 
     virtual void updateCoords() = 0;
-    virtual void updateOrientations() = 0;
+    // virtual void updateOrientations() = 0;
     virtual void updateForces() = 0;
     virtual void updateVelocities() = 0;
 

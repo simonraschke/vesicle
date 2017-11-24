@@ -10,8 +10,8 @@
 
 #include <eigen3/Eigen/Core>
 //-------------------Eigen::IOFormat( prec, flag,                 coeffSep, rowSep, rowPre, rowSuf, matPre, matSuf )
-#define ROWFORMAT    Eigen::IOFormat( 4,    Eigen::DontAlignCols, ", ",     ", ",   "",      "",    " ",    " " )
-#define PYTHONFORMAT Eigen::IOFormat( 4,    0,                    ", ",     "\n",   "[",     "]",   "[",    "]" )
+#define ROWFORMAT    Eigen::IOFormat( 3,    Eigen::DontAlignCols, ", ",     " ",    " ",    "",     " ",    " " )
+#define PYTHONFORMAT Eigen::IOFormat( 4,    0,                    ", ",     "\n",   "[",    "]",    "[",    "]" )
 
 
 #include <tbb/parallel_reduce.h>

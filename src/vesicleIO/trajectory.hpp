@@ -26,6 +26,7 @@ struct TrajectoryWriter
 
     void setTarget(PARTICLERANGE*);
     void setSkip(unsigned int);
+    void setAnisotropic(bool);
 
     virtual ~TrajectoryWriter();
 
@@ -46,6 +47,7 @@ protected:
     enhance::observer_ptr<PARTICLERANGE> target_range {nullptr};
     unsigned int skip{1};
     unsigned int skip_counter{0};
+    bool anisotropic {false};
 };
 
 

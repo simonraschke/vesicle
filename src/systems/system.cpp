@@ -39,7 +39,7 @@ float System::potentialEnergy() const
     {
         float pre_sum = 0;
         for(std::size_t j = 0; j<i; ++j)
-            pre_sum += algorithm->getInteraction().value(particles[i],particles[j]);
+            pre_sum += algorithm->getInteraction().isotropic(particles[i],particles[j]) + algorithm->getInteraction().anisotropic(particles[i],particles[j]);
 
         auto current = energy_sum.load();
         while (!energy_sum.compare_exchange_weak(current, current + pre_sum))

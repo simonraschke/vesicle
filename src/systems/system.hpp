@@ -137,9 +137,8 @@ void System::setTrajectoryWriter()
     trajectory_writer->setFilename("trajectory");
     trajectory_writer->setTarget(&particles);
 
-
-    // particles[0]->setCoords(cartesian(1,1,1));
-    // particles[1]->setCoords(cartesian(2.12246204831,1,1));
-    // particles[0]->setOrientation(cartesian(-1,1,0));
-    // particles[1]->setOrientation(cartesian(1,1,0));
+    particles[0]->setCoords(cartesian(1,1,1));
+    particles[1]->setCoords(cartesian(2.12246204831,1,1));
+    particles[0]->setOrientation(cartesian(+1,1,0));
+    particles[1]->setOrientation(cartesian(-1,1,0));
 }

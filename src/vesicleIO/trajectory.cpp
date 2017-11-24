@@ -41,6 +41,13 @@ bool TrajectoryWriter::isSkip()
 
 
 
+void TrajectoryWriter::setAnisotropic(bool b)
+{
+    anisotropic = b;
+}
+
+
+
 TrajectoryWriterGro::TrajectoryWriterGro()
     : TrajectoryWriter()
 {
@@ -81,15 +88,17 @@ void TrajectoryWriterGro::write(const HistoryStorage& history)
     assert(target_range);
 
     FILE << "t=" << history.getTime().back() << '\n';
-    FILE << target_range->size()*2 << '\n';
+
+    if(anisotropic)
+        FILE << target_range->size()*2 << '\n';
+    else
+        FILE << target_range->size() << '\n';
 
     unsigned long atom = 0;
     for(unsigned long residue = 0; residue < target_range->size(); ++residue)
     {
         const auto& target = target_range->operator[](residue);
         const cartesian& coords = scaleDown(target->coords());
-        const cartesian orientation = target->orientation().normalized();
-        // const cartesian& velocity = target->velocity();
         const cartesian velocity = cartesian::Zero();
 
         FILE << std::setw(5) <<  residue+1;
@@ -107,20 +116,25 @@ void TrajectoryWriterGro::write(const HistoryStorage& history)
         FILE << '\n';
         ++atom;
 
-        FILE << std::setw(5) <<  residue+1;
-        FILE << std::setw(5) <<  target->name();
-        FILE << std::setw(5) <<  "B";
-        FILE << std::setw(5) <<  atom+1;
-        FILE << std::setprecision(3);
-        FILE << std::setw(8) <<  coords(0) + orientation(0)*getParameters().kappa/2.f;
-        FILE << std::setw(8) <<  coords(1) + orientation(1)*getParameters().kappa/2.f;
-        FILE << std::setw(8) <<  coords(2) + orientation(2)*getParameters().kappa/2.f;
-        FILE << std::setprecision(4);
-        FILE << std::setw(8) <<  velocity(0);
-        FILE << std::setw(8) <<  velocity(1);
-        FILE << std::setw(8) <<  velocity(2);
-        FILE << '\n';
-        ++atom;
+        if(anisotropic)
+        {
+            const cartesian orientation = target->orientation().normalized();
+            const cartesian& circularVelocity = target->circularVelocity();
+            FILE << std::setw(5) <<  residue+1;
+            FILE << std::setw(5) <<  target->name();
+            FILE << std::setw(5) <<  "B";
+            FILE << std::setw(5) <<  atom+1;
+            FILE << std::setprecision(3);
+            FILE << std::setw(8) <<  coords(0) + orientation(0)*getParameters().kappa/2.f;
+            FILE << std::setw(8) <<  coords(1) + orientation(1)*getParameters().kappa/2.f;
+            FILE << std::setw(8) <<  coords(2) + orientation(2)*getParameters().kappa/2.f;
+            FILE << std::setprecision(4);
+            FILE << std::setw(8) <<  circularVelocity(0);
+            FILE << std::setw(8) <<  circularVelocity(1);
+            FILE << std::setw(8) <<  circularVelocity(2);
+            FILE << '\n';
+            ++atom;
+        }
     }
 
     FILE << getLengthX() << ' ' << getLengthY() << ' ' << getLengthZ();

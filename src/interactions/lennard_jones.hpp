@@ -7,10 +7,10 @@
 class LennardJones
     : public Interaction
 {
-    virtual float value(const Particle&, const Particle&) const override;
-    virtual cartesian force(const Particle&, const Particle&) const override;
+    virtual float isotropic(const Particle&, const Particle&) const override;
+    virtual float anisotropic(const Particle&, const Particle&) const override;
+    virtual cartesian isotropic_force(const Particle&, const Particle&) const override;
+    virtual cartesian anisotropic_force(const Particle&, const Particle&) const override;
 
-private:
-    // float power6_term_reciprocal(const Particle&, const Particle&) const;
-    // float power6_term(const Particle&, const Particle&) const;
+    virtual bool isAnisotropic() const override;
 };
