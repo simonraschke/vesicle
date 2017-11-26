@@ -4,21 +4,40 @@
 
 void System::clear()
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     algorithm.reset(nullptr);
     particles.clear();
 }
 
 
 
+const PARTICLERANGE& System::getParticles() const
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    return particles;
+}
+
+
+
 Algorithm& System::getAlgorithm() const
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     return *algorithm;
+}
+
+
+
+Interaction& System::getInteraction() const
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    return algorithm->getInteraction();
 }
 
 
 
 Thermostat& System::getThermostat() const
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     return *thermostat;
 }
 
@@ -27,6 +46,7 @@ Thermostat& System::getThermostat() const
 
 TrajectoryWriter& System::getTrajectoryWriter() const
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     return *trajectory_writer;
 }
 
@@ -34,6 +54,7 @@ TrajectoryWriter& System::getTrajectoryWriter() const
 
 float System::potentialEnergy() const
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     std::atomic<float> energy_sum;
     tbb::parallel_for(std::size_t(0),particles.size(), std::size_t(1), [&](const std::size_t& i)
     {
@@ -52,6 +73,7 @@ float System::potentialEnergy() const
 
 float System::kineticEnergy() const
 {   
+    vesDEBUG(__PRETTY_FUNCTION__)
     float value = PARALLEL_ACCUMULATE(particles,[&](float f, auto& p){ assert(p); return f + 0.5f*p->velocity().squaredNorm(); });
     return !std::isnan(value) ? value : throw std::runtime_error("kinetic Energy is NAN");
 }
@@ -60,6 +82,7 @@ float System::kineticEnergy() const
 
 void System::addTime(float t)
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     time_elapsed += t;
 }
 
@@ -67,5 +90,6 @@ void System::addTime(float t)
 
 float System::getTime() const
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     return time_elapsed;
 }

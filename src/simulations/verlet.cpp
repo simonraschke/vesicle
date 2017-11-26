@@ -4,6 +4,7 @@
 
 void Verlet::step(const unsigned long& steps)
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     for(unsigned long step = 0; step < steps; ++step)
     {
         assert(target_range);
@@ -37,6 +38,7 @@ void Verlet::step(const unsigned long& steps)
 
 void Verlet::updateCoords()
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     const auto dt = getParameters().dt;
     const auto dt2half = dt*dt*0.5f;
 
@@ -53,14 +55,27 @@ void Verlet::updateCoords()
         // std::cout << "orien: " << target->orientation().cross(target->orientationOld()).format(ROWFORMAT) << std::endl;
         // std::cout << "orien: " << target->orientation().format(ROWFORMAT) << std::endl;
         // std::cout << "angle = " << enhance::rad_to_deg(enhance::angle(target->orientation(),target->orientationOld())) << std::endl;
-
-        const auto torque = target->orientation().cross(target->orientationOld());
-        if( torque.norm() > 0.00001 )
+        
+        // static long steps = 0;
+        const auto torque_vector = target->orientation().cross(target->orientationOld());
+        if(!torque_vector.isZero(1e-3) && enhance::angle(target->orientationOld(),target->orientation()) > 1e-3)
+        // if(steps++ > 10)
         {
-            Eigen::AngleAxisf rotation (enhance::angle(target->orientation(),target->orientationOld()), target->orientation().cross(target->orientationOld()));
-            target->setCircularVelocity( rotation * target->circularVelocityOld() );
-
+            Eigen::AngleAxisf circular_velocity_rotation( enhance::angle(target->orientationOld(),target->orientation()) , torque_vector.normalized() );
+            vesDEBUG( enhance::angle(target->orientationOld(),target->orientation()) << torque_vector.normalized() << target->circularVelocityOld())
+            target->setCircularVelocity( circular_velocity_rotation * target->circularVelocityOld() );
+            target->setTorque( circular_velocity_rotation * target->torqueOld() );
         }
+        else
+        {
+            vesDEBUG("WARINING: NO TORQUE CALCULATED")
+        }
+
+        // if( torque.norm() > 0.00001 )
+        // {
+            // Eigen::AngleAxisf rotation (enhance::angle(target->orientation(),target->orientationOld()), target->orientation().cross(target->orientationOld()).normalized());
+            // target->setCircularVelocity( rotation * target->circularVelocityOld() );
+        // }
 
         // const auto torque = target->orientationOld().cross(target->torqueOld()*dt2half/target->getMass());
         // const auto torque = ((target->orientationOld() + target->circularVelocityOld()*dt + target->torqueOld()*dt2half)/target->getMass()).cross(target->torqueOld());
@@ -77,6 +92,7 @@ void Verlet::updateCoords()
 
 void Verlet::updateForces()
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     // first set to 0
     tbb::parallel_for_each(target_range->begin(), target_range->end(), [](auto& target) 
     {
@@ -114,6 +130,7 @@ void Verlet::updateForces()
 
 void Verlet::updateVelocities()
 {
+    vesDEBUG(__PRETTY_FUNCTION__<<"text")
     const auto dt_half = 0.5f*getParameters().dt;
     tbb::parallel_for_each(target_range->begin(), target_range->end(), [&](auto& target) 
     {

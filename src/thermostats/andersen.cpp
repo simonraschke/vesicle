@@ -4,6 +4,7 @@
 
 void AndersenThermostat::apply()
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     // coordinates
     {
         auto& target = (*target_range)[enhance::random<std::size_t>(0,target_range->size()-1)];

@@ -30,6 +30,7 @@ public:
     // control
     template<typename T>
     void addParticles(ParticleFactory<T>&&);
+    const PARTICLERANGE& getParticles() const;
 
     template<typename D,typename ENABLER = typename std::enable_if<std::is_base_of<Distributor,D>::value>::type>
     void distributeParticles();
@@ -40,6 +41,7 @@ public:
 
     template<typename I,typename ENABLER = typename std::enable_if<std::is_base_of<Interaction,I>::value>::type>
     void setInteraction();
+    Interaction& getInteraction() const;
 
     template<typename T,typename ENABLER = typename std::enable_if<std::is_base_of<Thermostat,T>::value>::type>
     void setThermostat();
@@ -136,9 +138,4 @@ void System::setTrajectoryWriter()
     trajectory_writer->setParameters(getParameters());
     trajectory_writer->setFilename("trajectory");
     trajectory_writer->setTarget(&particles);
-
-    particles[0]->setCoords(cartesian(1,1,1));
-    particles[1]->setCoords(cartesian(2.12246204831,1,1));
-    particles[0]->setOrientation(cartesian(+1,1,0));
-    particles[1]->setOrientation(cartesian(-1,1,0));
 }

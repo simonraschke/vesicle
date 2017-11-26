@@ -5,13 +5,14 @@
 TrajectoryWriter::TrajectoryWriter()
     : working_dir(boost::filesystem::current_path())
 {
-
+    vesDEBUG(__PRETTY_FUNCTION__)
 }
 
 
 
 TrajectoryWriter::~TrajectoryWriter()
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     if(FILE.is_open())
     {
         FILE.close();
@@ -22,6 +23,7 @@ TrajectoryWriter::~TrajectoryWriter()
 
 void TrajectoryWriter::setTarget(PARTICLERANGE* range)
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     target_range = enhance::make_observer<PARTICLERANGE>(range);
 }
 
@@ -29,6 +31,7 @@ void TrajectoryWriter::setTarget(PARTICLERANGE* range)
 
 void TrajectoryWriter::setSkip(unsigned int s)
 {
+    vesDEBUG(__PRETTY_FUNCTION__<< "  " << s)
     skip = s;
 }
 
@@ -36,6 +39,7 @@ void TrajectoryWriter::setSkip(unsigned int s)
 
 bool TrajectoryWriter::isSkip()
 {
+    vesDEBUG(__PRETTY_FUNCTION__<< "  " << (skip_counter < skip))
     return skip_counter < skip;
 }
 
@@ -43,6 +47,7 @@ bool TrajectoryWriter::isSkip()
 
 void TrajectoryWriter::setAnisotropic(bool b)
 {
+    vesDEBUG(__PRETTY_FUNCTION__<< "  " << b)
     anisotropic = b;
 }
 
@@ -51,7 +56,7 @@ void TrajectoryWriter::setAnisotropic(bool b)
 TrajectoryWriterGro::TrajectoryWriterGro()
     : TrajectoryWriter()
 {
-    
+    vesDEBUG(__PRETTY_FUNCTION__)
 }
 
 
@@ -59,6 +64,7 @@ TrajectoryWriterGro::TrajectoryWriterGro()
 
 void TrajectoryWriterGro::setFilename(std::string name)
 {
+    vesDEBUG(__PRETTY_FUNCTION__<< "  " << name)
     if(!filename && FILE.is_open())
     {
         FILE.close();
@@ -73,6 +79,7 @@ void TrajectoryWriterGro::setFilename(std::string name)
 
 void TrajectoryWriterGro::write(const HistoryStorage& history)
 {
+    vesDEBUG(__PRETTY_FUNCTION__<< "  simulation time: " << history.getTime().back())
     if(likely(isSkip()))
     {
         ++skip_counter;

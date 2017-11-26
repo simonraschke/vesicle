@@ -46,8 +46,9 @@ AngularLennardJones::cartesian AngularLennardJones::chi_force(const Particle& p1
     const cartesian partB = distance_vector(-p1_orien_kappa,-p2_orien_kappa)*(distance_vector(-p1_orien_kappa,-p2_orien_kappa).norm()-b)*2;
     const cartesian partC1 = distance_vector(p1_orien_kappa,-p2_orien_kappa)*(distance_vector(p1_orien_kappa,-p2_orien_kappa).norm()-c)*2;
     const cartesian partC2 = distance_vector(-p1_orien_kappa,p2_orien_kappa)*(distance_vector(-p1_orien_kappa,p2_orien_kappa).norm()-c)*2;
+    const float r2 = 1.f/squared_distance(p1,p2);
 
-    return (partA + partB + partC1 + partC2)*(-1.f);
+    return (partA + partB + partC1 + partC2)*(-1.f)*r2*r2*r2;
 }
 
 

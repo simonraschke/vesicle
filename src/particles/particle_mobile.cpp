@@ -4,6 +4,7 @@
 
 void ParticleMobile::setCoords(const cartesian& newCoords)
 {
+    assert(!newCoords.hasNaN());
     assert(currentCoords);
     *currentCoords = newCoords;
 }
@@ -12,6 +13,7 @@ void ParticleMobile::setCoords(const cartesian& newCoords)
 
 void ParticleMobile::setVelocity(const cartesian& newVelocity)
 {
+    assert(!newVelocity.hasNaN());
     assert(currentVelocity);
     *currentVelocity = newVelocity;
 }
@@ -20,6 +22,7 @@ void ParticleMobile::setVelocity(const cartesian& newVelocity)
 
 void ParticleMobile::setForce(const cartesian& newForce)
 {
+    assert(!newForce.hasNaN());
     assert(currentForce);
     *currentForce = newForce;
 }
@@ -28,6 +31,7 @@ void ParticleMobile::setForce(const cartesian& newForce)
 
 void ParticleMobile::setOrientation(const cartesian& newOrientation)
 {
+    assert(!newOrientation.hasNaN());
     assert(currentOrientation);
     *currentOrientation = newOrientation.normalized();
 }
@@ -36,6 +40,7 @@ void ParticleMobile::setOrientation(const cartesian& newOrientation)
 
 void ParticleMobile::setCircularVelocity(const cartesian& newCircularVelocity)
 {
+    assert(!newCircularVelocity.hasNaN());
     assert(currentCircularVelocity);
     *currentCircularVelocity = newCircularVelocity;
 }
@@ -44,6 +49,7 @@ void ParticleMobile::setCircularVelocity(const cartesian& newCircularVelocity)
 
 void ParticleMobile::setTorque(const cartesian& newTorque)
 {
+    assert(!newTorque.hasNaN());
     assert(currentTorque);
     *currentTorque = newTorque;
 }

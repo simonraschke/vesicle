@@ -9,6 +9,7 @@ tbb::mutex Controller::signal_mutex {};
 
 void Controller::signal(int SIG)
 {
+    vesDEBUG(__PRETTY_FUNCTION__ << " recieverd SIGNAL " << SIG)
     tbb::mutex::scoped_lock lock(Controller::signal_mutex);
     SIGNAL.store(SIG);
 }
@@ -17,10 +18,11 @@ void Controller::signal(int SIG)
 
 void SimulationControl::setup()
 {   
+    vesDEBUG(__PRETTY_FUNCTION__)
     flow.reset();
 
     system.setParameters(Parameters());
-    system.addParticles(ParticleFactory<ParticleMobile>(2));
+    system.addParticles(ParticleFactory<ParticleMobile>(100));
     system.distributeParticles<RandomDistributor>();
     system.setAlgorithm<Verlet>();
     system.setThermostat<AndersenThermostat>();
@@ -28,6 +30,11 @@ void SimulationControl::setup()
     system.setTrajectoryWriter<TrajectoryWriterGro>();
     system.getTrajectoryWriter().setSkip(system.getParameters().trajectory_skip);
     system.getTrajectoryWriter().setAnisotropic(system.getAlgorithm().getInteraction().isAnisotropic());
+
+    // system.getParticles()[0]->setCoords(Eigen::Vector3f(1,1,1));
+    // system.getParticles()[1]->setCoords(Eigen::Vector3f(2.12246204831,1,1));
+    // system.getParticles()[0]->setOrientation(Eigen::Vector3f(+1,1,0));
+    // system.getParticles()[1]->setOrientation(Eigen::Vector3f(-1,1,0));
 
     start_node = std::make_unique<tbb::flow::broadcast_node<tbb::flow::continue_msg>>(flow);
 
@@ -59,7 +66,7 @@ void SimulationControl::setup()
         (flow, [&](tbb::flow::continue_msg){ system.getTrajectoryWriter().write(history_storage); });
 
     tbb::flow::make_edge(*start_node,*step_node);
-    // tbb::flow::make_edge(*step_node,*thermostat_node);
+    tbb::flow::make_edge(*step_node,*thermostat_node);
     tbb::flow::make_edge(*step_node,*history_node);
     tbb::flow::make_edge(*history_node,*trajectory_node);
     
@@ -86,6 +93,7 @@ void SimulationControl::setup()
 
 void SimulationControl::start()
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     history_node->try_put(tbb::flow::continue_msg());
     flow.wait_for_all();
 
@@ -95,7 +103,7 @@ void SimulationControl::start()
         start_node->try_put(tbb::flow::continue_msg());
         flow.wait_for_all();
         if(i%system.getParameters().trajectory_skip==0) std::cout << i << std::endl;
-        if(i++>=10000) break;
+        if(i++>=100000) break;
     }
     history_storage.dumpToFile("history.dat");
 }
@@ -104,5 +112,6 @@ void SimulationControl::start()
 
 void SimulationControl::pause()
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
 
 }

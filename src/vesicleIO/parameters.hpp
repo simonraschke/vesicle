@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enhance/math_utility.hpp"
+#include "definitions.hpp"
 #include <memory>
 #include <exception>
 #include <cassert>
