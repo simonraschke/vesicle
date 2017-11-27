@@ -5,7 +5,8 @@
 
 #ifndef NDEBUG
 #include <iostream>
-#define vesDEBUG(x) std::cerr << "[DEBUG] " << __FILE__ << ':' << __LINE__ << ' ';\
+//<< __FILE__ << ':' << __LINE__ << ' ';
+#define vesDEBUG(x) std::cerr << "[DEBUG] ";\
                  do { std::cerr << x; } while (0);\
                  std::cerr << '\n';
 #else

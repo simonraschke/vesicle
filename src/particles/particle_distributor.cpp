@@ -54,12 +54,7 @@ RandomDistributor::cartesian RandomDistributor::randomCoords() const
 
 RandomDistributor::cartesian RandomDistributor::randomOrientation() const
 {
-    return cartesian
-    (
-        enhance::random<cartesian::Scalar>(0.f,1.f),
-        enhance::random<cartesian::Scalar>(0.f,1.f),
-        enhance::random<cartesian::Scalar>(0.f,1.f)
-    );
+    return Eigen::Vector3f::Random();
 }
 
 

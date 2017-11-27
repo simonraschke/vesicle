@@ -13,16 +13,16 @@
 
 struct Parameters
 {
-    float dt = 0.001;
-    float x = 10;
-    float y = 10;
-    float z = 10;
-    float temperature = 0.01;
-    unsigned int trajectory_skip = 10;
+    float dt = 0.002;
+    float x = 5;
+    float y = 5;
+    float z = 5;
+    float temperature = 0.5;
+    unsigned int trajectory_skip = 1;
 
     // AngularLennardJones
-    float kappa = 1.0;
-    float gamma = enhance::deg_to_rad(11.5);
+    float kappa = 3.0;
+    float gamma = enhance::deg_to_rad<float>(20);
 };
 
 

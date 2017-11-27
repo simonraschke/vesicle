@@ -2,6 +2,10 @@
 
 #include <cmath>
 #include <cstdint>
+#include <sstream>
+#include <exception>
+#include <eigen3/Eigen/Core>
+    
 
 
 namespace enhance
@@ -20,19 +24,36 @@ namespace enhance
         }
         return digits;
     }
-        
     
+
     
-    template<typename DERIVED>
-    constexpr float angle(const DERIVED& v1, const DERIVED& v2)
+    template<typename DERIVED1, typename DERIVED2>
+    constexpr float directed_angle(const DERIVED1& v1, const DERIVED2& v2)
     {
-        // return std::atan2(v1.cross(v2), v1.dot(v2));
-        return std::acos(v1.dot(v2)/std::sqrt(v1.norm()*v2.norm()));
+        assert(std::isfinite(std::atan2(v2.normalized()(1), v2.normalized()(0)) - std::atan2(v1.normalized()(1), v1.normalized()(0))));
+        return std::atan2(v2.normalized()(1), v2.normalized()(0)) - std::atan2(v1.normalized()(1), v1.normalized()(0));
+    }
+    
+
+    
+    template<typename DERIVED1, typename DERIVED2>
+    constexpr float absolute_angle(const DERIVED1& v1, const DERIVED2& v2)
+    {
+        return std::abs(directed_angle(v1,v2));
+    }
+    
+
+    
+    template<typename DERIVED1, typename DERIVED2>
+    constexpr float normalized_angle(const DERIVED1& v1, const DERIVED2& v2)
+    {
+        const float angle = directed_angle(v1,v2);
+        return angle < 0.f ? angle+M_PI : angle;
     }
         
     
     
-    template<typename T>
+    template<typename T, typename ENABLER = typename std::enable_if<std::is_floating_point<T>::value>::type>
     constexpr T deg_to_rad(const T& __deg) noexcept
     {
         return __deg*M_PI/180;
@@ -40,7 +61,7 @@ namespace enhance
     
     
     
-    template<typename T>
+    template<typename T, typename ENABLER = typename std::enable_if<std::is_floating_point<T>::value>::type>
     constexpr T rad_to_deg(const T& __rad) noexcept
     {
         return __rad/M_PI*180;

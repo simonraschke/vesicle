@@ -11,21 +11,9 @@ void Verlet::step(const unsigned long& steps)
         // save forces
         for(auto& target : *target_range)
         {
-            // std::cout << "coords  : " << target->coords().format(ROWFORMAT) << std::endl;
-            // std::cout << "velocity: " << target->velocity().format(ROWFORMAT) << std::endl;
-            // std::cout << "force   : " << target->force().format(ROWFORMAT) << std::endl;
-            // std::cout << "orientat: " << target->orientation().format(ROWFORMAT) << std::endl;
-            // std::cout << "cricvelo: " << target->circularVelocity().format(ROWFORMAT) << std::endl;
-            // std::cout << "torque  : " << target->torque().format(ROWFORMAT) << std::endl << std::endl;
             assert(target);
             target->save();
         }
-
-
-        // tbb::parallel_for_each(target_range->begin(), target_range->end(), [&](auto& target1) 
-        // {
-        //     target1->anisotropic_scalar = std::acumulate(target_range->begin(), target_range->end(), [&]( float f, auto& target2) { return interaction->anisotropic_force(target1,target2).norm(); }) / target.range();
-        // });
 
         updateCoords();
         // updateOrientations();
@@ -42,49 +30,30 @@ void Verlet::updateCoords()
     const auto dt = getParameters().dt;
     const auto dt2half = dt*dt*0.5f;
 
-
-    // std::cout << "angle111 = " << enhance::rad_to_deg(enhance::angle(Eigen::Vector3f::UnitY(),Eigen::Vector3f::UnitX())) << std::endl;
-
-    std::for_each(target_range->begin(), target_range->end(), [&](auto& target) 
-    // tbb::parallel_for_each(target_range->begin(), target_range->end(), [&](auto& target) 
+    // std::for_each(target_range->begin(), target_range->end(), [&](auto& target) 
+    tbb::parallel_for_each(target_range->begin(), target_range->end(), [&](auto& target) 
     {
         assert(target);
         target->setCoords( (target->coordsOld() + target->velocityOld()*dt + target->forceOld()*dt2half)/target->getMass());
         target->setOrientation( (target->orientationOld() + target->circularVelocityOld()*dt + target->torqueOld()*dt2half)/target->getMass() );
-
-        // std::cout << "orien: " << target->orientation().cross(target->orientationOld()).format(ROWFORMAT) << std::endl;
-        // std::cout << "orien: " << target->orientation().format(ROWFORMAT) << std::endl;
-        // std::cout << "angle = " << enhance::rad_to_deg(enhance::angle(target->orientation(),target->orientationOld())) << std::endl;
         
-        // static long steps = 0;
         const auto torque_vector = target->orientation().cross(target->orientationOld());
-        if(!torque_vector.isZero(1e-3) && enhance::angle(target->orientationOld(),target->orientation()) > 1e-3)
-        // if(steps++ > 10)
+        const float angle = enhance::absolute_angle(target->orientationOld(),target->orientation());
+        
+        // rotate circular velocity and force
+        // according to change of orientation
         {
-            Eigen::AngleAxisf circular_velocity_rotation( enhance::angle(target->orientationOld(),target->orientation()) , torque_vector.normalized() );
-            vesDEBUG( enhance::angle(target->orientationOld(),target->orientation()) << torque_vector.normalized() << target->circularVelocityOld())
-            target->setCircularVelocity( circular_velocity_rotation * target->circularVelocityOld() );
-            target->setTorque( circular_velocity_rotation * target->torqueOld() );
+            // const float decay = std::exp(-getParameters().dt);
+            const float decay = 1;
+            Eigen::AngleAxisf circular_velocity_rotation( angle, torque_vector.normalized() );
+            target->setCircularVelocity( (circular_velocity_rotation * target->circularVelocityOld())*decay );
+            target->setTorque( (circular_velocity_rotation * target->torqueOld())*decay*decay );
+            vesDEBUG( "angle " << angle << "  torque" << torque_vector.normalized().format(ROWFORMAT) << "  circular velocity "<< target->circularVelocity().format(ROWFORMAT))
         }
-        else
-        {
-            vesDEBUG("WARINING: NO TORQUE CALCULATED")
-        }
-
-        // if( torque.norm() > 0.00001 )
+        // else
         // {
-            // Eigen::AngleAxisf rotation (enhance::angle(target->orientation(),target->orientationOld()), target->orientation().cross(target->orientationOld()).normalized());
-            // target->setCircularVelocity( rotation * target->circularVelocityOld() );
+            // vesDEBUG("WARINING: NO TORQUE CALCULATED, torque: " << torque_vector.normalized().format(ROWFORMAT) << ", angle: " << angle)
         // }
-
-        // const auto torque = target->orientationOld().cross(target->torqueOld()*dt2half/target->getMass());
-        // const auto torque = ((target->orientationOld() + target->circularVelocityOld()*dt + target->torqueOld()*dt2half)/target->getMass()).cross(target->torqueOld());
-        // const auto torque = target->orientationOld().cross(target->torqueOld());
-        // std::cout << target->torqueOld().format(ROWFORMAT) << "    " << torque.norm() << std::endl;
-        // const Eigen::AngleAxisf rotate( torque.norm(), torque.normalized());
-        // std::cout << target->circularVelocity().norm() << "  " << torque.norm() << std::endl;
-        // target->setOrientation( rotate * target->orientationOld() );
-        // target->setCircularVelocity( rotate * target->circularVelocityOld() );
     });
 }
 
@@ -93,6 +62,7 @@ void Verlet::updateCoords()
 void Verlet::updateForces()
 {
     vesDEBUG(__PRETTY_FUNCTION__)
+
     // first set to 0
     tbb::parallel_for_each(target_range->begin(), target_range->end(), [](auto& target) 
     {
@@ -116,10 +86,11 @@ void Verlet::updateForces()
             target1->addForce(isotropic_force + anisotropic_force);
             target2->addForce((-1.f)*(isotropic_force + anisotropic_force));
 
-            const float dot_prod = isotropic_force.normalized().dot(anisotropic_force.normalized());
-            if( std::abs(dot_prod)-1.f > 0.001f) throw std::runtime_error("direction of forces should be the same, but scalar product is: "+std::to_string(dot_prod));
+            if( std::abs(isotropic_force.normalized().dot(anisotropic_force.normalized()))-1.f > 1e-3f) 
+                throw std::runtime_error("direction of forces should be the same, but scalar product is: "+std::to_string(isotropic_force.normalized().dot(anisotropic_force.normalized())));
 
             const Particle::cartesian chi_force_cartesian = interaction->chi_force(target1,target2);
+            vesDEBUG("chi_force " << chi_force_cartesian.format(ROWFORMAT))
             target1->addTorque(chi_force_cartesian);
             target2->addTorque((-1.f)*chi_force_cartesian);
         }

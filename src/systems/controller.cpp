@@ -22,7 +22,7 @@ void SimulationControl::setup()
     flow.reset();
 
     system.setParameters(Parameters());
-    system.addParticles(ParticleFactory<ParticleMobile>(100));
+    system.addParticles(ParticleFactory<ParticleMobile>(20));
     system.distributeParticles<RandomDistributor>();
     system.setAlgorithm<Verlet>();
     system.setThermostat<AndersenThermostat>();
@@ -32,9 +32,9 @@ void SimulationControl::setup()
     system.getTrajectoryWriter().setAnisotropic(system.getAlgorithm().getInteraction().isAnisotropic());
 
     // system.getParticles()[0]->setCoords(Eigen::Vector3f(1,1,1));
-    // system.getParticles()[1]->setCoords(Eigen::Vector3f(2.12246204831,1,1));
-    // system.getParticles()[0]->setOrientation(Eigen::Vector3f(+1,1,0));
-    // system.getParticles()[1]->setOrientation(Eigen::Vector3f(-1,1,0));
+    // system.getParticles()[1]->setCoords(Eigen::Vector3f(2.32246204831,1,1));
+    // system.getParticles()[0]->setOrientation(Eigen::Vector3f(0,1,0));
+    // system.getParticles()[1]->setOrientation(Eigen::Vector3f(0,1,0));
 
     start_node = std::make_unique<tbb::flow::broadcast_node<tbb::flow::continue_msg>>(flow);
 
@@ -69,24 +69,6 @@ void SimulationControl::setup()
     tbb::flow::make_edge(*step_node,*thermostat_node);
     tbb::flow::make_edge(*step_node,*history_node);
     tbb::flow::make_edge(*history_node,*trajectory_node);
-    
-
-    // // write first trajectory step
-    // {
-    //     HistoryBuffer buffer;
-    //     buffer.time = std::make_unique<float>(system.getTime()); 
-    //     try
-    //     {
-    //         tbb::parallel_invoke
-    //         (
-    //             [&]{ buffer.kineticEnergy = std::make_unique<float>(system.kineticEnergy()); },
-    //             [&]{ buffer.potentialEnergy = std::make_unique<float>(system.potentialEnergy()); }
-    //         );
-    //     }
-    //     catch(std::runtime_error e){ std::cout << e.what() << std::endl;  }
-    //     history_storage.flush(buffer);
-    //     system.getTrajectoryWriter().write(history_storage);
-    // }
 }
 
 
@@ -103,9 +85,13 @@ void SimulationControl::start()
         start_node->try_put(tbb::flow::continue_msg());
         flow.wait_for_all();
         if(i%system.getParameters().trajectory_skip==0) std::cout << i << std::endl;
-        if(i++>=100000) break;
+        if(i++>=500000) break;
     }
     history_storage.dumpToFile("history.dat");
+
+    // auto v1 = Eigen::Vector3f(-1,-1,0);
+    // auto v2 = Eigen::Vector3f( 1,0,0);
+    // vesDEBUG( enhance::rad_to_deg( enhance::absolute_angle(v1,v2) ) )
 }
 
 
