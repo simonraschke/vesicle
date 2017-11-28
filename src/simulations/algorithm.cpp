@@ -9,8 +9,8 @@ void Algorithm::setTarget(PARTICLERANGE* range)
 
 
 
-Interaction& Algorithm::getInteraction() const
+const std::unique_ptr<Interaction>& Algorithm::getInteraction() const
 {
-    vesDEBUG(__PRETTY_FUNCTION__)
-    return *interaction;
+    assert(interaction);
+    return interaction;
 }

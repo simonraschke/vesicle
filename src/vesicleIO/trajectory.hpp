@@ -38,6 +38,7 @@ protected:
 
     // virtual std::string format(const cartesian&) = 0;
     bool isSkip();
+    virtual void makeStartFileVMD() const = 0;
 
     TrajectoryWriter();
 
@@ -59,4 +60,7 @@ struct TrajectoryWriterGro
 
     virtual void setFilename(std::string) override;
     virtual void write(const HistoryStorage&) override;   
+
+protected:
+    virtual void makeStartFileVMD() const override;
 };

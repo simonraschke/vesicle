@@ -17,7 +17,7 @@ public:
 
     template<typename I>
     void setInteraction();
-    Interaction& getInteraction() const;
+    const std::unique_ptr<Interaction>& getInteraction() const;
 
     // execute
     virtual void step(const unsigned long& = 1) = 0;
@@ -45,6 +45,7 @@ private:
 template<typename I>
 void Algorithm::setInteraction()
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     interaction = std::make_unique<I>();
     interaction->setParameters(getParameters());
     interaction->setup();

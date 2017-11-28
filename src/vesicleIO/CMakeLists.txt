@@ -3,9 +3,11 @@ message(${CMAKE_CURRENT_SOURCE_DIR})
 set(IO_source_files
     parameters.cpp
     trajectory.cpp
+    program_options.cpp
     
     parameters.hpp
     trajectory.hpp
+    program_options.hpp
 
     history.hpp
 )

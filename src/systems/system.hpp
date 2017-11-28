@@ -37,19 +37,19 @@ public:
 
     template<typename A,typename ENABLER = typename std::enable_if<std::is_base_of<Algorithm,A>::value>::type>
     void setAlgorithm();
-    Algorithm& getAlgorithm() const;
+    const std::unique_ptr<Algorithm>& getAlgorithm() const;
 
     template<typename I,typename ENABLER = typename std::enable_if<std::is_base_of<Interaction,I>::value>::type>
     void setInteraction();
-    Interaction& getInteraction() const;
+    const std::unique_ptr<Interaction>& getInteraction() const;
 
     template<typename T,typename ENABLER = typename std::enable_if<std::is_base_of<Thermostat,T>::value>::type>
     void setThermostat();
-    Thermostat& getThermostat() const;
+    const std::unique_ptr<Thermostat>& getThermostat() const;
 
     template<typename W,typename ENABLER = typename std::enable_if<std::is_base_of<TrajectoryWriter,W>::value>::type>
     void setTrajectoryWriter();
-    TrajectoryWriter& getTrajectoryWriter() const;
+    const std::unique_ptr<TrajectoryWriter>& getTrajectoryWriter() const;
 
     float kineticEnergy() const;
     float potentialEnergy() const;
@@ -76,6 +76,7 @@ private:
 template<typename T>
 void System::addParticles(ParticleFactory<T>&& factory)
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     particles.reserve(particles.size()+factory.size());
     while(factory)
     {
@@ -88,6 +89,7 @@ void System::addParticles(ParticleFactory<T>&& factory)
 template<typename D,typename ENABLER>
 void System::distributeParticles()
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     D dist;
     dist.setParameters(getParameters());
     dist(&particles);
@@ -98,6 +100,7 @@ void System::distributeParticles()
 template<typename A,typename ENABLER>
 void System::setAlgorithm()
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     algorithm.reset(nullptr);
     assert(!algorithm);
     algorithm = std::make_unique<A>();
@@ -111,6 +114,7 @@ void System::setAlgorithm()
 template<typename T,typename ENABLER>
 void System::setThermostat()
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     thermostat.reset(nullptr);
     assert(!thermostat);
     thermostat = std::make_unique<T>();
@@ -124,6 +128,7 @@ void System::setThermostat()
 template<typename I,typename ENABLER>
 void System::setInteraction()
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     assert(algorithm);
     algorithm->setInteraction<I>();
 }
@@ -133,6 +138,7 @@ void System::setInteraction()
 template<typename W,typename ENABLER>
 void System::setTrajectoryWriter()
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     trajectory_writer = std::make_unique<W>();
     assert(trajectory_writer);
     trajectory_writer->setParameters(getParameters());

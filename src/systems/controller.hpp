@@ -9,6 +9,7 @@
 
 
 struct Controller
+    : public ParameterDependentComponent
 {
     virtual ~Controller() = default;
 

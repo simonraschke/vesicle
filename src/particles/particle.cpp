@@ -89,6 +89,8 @@ void Particle::addVelocity(const cartesian& c)
 void Particle::addForce(const cartesian& c)
 {
     tbb::spin_mutex::scoped_lock lock(mutex);
+    if(c.hasNaN())
+        vesCRITICAL(c.format(ROWFORMAT))
     assert(currentForce);
     assert(!c.hasNaN());
     assert(!currentForce->hasNaN());

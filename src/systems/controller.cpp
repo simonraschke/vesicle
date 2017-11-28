@@ -19,17 +19,54 @@ void Controller::signal(int SIG)
 void SimulationControl::setup()
 {   
     vesDEBUG(__PRETTY_FUNCTION__)
-    flow.reset();
 
-    system.setParameters(Parameters());
-    system.addParticles(ParticleFactory<ParticleMobile>(20));
-    system.distributeParticles<RandomDistributor>();
-    system.setAlgorithm<Verlet>();
-    system.setThermostat<AndersenThermostat>();
-    system.setInteraction<AngularLennardJones>();
-    system.setTrajectoryWriter<TrajectoryWriterGro>();
-    system.getTrajectoryWriter().setSkip(system.getParameters().trajectory_skip);
-    system.getTrajectoryWriter().setAnisotropic(system.getAlgorithm().getInteraction().isAnisotropic());
+    {
+        system.setParameters(getParameters());
+    }
+    // MUST
+    {
+        system.addParticles(ParticleFactory<ParticleMobile>(getParameters().mobile));
+        system.distributeParticles<RandomDistributor>();
+    }
+    //MUST
+    {
+        if(getParameters().algorithm == std::string("verlet"))
+            system.setAlgorithm<Verlet>();
+        else if(getParameters().algorithm == "langevin" )
+            system.setAlgorithm<Langevin>();
+        assert(system.getAlgorithm());
+    }
+    //MUST
+    {
+        if(getParameters().interaction == "lj")
+            system.setInteraction<LennardJones>();
+        else if(getParameters().interaction == "alj")
+            system.setInteraction<AngularLennardJones>();
+        assert(system.getInteraction());
+    }
+    // OPTIONAL
+    {
+        if(getParameters().thermostat == "andersen")
+        {
+            system.setThermostat<AndersenThermostat>();
+            assert(system.getThermostat());
+        }
+    }
+    //OPTIONAL
+    {
+        if(getParameters().traj == "gro")
+        {
+            system.setTrajectoryWriter<TrajectoryWriterGro>();
+            assert(system.getTrajectoryWriter());
+        }
+        if(system.getTrajectoryWriter())
+        {
+            system.getTrajectoryWriter()->setSkip(getParameters().traj_skip);
+            system.getTrajectoryWriter()->setAnisotropic(system.getInteraction()->isAnisotropic());
+            // system.getTrajectoryWriter()->setAnisotropic(false);
+        }
+    }
+    
 
     // system.getParticles()[0]->setCoords(Eigen::Vector3f(1,1,1));
     // system.getParticles()[1]->setCoords(Eigen::Vector3f(2.32246204831,1,1));
@@ -38,11 +75,24 @@ void SimulationControl::setup()
 
     start_node = std::make_unique<tbb::flow::broadcast_node<tbb::flow::continue_msg>>(flow);
 
+
     step_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
-        (flow, [&](tbb::flow::continue_msg){ system.getAlgorithm().step(); });
+        (flow, [&](tbb::flow::continue_msg)
+        { 
+            if(system.getAlgorithm())
+                system.getAlgorithm()->step();
+            else
+                vesCRITICAL("no algorithm was set") 
+        });
+
 
     thermostat_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
-        (flow, [&](tbb::flow::continue_msg){ system.getThermostat().apply(); });
+        (flow, [&](tbb::flow::continue_msg)
+        { 
+            if(system.getThermostat())
+                system.getThermostat()->apply(); 
+        });
+
 
     history_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
         (flow, [&](tbb::flow::continue_msg)
@@ -58,13 +108,20 @@ void SimulationControl::setup()
                     [&]{ buffer.potentialEnergy = std::make_unique<float>(system.potentialEnergy()); }
                 );
             }
-            catch(std::runtime_error e){ std::cout << e.what() << std::endl;  }
+            catch(std::runtime_error e){ vesWARNING(e.what()) }
             history_storage.flush(buffer);
         });
 
-    trajectory_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
-        (flow, [&](tbb::flow::continue_msg){ system.getTrajectoryWriter().write(history_storage); });
 
+    trajectory_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
+        (flow, [&](tbb::flow::continue_msg)
+        { 
+            if(system.getTrajectoryWriter())
+                system.getTrajectoryWriter()->write(history_storage); 
+        });
+
+
+    flow.reset();
     tbb::flow::make_edge(*start_node,*step_node);
     tbb::flow::make_edge(*step_node,*thermostat_node);
     tbb::flow::make_edge(*step_node,*history_node);
@@ -79,13 +136,13 @@ void SimulationControl::start()
     history_node->try_put(tbb::flow::continue_msg());
     flow.wait_for_all();
 
-    int i = 0;
+    std::size_t i = 0;
     while(SIGNAL.load() == 0)
     {
         start_node->try_put(tbb::flow::continue_msg());
         flow.wait_for_all();
-        if(i%system.getParameters().trajectory_skip==0) std::cout << i << std::endl;
-        if(i++>=500000) break;
+        if(i%system.getParameters().traj_skip==0) std::cout << i << std::endl;
+        ++i;
     }
     history_storage.dumpToFile("history.dat");
 
@@ -99,5 +156,4 @@ void SimulationControl::start()
 void SimulationControl::pause()
 {
     vesDEBUG(__PRETTY_FUNCTION__)
-
 }

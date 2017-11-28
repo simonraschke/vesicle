@@ -6,7 +6,12 @@ void System::clear()
 {
     vesDEBUG(__PRETTY_FUNCTION__)
     algorithm.reset(nullptr);
+    thermostat.reset(nullptr);
+    trajectory_writer.reset(nullptr);
     particles.clear();
+    assert(!algorithm);
+    assert(!thermostat);
+    assert(!trajectory_writer);
 }
 
 
@@ -19,35 +24,38 @@ const PARTICLERANGE& System::getParticles() const
 
 
 
-Algorithm& System::getAlgorithm() const
+const std::unique_ptr<Algorithm>& System::getAlgorithm() const
 {
     vesDEBUG(__PRETTY_FUNCTION__)
-    return *algorithm;
+    assert(algorithm);
+    return algorithm;
 }
 
 
 
-Interaction& System::getInteraction() const
+const std::unique_ptr<Interaction>& System::getInteraction() const
 {
     vesDEBUG(__PRETTY_FUNCTION__)
+    assert(algorithm);
+    assert(algorithm->getInteraction());
     return algorithm->getInteraction();
 }
 
 
 
-Thermostat& System::getThermostat() const
+const std::unique_ptr<Thermostat>& System::getThermostat() const
 {
     vesDEBUG(__PRETTY_FUNCTION__)
-    return *thermostat;
+    return thermostat;
 }
 
 
 
 
-TrajectoryWriter& System::getTrajectoryWriter() const
+const std::unique_ptr<TrajectoryWriter>& System::getTrajectoryWriter() const
 {
     vesDEBUG(__PRETTY_FUNCTION__)
-    return *trajectory_writer;
+    return trajectory_writer;
 }
 
 
@@ -60,7 +68,13 @@ float System::potentialEnergy() const
     {
         float pre_sum = 0;
         for(std::size_t j = 0; j<i; ++j)
-            pre_sum += algorithm->getInteraction().isotropic(particles[i],particles[j]) + algorithm->getInteraction().anisotropic(particles[i],particles[j]);
+        {
+            assert(algorithm);
+            assert(algorithm->getInteraction());
+            assert(particles[i]);
+            assert(particles[j]);
+            pre_sum += algorithm->getInteraction()->translation(particles[i],particles[j]) + algorithm->getInteraction()->rotation(particles[i],particles[j]);
+        }
 
         auto current = energy_sum.load();
         while (!energy_sum.compare_exchange_weak(current, current + pre_sum))

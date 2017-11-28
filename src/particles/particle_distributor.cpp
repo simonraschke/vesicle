@@ -10,7 +10,7 @@ bool Distributor::conflicting_placement(PARTICLERANGE* range, PARTICLERANGE::val
     {
         assert(p1 && p2);
         if(p1==p2) return;
-        if(squared_distance(*p1,*p2) <= 1.f) conflict.store(true);
+        if(squared_distance(*p1,*p2) <= 1.122f) conflict.store(true);
     });
     return conflict.load();
 }
@@ -30,11 +30,12 @@ void RandomDistributor::operator()(PARTICLERANGE* range)
     assert(range);
     for(auto& p : *range)
     {
-        while(conflicting_placement(range,p))
+        do
         {
             assert(p);
             p->setCoords(randomCoords());
         }
+        while(conflicting_placement(range,p));
     }
 }
 

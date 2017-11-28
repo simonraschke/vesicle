@@ -1,5 +1,7 @@
 #pragma once
 
+
+#include "definitions.hpp"
 #include <memory>
 #include <string>
 #include <eigen3/Eigen/Core>

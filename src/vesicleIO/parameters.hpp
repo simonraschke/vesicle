@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enhance/math_utility.hpp"
+#include "program_options.hpp"
 #include "definitions.hpp"
 #include <memory>
 #include <exception>
@@ -13,16 +14,28 @@
 
 struct Parameters
 {
-    float dt = 0.002;
-    float x = 5;
-    float y = 5;
-    float z = 5;
-    float temperature = 0.5;
-    unsigned int trajectory_skip = 1;
+    // GENERAL
+    std::string algorithm {};
+    std::string interaction {};
+    std::string thermostat {};
 
-    // AngularLennardJones
-    float kappa = 3.0;
-    float gamma = enhance::deg_to_rad<float>(20);
+    // SYSTEM
+    std::size_t mobile {};
+    float dt {};
+    float x {};
+    float y {};
+    float z {};
+    float temperature {};
+    float kappa {};
+    float gamma {};
+
+    // OUTPUT
+    std::string traj {};
+    std::size_t traj_skip {};
+
+    // functions
+    void setup();
+    ProgramOptions programOptions {};
 };
 
 

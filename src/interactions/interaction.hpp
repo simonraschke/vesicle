@@ -19,17 +19,15 @@ struct Interaction
 
     virtual ~Interaction() = default;
 
-    float isotropic(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
-    float anisotropic(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
-    cartesian isotropic_force(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
-    cartesian anisotropic_force(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
-    cartesian chi_force(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
+    float translation(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
+    float rotation(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
+    cartesian translation_force(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
+    cartesian rotation_force(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
 
-    virtual float isotropic(const Particle&, const Particle&) const = 0 ;
-    virtual float anisotropic(const Particle&, const Particle&) const = 0 ;
-    virtual cartesian isotropic_force(const Particle&, const Particle&) const = 0 ;
-    virtual cartesian anisotropic_force(const Particle&, const Particle&) const = 0 ;
-    virtual cartesian chi_force(const Particle&, const Particle&) const = 0 ;
+    virtual float translation(const Particle&, const Particle&) const = 0 ;
+    virtual float rotation(const Particle&, const Particle&) const = 0 ;
+    virtual cartesian translation_force(const Particle&, const Particle&) const = 0 ;
+    virtual cartesian rotation_force(const Particle&, const Particle&) const = 0 ;
 
 
     virtual void setup();
@@ -44,37 +42,30 @@ private:
 
 
 
-inline float Interaction::isotropic(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
+inline float Interaction::translation(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
 {
-    return isotropic(*ptr1,*ptr2);
+    return translation(*ptr1,*ptr2);
 }
 
 
 
-inline float Interaction::anisotropic(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
+inline float Interaction::rotation(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
 {
-    return anisotropic(*ptr1,*ptr2);
+    return rotation(*ptr1,*ptr2);
 }
 
 
 
-inline Interaction::cartesian Interaction::isotropic_force(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
+inline Interaction::cartesian Interaction::translation_force(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
 {
-    return isotropic_force(*ptr1,*ptr2);
+    return translation_force(*ptr1,*ptr2);
 }
 
 
 
-inline Interaction::cartesian Interaction::anisotropic_force(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
+inline Interaction::cartesian Interaction::rotation_force(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
 {
-    return anisotropic_force(*ptr1,*ptr2);
-}
-
-
-
-inline Interaction::cartesian Interaction::chi_force(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
-{
-    return chi_force(*ptr1,*ptr2);
+    return rotation_force(*ptr1,*ptr2);
 }
 
 
