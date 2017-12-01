@@ -3,10 +3,11 @@ message(${CMAKE_CURRENT_SOURCE_DIR})
 set(simulations_source_files
     algorithm.cpp
     verlet.cpp
+    shake_verlet.cpp
     langevin.cpp
     
     algorithm.hpp
-    verlet.hpp
+    shake_verlet.hpp
     langevin.hpp
 )
 

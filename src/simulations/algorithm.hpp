@@ -5,6 +5,7 @@
 #include "vesicleIO/parameters.hpp"
 #include "particles/particle.hpp"
 #include "interactions/interaction.hpp"
+#include <tbb/tbb.h>
 
 
 class Algorithm

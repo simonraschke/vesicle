@@ -29,11 +29,11 @@
 
 
 #include <tbb/parallel_reduce.h>
-#define PARALLEL_ACCUMULATE(cont, functor)  tbb::parallel_reduce \
-    (tbb::blocked_range<decltype(cont)::const_iterator>( cont.cbegin(), cont.cend() ), \
-    (float)0 , [&](auto& r, float i) \
+#define PARALLEL_REDUCE(type, cont, functor)  tbb::parallel_reduce \
+    (tbb::blocked_range<decltype(cont)::const_iterator>( std::cbegin(cont), std::cend(cont) ), \
+    (type)0 , [&](auto& r, type i) \
     { \
-        return i + std::accumulate(r.begin(), r.end(), (float)0, functor); \
+        return i + std::accumulate(std::begin(r), std::end(r), (type)0, functor); \
     },\
-    std::plus<float>())
+    std::plus<type>())
 

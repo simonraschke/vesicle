@@ -13,7 +13,7 @@ void ProgramOptions::read(int argc, const char* argv[])
     generalOptions.add_options()
         ("config", po::value<std::string>(&config_file_name), "read from config file")
         ("help,h", "show help")
-        ("general.algorithm",  po::value<std::string>(), "[verlet,langevin]")
+        ("general.algorithm",  po::value<std::string>(), "[verlet,shakeVerlet,langevin]")
         ("general.interaction",  po::value<std::string>(), "[lj,alj]")
         ("general.thermostat",  po::value<std::string>(), "[andersen]");
     

@@ -16,7 +16,6 @@ void Verlet::step(const unsigned long& steps)
         }
 
         updateCoords();
-        // updateOrientations();
         updateForces();
         updateVelocities();
     }
@@ -30,7 +29,6 @@ void Verlet::updateCoords()
     const auto dt = getParameters().dt;
     const auto dt2half = dt*dt*0.5f;
 
-    // std::for_each(target_range->begin(), target_range->end(), [&](auto& target) 
     tbb::parallel_for_each(target_range->begin(), target_range->end(), [&](auto& target) 
     {
         assert(target);
@@ -73,7 +71,7 @@ void Verlet::updateForces()
 
 void Verlet::updateVelocities()
 {
-    vesDEBUG(__PRETTY_FUNCTION__<<"text")
+    vesDEBUG(__PRETTY_FUNCTION__)
     const auto dt_half = 0.5f*getParameters().dt;
     tbb::parallel_for_each(target_range->begin(), target_range->end(), [&](auto& target) 
     {

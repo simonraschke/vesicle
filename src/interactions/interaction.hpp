@@ -21,11 +21,15 @@ struct Interaction
 
     float translation(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
     float rotation(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
+    float constrained(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
+    float constrainedOld(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
     cartesian translation_force(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
     cartesian rotation_force(const std::unique_ptr<Particle>&, const std::unique_ptr<Particle>&) const;
 
     virtual float translation(const Particle&, const Particle&) const = 0 ;
     virtual float rotation(const Particle&, const Particle&) const = 0 ;
+    virtual float constrained(const Particle&, const Particle&) const = 0 ;
+    virtual float constrainedOld(const Particle&, const Particle&) const = 0 ;
     virtual cartesian translation_force(const Particle&, const Particle&) const = 0 ;
     virtual cartesian rotation_force(const Particle&, const Particle&) const = 0 ;
 
@@ -52,6 +56,20 @@ inline float Interaction::translation(const std::unique_ptr<Particle>& ptr1, con
 inline float Interaction::rotation(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
 {
     return rotation(*ptr1,*ptr2);
+}
+
+
+
+inline float Interaction::constrained(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
+{
+    return constrained(*ptr1,*ptr2);
+}
+
+
+
+inline float Interaction::constrainedOld(const std::unique_ptr<Particle>& ptr1, const std::unique_ptr<Particle>& ptr2) const
+{
+    return constrained(*ptr1,*ptr2);
 }
 
 

@@ -173,6 +173,7 @@ void TrajectoryWriterGro::write(const HistoryStorage& history)
 
 void TrajectoryWriterGro::makeStartFileVMD() const
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     // OFSTREAM STARTER;
     // STARTER.open(vesicle.vmd);
     // STARTER << "#!/bin/bash" << '\n';

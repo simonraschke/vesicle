@@ -32,6 +32,8 @@ void SimulationControl::setup()
     {
         if(getParameters().algorithm == std::string("verlet"))
             system.setAlgorithm<Verlet>();
+        else if(getParameters().algorithm == "shakeVerlet" )
+            system.setAlgorithm<ShakeVerlet>();
         else if(getParameters().algorithm == "langevin" )
             system.setAlgorithm<Langevin>();
         assert(system.getAlgorithm());
@@ -63,7 +65,6 @@ void SimulationControl::setup()
         {
             system.getTrajectoryWriter()->setSkip(getParameters().traj_skip);
             system.getTrajectoryWriter()->setAnisotropic(system.getInteraction()->isAnisotropic());
-            // system.getTrajectoryWriter()->setAnisotropic(false);
         }
     }
     
@@ -79,6 +80,7 @@ void SimulationControl::setup()
     step_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
         (flow, [&](tbb::flow::continue_msg)
         { 
+            vesDEBUG("step_node")
             if(system.getAlgorithm())
                 system.getAlgorithm()->step();
             else
@@ -89,6 +91,7 @@ void SimulationControl::setup()
     thermostat_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
         (flow, [&](tbb::flow::continue_msg)
         { 
+            vesDEBUG("thermostat_node")
             if(system.getThermostat())
                 system.getThermostat()->apply(); 
         });
@@ -97,6 +100,7 @@ void SimulationControl::setup()
     history_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
         (flow, [&](tbb::flow::continue_msg)
         { 
+            vesDEBUG("history_node")
             system.addTime(system.getParameters().dt); 
             HistoryBuffer buffer;
             buffer.time = std::make_unique<float>(system.getTime()); 
@@ -116,8 +120,9 @@ void SimulationControl::setup()
     trajectory_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
         (flow, [&](tbb::flow::continue_msg)
         { 
+            vesDEBUG("trajectory_node")
             if(system.getTrajectoryWriter())
-                system.getTrajectoryWriter()->write(history_storage); 
+                system.getTrajectoryWriter()->write(history_storage);
         });
 
 

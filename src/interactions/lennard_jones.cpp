@@ -18,6 +18,20 @@ float LennardJones::rotation(const Particle& p1 __attribute__((unused)) , const 
 
 
 
+float LennardJones::constrained(const Particle& p1 __attribute__((unused)) , const Particle& p2  __attribute__((unused))) const 
+{
+    return 0.f;
+}
+
+
+
+float LennardJones::constrainedOld(const Particle& p1 __attribute__((unused)) , const Particle& p2  __attribute__((unused))) const 
+{
+    return 0.f;
+}
+
+
+
 LennardJones::cartesian LennardJones::translation_force(const Particle& p1, const Particle& p2) const 
 {
     const float r2 = 1.f/squared_distance(p1.coordsOld(),p2.coordsOld());

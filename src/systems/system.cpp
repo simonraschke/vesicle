@@ -88,7 +88,7 @@ float System::potentialEnergy() const
 float System::kineticEnergy() const
 {   
     vesDEBUG(__PRETTY_FUNCTION__)
-    float value = PARALLEL_ACCUMULATE(particles,[&](float f, auto& p){ assert(p); return f + 0.5f*p->velocity().squaredNorm(); });
+    float value = PARALLEL_REDUCE(float,particles,[&](float f, auto& p){ assert(p); return f + 0.5f*p->velocity().squaredNorm(); });
     return !std::isnan(value) ? value : throw std::runtime_error("kinetic Energy is NAN");
 }
 
