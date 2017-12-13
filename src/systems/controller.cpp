@@ -36,6 +36,15 @@ void SimulationControl::setup()
             system.setAlgorithm<ShakeVerlet>();
         else if(getParameters().algorithm == "langevin" )
             system.setAlgorithm<Langevin>();
+        else if(getParameters().algorithm == "montecarlo" )
+        {
+            system.setAlgorithm<MonteCarlo>();
+
+            if(getParameters().acceptance == std::string("metropolis"))
+                system.getAlgorithm()->setAcceptance<Metropolis>();
+
+            assert(system.getAlgorithm()->getInteraction());
+        }
         assert(system.getAlgorithm());
     }
     //MUST

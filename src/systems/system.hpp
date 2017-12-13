@@ -11,6 +11,7 @@
 #include "simulations/verlet.hpp"
 #include "simulations/shake_verlet.hpp"
 #include "simulations/langevin.hpp"
+#include "simulations/monte_carlo.hpp"
 #include "interactions/lennard_jones.hpp"
 #include "interactions/angular_lennard_jones.hpp"
 #include "vesicleIO/parameters.hpp"

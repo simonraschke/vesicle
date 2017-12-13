@@ -16,6 +16,7 @@ struct Parameters
 {
     // GENERAL
     std::string algorithm {};
+    std::string acceptance {};
     std::string interaction {};
     std::string thermostat {};
 
@@ -28,7 +29,8 @@ struct Parameters
     float temperature {};
     float kappa {};
     float gamma {};
-
+    float stepwidth_coordinates {};
+    float stepwidth_orientation {};
     // OUTPUT
     std::string traj {};
     std::size_t traj_skip {};

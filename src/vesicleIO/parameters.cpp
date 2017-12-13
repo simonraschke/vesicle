@@ -12,6 +12,14 @@ void Parameters::setup()
         algorithm = "verlet";
     }
 
+    if(programOptions.optionsMap.count("general.acceptance"))
+        acceptance = programOptions.optionsMap["general.acceptance"].as<std::string>();
+    else 
+    {
+        vesWARNING("general.acceptance not defined, choosing metropolis")
+        acceptance = "metropolis";
+    }
+
     if(programOptions.optionsMap.count("general.interaction"))
         interaction = programOptions.optionsMap["general.interaction"].as<std::string>();
     else 
@@ -86,6 +94,18 @@ void Parameters::setup()
             gamma = enhance::deg_to_rad(programOptions.optionsMap["system.gamma"].as<float>());
         else 
             vesCRITICAL("system.gamma not defined")   
+
+
+        if(programOptions.optionsMap.count("system.stepwidth_coordinates"))
+            stepwidth_coordinates = programOptions.optionsMap["system.stepwidth_coordinates"].as<float>();
+        else 
+            vesCRITICAL("system.stepwidth_coordinates not defined")   
+
+
+        if(programOptions.optionsMap.count("system.stepwidth_orientation"))
+            stepwidth_orientation = programOptions.optionsMap["system.stepwidth_orientation"].as<float>();
+        else 
+            vesCRITICAL("system.stepwidth_orientation not defined")   
     }
 
     // output configuration
@@ -107,17 +127,20 @@ void Parameters::setup()
 
     {
         vesLOG("VALUE OVERVIEW")
-        vesLOG("general.algorithm   " << algorithm )
-        vesLOG("general.interaction " << interaction )
-        vesLOG("general.thermostat  " << thermostat )
-        vesLOG("system.mobile       " << mobile )
-        vesLOG("system.box          " << x << " " << y << " " << z )
-        vesLOG("system.timestep     " << dt )
-        vesLOG("system.termperature " << temperature )
-        vesLOG("system.kappa        " << kappa )
-        vesLOG("system.gamma        " << gamma )
-        vesLOG("output.traj         " << traj )
-        vesLOG("output.skip         " << traj_skip )
+        vesLOG("general.algorithm            " << algorithm )
+        vesLOG("general.acceptance           " << acceptance )
+        vesLOG("general.interaction          " << interaction )
+        vesLOG("general.thermostat           " << thermostat )
+        vesLOG("system.mobile                " << mobile )
+        vesLOG("system.box                   " << x << " " << y << " " << z )
+        vesLOG("system.timestep              " << dt )
+        vesLOG("system.termperature          " << temperature )
+        vesLOG("system.kappa                 " << kappa )
+        vesLOG("system.gamma                 " << gamma )
+        vesLOG("system.stepwidth_coordinates " << stepwidth_coordinates )
+        vesLOG("system.stepwidth_orientation " << stepwidth_orientation )
+        vesLOG("output.traj                  " << traj )
+        vesLOG("output.skip                  " << traj_skip )
     }
 }
 

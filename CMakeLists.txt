@@ -13,23 +13,18 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=nocona -mtune=generic")
 
 set(CMAKE_CXX_STANDARD 14)
 
-# add_library(enhance SHARED enhance/CMakeLists.txt)
-# set_target_properties(enhance PROPERTIES LINKER_LANGUAGE CXX)
-
-# Linking the libraries
+# Building the libraries
 add_subdirectory(enhance)
 add_subdirectory(src)
 
 # Build executable from main
 set(vesicle_source_files src/vesicle.cpp)
-add_executable(vesicle ${vesicle_source_files})
-
-# build into bin directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "~/bin/")
+add_executable(vesicle ${vesicle_source_files})
 
 # Link
 set( CMAKE_EXE_LINKER_FLAGS "-ltbb -lboost_system -lboost_filesystem -lboost_program_options" )
 target_link_libraries( vesicle enhance particles simulations systems IO interactions thermostats ${CMAKE_EXE_LINKER_FLAGS} )
 # target_link_libraries( vesicle systems ${CMAKE_EXE_LINKER_FLAGS} )
 
-install( TARGETS vesicle RUNTIME DESTINATION ~/bin )
+install( TARGETS vesicle RUNTIME DESTINATION bin )

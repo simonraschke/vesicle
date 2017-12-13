@@ -5,10 +5,13 @@ set(simulations_source_files
     verlet.cpp
     shake_verlet.cpp
     langevin.cpp
+    monte_carlo.cpp
     
     algorithm.hpp
+    verlet.hpp
     shake_verlet.hpp
     langevin.hpp
+    monte_carlo.hpp
 )
 
 add_library(simulations STATIC ${simulations_source_files})

@@ -13,7 +13,8 @@ void ProgramOptions::read(int argc, const char* argv[])
     generalOptions.add_options()
         ("config", po::value<std::string>(&config_file_name), "read from config file")
         ("help,h", "show help")
-        ("general.algorithm",  po::value<std::string>(), "[verlet,shakeVerlet,langevin]")
+        ("general.algorithm",  po::value<std::string>(), "[verlet,shakeVerlet,langevin,montecarlo]")
+        ("general.acceptance",  po::value<std::string>(), "[metropolis]")
         ("general.interaction",  po::value<std::string>(), "[lj,alj]")
         ("general.thermostat",  po::value<std::string>(), "[andersen]");
     
@@ -25,7 +26,9 @@ void ProgramOptions::read(int argc, const char* argv[])
         ("system.temperature,t", po::value<float>(), "temperature")
         ("system.timestep", po::value<float>(), "time step")
         ("system.kappa,k", po::value<float>(), "kappa")
-        ("system.gamma,g", po::value<float>(), "gamma angle");
+        ("system.gamma,g", po::value<float>(), "gamma angle")
+        ("system.stepwidth_coordinates", po::value<float>(), "coordinates stepwidth (MonteCarlo only)")
+        ("system.stepwidth_orientation", po::value<float>(), "orientation stepwidth (MonteCarlo only)");
     
     po::options_description outputOptions("Output Options");
     outputOptions.add_options()
@@ -57,7 +60,7 @@ void ProgramOptions::read(int argc, const char* argv[])
         catch(boost::bad_any_cast e)
         {
             vesCRITICAL(e.what())
-            std::exit(1);
+            std::exit(EXIT_FAILURE);
         }
     }
 }
