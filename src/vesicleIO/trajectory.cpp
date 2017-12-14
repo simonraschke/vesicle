@@ -29,22 +29,6 @@ void TrajectoryWriter::setTarget(PARTICLERANGE* range)
 
 
 
-void TrajectoryWriter::setSkip(unsigned int s)
-{
-    vesDEBUG(__PRETTY_FUNCTION__<< "  " << s)
-    skip = s;
-}
-
-
-
-bool TrajectoryWriter::isSkip()
-{
-    vesDEBUG(__PRETTY_FUNCTION__<< "  " << (skip_counter < skip))
-    return skip_counter < skip;
-}
-
-
-
 void TrajectoryWriter::setAnisotropic(bool b)
 {
     vesDEBUG(__PRETTY_FUNCTION__<< "  " << b)
@@ -83,14 +67,14 @@ void TrajectoryWriterGro::setFilename(std::string name)
 void TrajectoryWriterGro::write(const HistoryStorage& history)
 {
     vesDEBUG(__PRETTY_FUNCTION__<< "  simulation time: " << history.getTime().back())
-    if(likely(isSkip()))
+    ++skip_counter;
+    if(likely(skip_counter%getParameters().traj_skip==0))
     {
-        ++skip_counter;
         return;
     }
     else
     {
-        skip_counter = 0;
+        skip_counter = 1;
     }
     
     assert(FILE.is_open());
@@ -131,7 +115,7 @@ void TrajectoryWriterGro::write(const HistoryStorage& history)
         else
         {
             const cartesian orientation = target->orientation().normalized();
-            const cartesian& circularVelocity = target->circularVelocity();
+            const cartesian displacement = target->orientation() - target->orientationOld();
             
             FILE << std::setw(5) <<  residue+1;
             FILE << std::setw(5) <<  target->name();
@@ -142,9 +126,9 @@ void TrajectoryWriterGro::write(const HistoryStorage& history)
             FILE << std::setw(8) <<  coords(1) - orientation(1)*getParameters().kappa/2.f;
             FILE << std::setw(8) <<  coords(2) - orientation(2)*getParameters().kappa/2.f;
             FILE << std::setprecision(4);
-            FILE << std::setw(8) <<  circularVelocity(0);
-            FILE << std::setw(8) <<  circularVelocity(1);
-            FILE << std::setw(8) <<  circularVelocity(2);
+            FILE << std::setw(8) <<  displacement(0);
+            FILE << std::setw(8) <<  displacement(1);
+            FILE << std::setw(8) <<  displacement(2);
             FILE << '\n';
             ++atom;
 
@@ -157,9 +141,9 @@ void TrajectoryWriterGro::write(const HistoryStorage& history)
             FILE << std::setw(8) <<  coords(1) + orientation(1)*getParameters().kappa/2.f;
             FILE << std::setw(8) <<  coords(2) + orientation(2)*getParameters().kappa/2.f;
             FILE << std::setprecision(4);
-            FILE << std::setw(8) <<  circularVelocity(0);
-            FILE << std::setw(8) <<  circularVelocity(1);
-            FILE << std::setw(8) <<  circularVelocity(2);
+            FILE << std::setw(8) <<  -displacement(0);
+            FILE << std::setw(8) <<  -displacement(1);
+            FILE << std::setw(8) <<  -displacement(2);
             FILE << '\n';
             ++atom;
         }

@@ -29,6 +29,7 @@ int main(int argc, const char *argv[])
     }
     control.setup();
 
+    Eigen::initParallel();
 #ifndef NDEBUG
     tbb::task_arena limited(1);
     limited.execute([&]

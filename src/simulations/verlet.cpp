@@ -60,7 +60,7 @@ void Verlet::updateForces()
             assert(target1);
             assert(target2);
             assert(interaction);
-            const Particle::cartesian translation_force = interaction->translation_force(target1,target2);
+            const Particle::cartesian translation_force = interaction->force(target1,target2);
             target1->addForce(translation_force);
             target2->addForce((-1.f)*translation_force);
         }

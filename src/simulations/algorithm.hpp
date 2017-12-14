@@ -7,6 +7,7 @@
 #include "interactions/interaction.hpp"
 #include "acceptance_adapters/acceptance_adapter.hpp"
 #include <tbb/tbb.h>
+#include <eigen3/Eigen/Sparse>
 
 
 class Algorithm
@@ -43,6 +44,9 @@ protected:
     std::unique_ptr<Interaction> interaction {nullptr};
     std::unique_ptr<AcceptanceAdapter> acceptance {nullptr};
     enhance::observer_ptr<PARTICLERANGE> target_range {nullptr};
+
+    // std::unique_ptr<Eigen::SparseMatrix<float>> energy_matrix_old  {std::make_unique<Eigen::SparseMatrix<float>>()};
+    // std::unique_ptr<Eigen::SparseMatrix<float>> energy_matrix_work {std::make_unique<Eigen::SparseMatrix<float>>()};
 
 private:  
 

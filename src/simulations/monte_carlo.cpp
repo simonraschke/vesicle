@@ -60,9 +60,9 @@ void MonteCarlo::updateOrientations()
         const float da = getParameters().stepwidth_orientation;
         const auto randomVec = Particle::cartesian
         (
-            enhance::random<float>(0.f,da),
-            enhance::random<float>(0.f,da),
-            enhance::random<float>(0.f,da)
+            enhance::random<float>(-da,da),
+            enhance::random<float>(-da,da),
+            enhance::random<float>(-da,da)
         );
         const Eigen::AngleAxisf rotate (da, randomVec);
 
@@ -102,7 +102,7 @@ float MonteCarlo::potentialEnergy(const std::unique_ptr<Particle>& p1) const
         assert(target);
         if(p1==target) return;
         assert(getInteraction());
-        const float energy = getInteraction()->translation(p1,target);
+        const float energy = getInteraction()->potential(p1,target);
 
         auto current = energy_sum.load();
         while (!energy_sum.compare_exchange_weak(current, current + energy))
@@ -116,7 +116,7 @@ float MonteCarlo::potentialEnergy(const std::unique_ptr<Particle>& p1) const
     //     assert(target);
     //     if(p1==target) return;
     //     assert(getInteraction());
-    //     const float energy = getInteraction()->translation(p1,target);
+    //     const float energy = getInteraction()->potential(p1,target);
 
     //     auto current = energy_sum.load();
     //     while (!energy_sum.compare_exchange_weak(current, current + energy))

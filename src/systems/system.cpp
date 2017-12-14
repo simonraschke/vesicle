@@ -73,7 +73,7 @@ float System::potentialEnergy() const
             assert(algorithm->getInteraction());
             assert(particles[i]);
             assert(particles[j]);
-            pre_sum += algorithm->getInteraction()->translation(particles[i],particles[j]) + algorithm->getInteraction()->rotation(particles[i],particles[j]);
+            pre_sum += algorithm->getInteraction()->potential(particles[i],particles[j]) + algorithm->getInteraction()->potential(particles[i],particles[j]);
         }
 
         auto current = energy_sum.load();

@@ -16,6 +16,62 @@ void Controller::signal(int SIG)
 
 
 
+void SimulationControl::make_nodes()
+{
+    start_node = std::make_unique<tbb::flow::broadcast_node<tbb::flow::continue_msg>>(flow);
+
+
+    step_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
+        (flow, [&](tbb::flow::continue_msg)
+        { 
+            vesDEBUG("step_node")
+            if(system.getAlgorithm())
+                system.getAlgorithm()->step();
+            else
+                vesCRITICAL("no algorithm was set") 
+        });
+
+
+    thermostat_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
+        (flow, [&](tbb::flow::continue_msg)
+        { 
+            vesDEBUG("thermostat_node")
+            if(system.getThermostat())
+                system.getThermostat()->apply(); 
+        });
+
+
+    history_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
+        (flow, [&](tbb::flow::continue_msg)
+        { 
+            vesDEBUG("history_node")
+            system.addTime(system.getParameters().dt); 
+            HistoryBuffer buffer;
+            buffer.time = std::make_unique<float>(system.getTime()); 
+            try
+            {
+                tbb::parallel_invoke
+                (
+                    [&]{ buffer.kineticEnergy = std::make_unique<float>(system.kineticEnergy()); },
+                    [&]{ buffer.potentialEnergy = std::make_unique<float>(system.potentialEnergy()); }
+                );
+            }
+            catch(std::runtime_error e){ vesWARNING(e.what()) }
+            history_storage.flush(buffer);
+        });
+
+
+    trajectory_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
+        (flow, [&](tbb::flow::continue_msg)
+        { 
+            vesDEBUG("trajectory_node")
+            if(system.getTrajectoryWriter())
+                system.getTrajectoryWriter()->write(history_storage);
+        });
+}
+
+
+
 void SimulationControl::setup()
 {   
     vesDEBUG(__PRETTY_FUNCTION__)
@@ -73,69 +129,13 @@ void SimulationControl::setup()
         }
         if(system.getTrajectoryWriter())
         {
-            system.getTrajectoryWriter()->setSkip(getParameters().traj_skip);
             system.getTrajectoryWriter()->setAnisotropic(system.getInteraction()->isAnisotropic());
         }
     }
     
+    make_nodes();
 
-    // system.getParticles()[0]->setCoords(Eigen::Vector3f(1,1,1));
-    // system.getParticles()[1]->setCoords(Eigen::Vector3f(2.32246204831,1,1));
-    // system.getParticles()[0]->setOrientation(Eigen::Vector3f(0,1,0));
-    // system.getParticles()[1]->setOrientation(Eigen::Vector3f(0,1,0));
-
-    start_node = std::make_unique<tbb::flow::broadcast_node<tbb::flow::continue_msg>>(flow);
-
-
-    step_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
-        (flow, [&](tbb::flow::continue_msg)
-        { 
-            vesDEBUG("step_node")
-            if(system.getAlgorithm())
-                system.getAlgorithm()->step();
-            else
-                vesCRITICAL("no algorithm was set") 
-        });
-
-
-    thermostat_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
-        (flow, [&](tbb::flow::continue_msg)
-        { 
-            vesDEBUG("thermostat_node")
-            if(system.getThermostat())
-                system.getThermostat()->apply(); 
-        });
-
-
-    history_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
-        (flow, [&](tbb::flow::continue_msg)
-        { 
-            vesDEBUG("history_node")
-            system.addTime(system.getParameters().dt); 
-            HistoryBuffer buffer;
-            buffer.time = std::make_unique<float>(system.getTime()); 
-            try
-            {
-                tbb::parallel_invoke
-                (
-                    [&]{ buffer.kineticEnergy = std::make_unique<float>(system.kineticEnergy()); },
-                    [&]{ buffer.potentialEnergy = std::make_unique<float>(system.potentialEnergy()); }
-                );
-            }
-            catch(std::runtime_error e){ vesWARNING(e.what()) }
-            history_storage.flush(buffer);
-        });
-
-
-    trajectory_node = std::make_unique<tbb::flow::continue_node<tbb::flow::continue_msg>>
-        (flow, [&](tbb::flow::continue_msg)
-        { 
-            vesDEBUG("trajectory_node")
-            if(system.getTrajectoryWriter())
-                system.getTrajectoryWriter()->write(history_storage);
-        });
-
-
+    // make flow graph
     flow.reset();
     tbb::flow::make_edge(*start_node,*step_node);
     tbb::flow::make_edge(*step_node,*thermostat_node);
@@ -148,8 +148,24 @@ void SimulationControl::setup()
 void SimulationControl::start()
 {
     vesDEBUG(__PRETTY_FUNCTION__)
-    history_node->try_put(tbb::flow::continue_msg());
-    flow.wait_for_all();
+
+    // print initial trajectory for start time
+    {
+        HistoryBuffer buffer;
+        buffer.time = std::make_unique<float>(system.getTime()); 
+        try
+        {
+            tbb::parallel_invoke
+            (
+                [&]{ buffer.kineticEnergy = std::make_unique<float>(system.kineticEnergy()); },
+                [&]{ buffer.potentialEnergy = std::make_unique<float>(system.potentialEnergy()); }
+            );
+        }
+        catch(std::runtime_error e){ vesWARNING(e.what()) }
+        history_storage.flush(buffer);
+        if(system.getTrajectoryWriter())
+            system.getTrajectoryWriter()->write(history_storage);
+    }
 
     std::size_t i = 0;
     while(SIGNAL.load() == 0)
@@ -160,10 +176,6 @@ void SimulationControl::start()
         ++i;
     }
     history_storage.dumpToFile("history.dat");
-
-    // auto v1 = Eigen::Vector3f(-1,-1,0);
-    // auto v2 = Eigen::Vector3f( 1,0,0);
-    // vesDEBUG( enhance::rad_to_deg( enhance::absolute_angle(v1,v2) ) )
 }
 
 

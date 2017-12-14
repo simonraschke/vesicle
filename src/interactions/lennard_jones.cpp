@@ -2,7 +2,7 @@
 
 
 
-float LennardJones::translation(const Particle& p1, const Particle& p2) const 
+float LennardJones::potential(const Particle& p1, const Particle& p2) const 
 {
     const float r2 = 1.f/squared_distance(p1,p2);
     const float r6 = r2*r2*r2;
@@ -11,28 +11,7 @@ float LennardJones::translation(const Particle& p1, const Particle& p2) const
 
 
 
-float LennardJones::rotation(const Particle& p1 __attribute__((unused)) , const Particle& p2  __attribute__((unused))) const 
-{
-    return 0.f;
-}
-
-
-
-float LennardJones::constrained(const Particle& p1 __attribute__((unused)) , const Particle& p2  __attribute__((unused))) const 
-{
-    return 0.f;
-}
-
-
-
-float LennardJones::constrainedOld(const Particle& p1 __attribute__((unused)) , const Particle& p2  __attribute__((unused))) const 
-{
-    return 0.f;
-}
-
-
-
-LennardJones::cartesian LennardJones::translation_force(const Particle& p1, const Particle& p2) const 
+LennardJones::cartesian LennardJones::force(const Particle& p1, const Particle& p2) const 
 {
     const float r2 = 1.f/squared_distance(p1.coordsOld(),p2.coordsOld());
     const float r6 = r2*r2*r2;
@@ -49,13 +28,6 @@ LennardJones::cartesian LennardJones::translation_force(const Particle& p1, cons
 #endif
 
     return distance_vector(p1.coordsOld(),p2.coordsOld())*value;
-}
-
-
-
-LennardJones::cartesian LennardJones::rotation_force(const Particle& p1 __attribute__((unused)) , const Particle& p2  __attribute__((unused))) const 
-{
-    return cartesian::Zero();
 }
 
 

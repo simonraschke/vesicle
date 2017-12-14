@@ -25,7 +25,6 @@ struct TrajectoryWriter
     virtual void setFilename(std::string) = 0;
 
     void setTarget(PARTICLERANGE*);
-    void setSkip(unsigned int);
     void setAnisotropic(bool);
 
     virtual ~TrajectoryWriter();
@@ -36,8 +35,6 @@ protected:
     using Box<PERIODIC::ON>::getLengthY;
     using Box<PERIODIC::ON>::getLengthZ;
 
-    // virtual std::string format(const cartesian&) = 0;
-    bool isSkip();
     virtual void makeStartFileVMD() const = 0;
 
     TrajectoryWriter();
@@ -46,8 +43,7 @@ protected:
     OFSTREAM FILE {};
     std::unique_ptr<std::string> filename {nullptr};
     enhance::observer_ptr<PARTICLERANGE> target_range {nullptr};
-    unsigned int skip{1};
-    unsigned int skip_counter{0};
+    unsigned int skip_counter{1};
     bool anisotropic {false};
 };
 

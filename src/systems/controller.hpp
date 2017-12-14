@@ -21,6 +21,7 @@ struct Controller
 
 protected:
     Controller() = default;
+    virtual void make_nodes() = 0;
 
     System system {};
     tbb::flow::graph flow {};
@@ -38,6 +39,9 @@ struct SimulationControl
     virtual void start() override;
     virtual void pause() override;
     
+protected:
+    virtual void make_nodes() override;
+
 private:
     HistoryStorage history_storage {};
 

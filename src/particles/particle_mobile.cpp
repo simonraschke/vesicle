@@ -38,24 +38,6 @@ void ParticleMobile::setOrientation(const cartesian& newOrientation)
 
 
 
-void ParticleMobile::setCircularVelocity(const cartesian& newCircularVelocity)
-{
-    assert(!newCircularVelocity.hasNaN());
-    assert(currentCircularVelocity);
-    *currentCircularVelocity = newCircularVelocity;
-}
-
-
-
-void ParticleMobile::setTorque(const cartesian& newTorque)
-{
-    assert(!newTorque.hasNaN());
-    assert(currentTorque);
-    *currentTorque = newTorque;
-}
-
-
-
 std::string ParticleMobile::name() const
 {
     return "MOBIL";

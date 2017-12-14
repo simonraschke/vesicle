@@ -12,17 +12,11 @@ void Particle::save()
     assert(currentForce);
     assert(oldOrientation);
     assert(currentOrientation);
-    assert(oldCircularVelocity);
-    assert(currentCircularVelocity);
-    assert(oldTorque);
-    assert(currentTorque);
 
     *oldCoords = *currentCoords;
     *oldVelocity = *currentVelocity;
     *oldForce = *currentForce;
     *oldOrientation = *currentOrientation;
-    *oldCircularVelocity = *currentCircularVelocity;
-    *oldTorque = *currentTorque;
 }
 
 
@@ -59,14 +53,6 @@ void Particle::clearOrientation()
 
 
 
-void Particle::clearTorque()
-{
-    assert(currentTorque);
-    *currentTorque = cartesian::Zero();
-}
-
-
-
 // void Particle::addCoords(const cartesian& c)
 // {
 //     tbb::spin_mutex::scoped_lock lock(mutex);
@@ -95,28 +81,6 @@ void Particle::addForce(const cartesian& c)
     assert(!c.hasNaN());
     assert(!currentForce->hasNaN());
     *currentForce += c;
-}
-
-
-
-void Particle::addCircularVelocity(const cartesian& c)
-{
-    tbb::spin_mutex::scoped_lock lock(mutex);
-    assert(currentCircularVelocity);
-    assert(!c.hasNaN());
-    assert(!currentCircularVelocity->hasNaN());
-    *currentCircularVelocity += c;
-}
-
-
-
-void Particle::addTorque(const cartesian& c)
-{
-    tbb::spin_mutex::scoped_lock lock(mutex);
-    assert(currentTorque);
-    assert(!c.hasNaN());
-    assert(!currentTorque->hasNaN());
-    *currentTorque += c;
 }
 
 
@@ -197,42 +161,6 @@ const Particle::cartesian& Particle::orientationOld() const
     assert(oldOrientation);
     assert(!oldOrientation->hasNaN());
     return *oldOrientation;
-}
-
-
-
-const Particle::cartesian& Particle::circularVelocity() const
-{
-    assert(currentCircularVelocity);
-    assert(!currentCircularVelocity->hasNaN());
-    return *currentCircularVelocity;
-}
-
-
-
-const Particle::cartesian& Particle::circularVelocityOld() const
-{
-    assert(oldCircularVelocity);
-    assert(!oldCircularVelocity->hasNaN());
-    return *oldCircularVelocity;
-}
-
-
-
-const Particle::cartesian& Particle::torque() const
-{
-    assert(currentTorque);
-    assert(!currentTorque->hasNaN());
-    return *currentTorque;
-}
-
-
-
-const Particle::cartesian& Particle::torqueOld() const
-{
-    assert(oldTorque);
-    assert(!oldTorque->hasNaN());
-    return *oldTorque;
 }
 
 
