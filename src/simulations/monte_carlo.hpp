@@ -14,6 +14,7 @@ public:
     
 protected:
     virtual void updateCoords() override;
+    virtual void updateOrientations();
     virtual void updateForces() override;
     virtual void updateVelocities() override;
 

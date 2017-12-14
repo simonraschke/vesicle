@@ -24,7 +24,7 @@ public:
     // this should be nullptr if not MonteCarlo
     template<typename A>
     void setAcceptance();
-    const std::unique_ptr<Interaction>& getAcceptance() const;
+    const std::unique_ptr<AcceptanceAdapter>& getAcceptance() const;
 
     // execute
     virtual void step(const unsigned long& = 1) = 0;

@@ -14,3 +14,11 @@ const std::unique_ptr<Interaction>& Algorithm::getInteraction() const
     assert(interaction);
     return interaction;
 }
+
+
+
+const std::unique_ptr<AcceptanceAdapter>& Algorithm::getAcceptance() const
+{
+    assert(acceptance);
+    return acceptance;
+}

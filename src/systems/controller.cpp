@@ -43,7 +43,7 @@ void SimulationControl::setup()
             if(getParameters().acceptance == std::string("metropolis"))
                 system.getAlgorithm()->setAcceptance<Metropolis>();
 
-            assert(system.getAlgorithm()->getInteraction());
+            assert(system.getAlgorithm()->getAcceptance());
         }
         assert(system.getAlgorithm());
     }
@@ -58,6 +58,7 @@ void SimulationControl::setup()
     // OPTIONAL
     {
         if(getParameters().thermostat == "andersen")
+        if(getParameters().algorithm  != "montecarlo")
         {
             system.setThermostat<AndersenThermostat>();
             assert(system.getThermostat());

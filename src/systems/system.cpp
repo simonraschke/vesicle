@@ -63,7 +63,7 @@ const std::unique_ptr<TrajectoryWriter>& System::getTrajectoryWriter() const
 float System::potentialEnergy() const
 {
     vesDEBUG(__PRETTY_FUNCTION__)
-    std::atomic<float> energy_sum;
+    std::atomic<float> energy_sum = {0.f};
     tbb::parallel_for(std::size_t(0),particles.size(), std::size_t(1), [&](const std::size_t& i)
     {
         float pre_sum = 0;

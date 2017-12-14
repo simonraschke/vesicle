@@ -40,7 +40,7 @@ protected:
 
 inline void HistoryStorage::flush(HistoryBuffer& buffer)
 {
-    if(buffer.time)
+    if(likely(buffer.time))
     {
         times.emplace_back(*buffer.time);
         
