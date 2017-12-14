@@ -1,2 +1,2 @@
 # vesicle
-A fast, concurrent, shared memory MD simulator 
+A fast, concurrent, shared memory MD and MC simulator 
