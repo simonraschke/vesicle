@@ -21,7 +21,7 @@
 #include "vesicleIO/parameters.hpp"
 #include "particles/particle.hpp"
 #include "interactions/interaction.hpp"
-#include "acceptance_adapters/acceptance_adapter.hpp"
+#include "monte_carlo_utility/acceptance_adapter.hpp"
 #include <tbb/tbb.h>
 #include <eigen3/Eigen/Sparse>
 
@@ -30,6 +30,7 @@ class Algorithm
     : public ParameterDependentComponent
 {
 public:
+    virtual void setup();
 
     // set Parameters
     void setTarget(PARTICLERANGE*);

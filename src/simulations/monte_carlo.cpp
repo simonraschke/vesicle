@@ -18,6 +18,13 @@
 
 
 
+void MonteCarlo::setup()
+{
+    cells.setup();
+}
+
+
+
 void MonteCarlo::step(const unsigned long& steps)
 {
     vesDEBUG(__PRETTY_FUNCTION__)

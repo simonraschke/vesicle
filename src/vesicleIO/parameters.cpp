@@ -122,6 +122,18 @@ void Parameters::setup()
             stepwidth_orientation = programOptions.optionsMap["system.stepwidth_orientation"].as<float>();
         else 
             vesCRITICAL("system.stepwidth_orientation not defined")   
+
+
+        if(programOptions.optionsMap.count("system.cell_min_edge"))
+            cell_min_edge = programOptions.optionsMap["system.cell_min_edge"].as<float>();
+        else 
+            vesCRITICAL("system.cell_min_edge not defined")   
+
+
+        if(programOptions.optionsMap.count("system.max_cells_dim"))
+            max_cells_dim = programOptions.optionsMap["system.max_cells_dim"].as<std::size_t>();
+        else 
+            vesCRITICAL("system.max_cells_dim not defined")   
     }
 
     // output configuration
@@ -155,6 +167,8 @@ void Parameters::setup()
         vesLOG("system.gamma                 " << gamma )
         vesLOG("system.stepwidth_coordinates " << stepwidth_coordinates )
         vesLOG("system.stepwidth_orientation " << stepwidth_orientation )
+        vesLOG("system.cell_min_edge         " << cell_min_edge )
+        vesLOG("system.max_cells_dim         " << max_cells_dim )
         vesLOG("output.traj                  " << traj )
         vesLOG("output.skip                  " << traj_skip )
     }

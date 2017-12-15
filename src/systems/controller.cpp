@@ -72,7 +72,7 @@ void SimulationControl::make_nodes()
                     [&]{ buffer.potentialEnergy = std::make_unique<float>(system.potentialEnergy()); }
                 );
             }
-            catch(std::runtime_error e){ vesWARNING(e.what()) }
+            catch(std::runtime_error& e){ vesWARNING(e.what()) }
             history_storage.flush(buffer);
         });
 
@@ -177,7 +177,7 @@ void SimulationControl::start()
                 [&]{ buffer.potentialEnergy = std::make_unique<float>(system.potentialEnergy()); }
             );
         }
-        catch(std::runtime_error e){ vesWARNING(e.what()) }
+        catch(std::runtime_error& e){ vesWARNING(e.what()) }
         history_storage.flush(buffer);
         if(system.getTrajectoryWriter())
             system.getTrajectoryWriter()->write(history_storage);

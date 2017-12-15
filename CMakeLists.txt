@@ -11,6 +11,7 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -fmax-errors=3 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=nocona -mtune=generic")
 
+set(CMAKE_VERBOSE_MAKEFILE Off)
 set(CMAKE_CXX_STANDARD 14)
 
 # Building the libraries
@@ -24,7 +25,6 @@ add_executable(vesicle ${vesicle_source_files})
 
 # Link
 set( CMAKE_EXE_LINKER_FLAGS "-ltbb -lboost_system -lboost_filesystem -lboost_program_options" )
-target_link_libraries( vesicle enhance particles simulations systems IO interactions thermostats ${CMAKE_EXE_LINKER_FLAGS} )
-# target_link_libraries( vesicle systems ${CMAKE_EXE_LINKER_FLAGS} )
+target_link_libraries( vesicle systems IO interactions ${CMAKE_EXE_LINKER_FLAGS} )
 
 install( TARGETS vesicle RUNTIME DESTINATION bin )

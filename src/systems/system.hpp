@@ -125,6 +125,7 @@ void System::setAlgorithm()
     assert(algorithm);
     algorithm->setParameters(getParameters());
     algorithm->setTarget(&particles);
+    algorithm->setup();
 }
 
 

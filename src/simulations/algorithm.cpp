@@ -17,6 +17,14 @@
 #include "algorithm.hpp"
 
 
+
+void Algorithm::setup()
+{
+    vesDEBUG(__PRETTY_FUNCTION__ << "nothing to setup")
+}
+
+
+
 void Algorithm::setTarget(PARTICLERANGE* range)
 {
     vesDEBUG(__PRETTY_FUNCTION__)

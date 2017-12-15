@@ -47,6 +47,9 @@ struct Parameters
     float gamma {};
     float stepwidth_coordinates {};
     float stepwidth_orientation {};
+    float cell_min_edge {};
+    std::size_t max_cells_dim {};
+
     // OUTPUT
     std::string traj {};
     std::size_t traj_skip {};

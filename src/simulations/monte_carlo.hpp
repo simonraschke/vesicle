@@ -17,7 +17,9 @@
 #pragma once
 
 #include "algorithm.hpp"
-#include "acceptance_adapters/metropolis.hpp"
+#include "monte_carlo_utility/metropolis.hpp"
+#include "monte_carlo_utility/cell_container.hpp"
+#include "particles/particle.hpp"
 #include <memory>
 
 
@@ -26,6 +28,7 @@ class MonteCarlo
     : public Algorithm
 {
 public: 
+    virtual void setup() override;
     virtual void step(const unsigned long& = 1) override;
     
 protected:
@@ -37,4 +40,6 @@ protected:
     float potentialEnergy(const std::unique_ptr<Particle>&) const;
 
 private:  
+
+    CellContainer<Particle> cells {};
 };

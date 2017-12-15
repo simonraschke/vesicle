@@ -18,7 +18,7 @@ namespace enhance
     protected:
     private:
         std::size_t position {0};
-        std::array<std::unique_ptr<T>, SIZE> storage;
+        std::array<std::unique_ptr<T>, SIZE> storage {};
     };
 
 

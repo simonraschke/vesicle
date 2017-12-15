@@ -44,7 +44,9 @@ void ProgramOptions::read(int argc, const char* argv[])
         ("system.kappa,k", po::value<float>(), "kappa")
         ("system.gamma,g", po::value<float>(), "gamma angle")
         ("system.stepwidth_coordinates", po::value<float>(), "coordinates stepwidth (MonteCarlo only)")
-        ("system.stepwidth_orientation", po::value<float>(), "orientation stepwidth (MonteCarlo only)");
+        ("system.stepwidth_orientation", po::value<float>(), "orientation stepwidth (MonteCarlo only)")
+        ("system.cell_min_edge", po::value<float>(), "minimum edge length of cell")
+        ("system.max_cells_dim", po::value<std::size_t>(), "maximum cells per dimension");
     
     po::options_description outputOptions("Output Options");
     outputOptions.add_options()
@@ -73,7 +75,7 @@ void ProgramOptions::read(int argc, const char* argv[])
         {
             read_from_file(allOptions,optionsMap);
         }
-        catch(boost::bad_any_cast e)
+        catch(boost::bad_any_cast& e)
         {
             vesCRITICAL(e.what())
             std::exit(EXIT_FAILURE);
