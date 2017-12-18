@@ -18,6 +18,7 @@
 
 #include "cell.hpp"
 #include "systems/box.hpp"
+#include <tbb/parallel_for_each.h>
 
 
 
@@ -29,62 +30,106 @@ class CellContainer
 public:
     void setup();
 
+    template<typename P1, typename P2>
+    bool areNeighbourCells(const Cell<P1>&, const Cell<P2>&) const;
+
 private:
     std::vector<Cell<CELL_MEM_T>> cells {};
 };
 
 
 
+template<typename CELL_MEM_T>
+template<typename P1, typename P2>
+inline bool CellContainer<CELL_MEM_T>::areNeighbourCells(const Cell<P1>& first, const Cell<P2>& second) const
+{
+    Box<PERIODIC::ON> periodic;
+    periodic.setParameters(getParameters());
+    const Eigen::Vector3f connection_vector = periodic.distance_vector(first.getBoundaries().center(), second.getBoundaries().center()).cwiseAbs();
+    
+    if(std::addressof(first) == std::addressof(second))
+    {
+        vesDEBUG(__func__ << " " << connection_vector.format(ROWFORMAT) << " return:  false  (Reason: same Cell)")
+        return false;
+    }
+    else if((connection_vector(0) < first.getBoundaries().sizes()(0) + 0.01) 
+        &&  (connection_vector(1) < first.getBoundaries().sizes()(1) + 0.01) 
+        &&  (connection_vector(2) < first.getBoundaries().sizes()(2) + 0.01) )
+    { 
+        vesDEBUG(__func__ << " " << connection_vector.format(ROWFORMAT) << " return:  true  (Reason: in reach)")
+        return true;
+    }
+    else 
+    { 
+        vesDEBUG(__func__ << " " << connection_vector.format(ROWFORMAT) << " return:  false (Reason: not in reach)")
+        return false;
+    }
+}
+
+
 
 template<typename CELL_MEM_T>
 inline void CellContainer<CELL_MEM_T>::setup()
 {
-    float x_edge = 0.f;
-    float y_edge = 0.f;
-    float z_edge = 0.f;
     const float min_edge = getParameters().cell_min_edge;
     const std::size_t max_cells_dim = getParameters().max_cells_dim;
 
-    if( min_edge/getLengthX() <= max_cells_dim)
-        x_edge = min_edge;
-    else
-        x_edge = getLengthX()/max_cells_dim;
-    std::size_t max_cells_x = std::round(getLengthX()/x_edge);
+    vesDEBUG("box x y z: " << getLengthX()  << " " << getLengthY()  << " " << getLengthZ())
+    vesDEBUG("minimum edge for a cell is " << min_edge)
+    vesDEBUG("maximum number of cells per dimension is " << max_cells_dim)
 
-    if( min_edge/getLengthY() <= max_cells_dim)
-        y_edge = min_edge;
-    else
-        y_edge = getLengthY()/max_cells_dim;
-    std::size_t max_cells_y = std::round(getLengthY()/y_edge);
+    const std::size_t cells_x = std::trunc( getLengthX() / (min_edge) );
+    const float x_edge = getLengthX()/cells_x;
 
-    if( min_edge/getLengthZ() <= max_cells_dim)
-        z_edge = min_edge;
-    else
-        z_edge = getLengthZ()/max_cells_dim;
-    std::size_t max_cells_z = std::round(getLengthZ()/z_edge);
+    const std::size_t cells_y = std::trunc( getLengthY() / (min_edge) );
+    const float y_edge = getLengthY()/cells_y;
 
-    for ( std::size_t x = 0; x < max_cells_x; ++x )
-    for ( std::size_t y = 0; y < max_cells_y; ++y )
-    for ( std::size_t z = 0; z < max_cells_z; ++z )
+    const std::size_t cells_z = std::trunc( getLengthZ() / (min_edge) );
+    const float z_edge = getLengthZ()/cells_z;
+
+    vesDEBUG("cells in x dimension: " << cells_x << " with edge: " << x_edge)
+    vesDEBUG("cells in y dimension: " << cells_y << " with edge: " << y_edge)
+    vesDEBUG("cells in z dimension: " << cells_z << " with edge: " << z_edge)
+    vesDEBUG("cells overall: " << cells_x*cells_y*cells_z)
+
+    for ( std::size_t x = 0; x < cells_x; ++x )
+    for ( std::size_t y = 0; y < cells_y; ++y )
+    for ( std::size_t z = 0; z < cells_z; ++z )
     {
-        cells.emplace_back( );
-        auto from = Eigen::Vector3f( x_edge*x,     y_edge*y,     z_edge*z     ) - Eigen::Vector3f(0.01, 0.01, 0.01);
-        auto to   = Eigen::Vector3f( x_edge*(x+1), y_edge*(y+1), z_edge*(z+1) ) + Eigen::Vector3f(0.01, 0.01, 0.01);
+        vesDEBUG("##### building cell: " << x << ' ' << y << ' ' << z)
+        cells.emplace_back();
+        const Eigen::Vector3f from = Eigen::Vector3f( x_edge*x,     y_edge*y,     z_edge*z     ) - Eigen::Vector3f(0.01, 0.01, 0.01);
+        const Eigen::Vector3f to   = Eigen::Vector3f( x_edge*(x+1), y_edge*(y+1), z_edge*(z+1) ) + Eigen::Vector3f(0.01, 0.01, 0.01);
         cells.back().setBoundaries(from,to);
-        #ifndef NDEBUG
-            vesDEBUG("built cell:")
-            vesDEBUG( "min    " << cells.back().getBoundaries().min().format(ROWFORMAT))
-            vesDEBUG( "max    " << cells.back().getBoundaries().max().format(ROWFORMAT))
-            vesDEBUG( "centre " << cells.back().getBoundaries().center().format(ROWFORMAT))
-        #endif
+
+        std::cerr.precision(3);
+        std::cerr << std::fixed;
+        vesDEBUG("  from:  " << from.format(ROWFORMAT))
+        vesDEBUG("  to:    " << to.format(ROWFORMAT))
+        vesDEBUG("  min    " << cells.back().getBoundaries().min().format(ROWFORMAT))
+        vesDEBUG("  max    " << cells.back().getBoundaries().max().format(ROWFORMAT))
+        vesDEBUG("  centre " << cells.back().getBoundaries().center().format(ROWFORMAT))
     }
 
+    assert( cells.size() == cells_x*cells_y*cells_z );
+
+    tbb::parallel_for_each(std::begin(cells), std::end(cells), [&](Cell<CELL_MEM_T> & cell)
+    {
+        cell.setupProximityAndRegion(cells, [&](const auto& a, const auto& b) { return areNeighbourCells(a,b); } );
+        vesDEBUG(cell.getProximity().size());
+    });
+
+    std::for_each(std::begin(cells), std::end(cells), [&](Cell<CELL_MEM_T> & cell)
+    {
+        vesDEBUG("size of cell proximity: " << cell.getProximity().size() )
+        vesDEBUG("size of cell region:    " << cell.getRegion().size() )
+        assert(cell.getProximity().size() == 26);
+        assert(cell.getRegion().size() == 27);
+    });
     std::terminate();
-    // assert( this->size() == std::pow(cells_per_dim, 3) );
+
+
     
-    // console::debug(size(), "cells were built");
-    
-    // setup_cell_environments();
     
     // #ifndef NDEBUG
     // parallel_for_each( [&](const cell_t& origin) { for_each([&](const cell_t& other) { if (origin == other) return; assert( origin != other ); } ); });

@@ -16,9 +16,9 @@
 
 #pragma once
 
-// #include "particles/particle.hpp"
+#include "systems/box.hpp"
 #include "enhance/observer_ptr.hpp"
-#include <array>
+// #include <array>
 #include <vector>
 #include <memory>
 #include <eigen3/Eigen/Core>
@@ -28,10 +28,17 @@
 
 template<typename T>
 class Cell
+    // : public Box<PERIODIC::ON>
 {
 public:
     typedef T particle_type;
 
+protected:
+    std::vector<enhance::observer_ptr<particle_type>> members{};
+    std::vector<enhance::observer_ptr<const Cell<particle_type>>> proximity {};
+    std::vector<enhance::observer_ptr<const Cell<particle_type>>> region {};
+
+public:
     // bounding box access
     void setBoundaries(const Eigen::Vector3f&, const Eigen::Vector3f&);
     const Eigen::AlignedBox<float,3>& getBoundaries() const;
@@ -40,9 +47,14 @@ public:
     bool contains(const std::unique_ptr<particle_type>&) const;
     bool contains(const enhance::observer_ptr<particle_type>&) const;
 
-protected:
-    std::vector<enhance::observer_ptr<particle_type>> members{};
-    std::array<enhance::observer_ptr<Cell<particle_type>>,26> proximity {};
+    // template<typename P>
+    // bool isNeighbour(const Cell<P>&) const;
+
+    // proximity and region access
+    template<typename CRITERION>
+    void setupProximityAndRegion(const std::vector<Cell<particle_type>>&, CRITERION&&);
+    inline const decltype(proximity)& getProximity() const { return proximity; }
+    inline const decltype(region)& getRegion() const { return region; }
 
 private:
     Eigen::AlignedBox<float,3> bounding_box {};
@@ -79,7 +91,6 @@ inline const Eigen::AlignedBox<float,3>& Cell<T>::getBoundaries() const
 template<typename T>
 inline bool Cell<T>::contains(const std::unique_ptr<particle_type>& p) const
 {
-    // return contains(p.coords());
     return std::any_of(std::cbegin(members),std::cend(members), p);
 }
 
@@ -88,6 +99,34 @@ inline bool Cell<T>::contains(const std::unique_ptr<particle_type>& p) const
 template<typename T>
 inline bool Cell<T>::contains(const enhance::observer_ptr<particle_type>& p) const
 {
-    // return contains(p.coords());
     return std::any_of(std::cbegin(members),std::cend(members), p);
 }
+
+
+
+template<typename T>
+template<typename CRITERION>
+inline void Cell<T>::setupProximityAndRegion(const std::vector<Cell>& cells, CRITERION&& criterion)
+{
+    for(const auto& cell : cells)
+    {
+        if(std::addressof(cell) == std::addressof(*this))
+            region.emplace_back( enhance::make_observer<const Cell<particle_type>>(&cell) );
+
+        else if(criterion(*this,cell))
+        {
+            proximity.emplace_back( enhance::make_observer<const Cell<particle_type>>(&cell) );
+            region.emplace_back( enhance::make_observer<const Cell<particle_type>>(&cell) );
+        }
+    }
+}
+
+
+
+// template<typename T>
+// template<typename P>
+// inline bool Cell<T>::isNeighbour(const Cell<P>& other) const
+// {
+//     Eigen::Vector3f connection_vector(bounding_box.center() - other.getBoundaries().center());
+//     return true;
+// }

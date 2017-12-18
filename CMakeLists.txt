@@ -28,3 +28,6 @@ set( CMAKE_EXE_LINKER_FLAGS "-ltbb -lboost_system -lboost_filesystem -lboost_pro
 target_link_libraries( vesicle systems IO interactions ${CMAKE_EXE_LINKER_FLAGS} )
 
 install( TARGETS vesicle RUNTIME DESTINATION bin )
+
+enable_testing()
+add_subdirectory(tests)

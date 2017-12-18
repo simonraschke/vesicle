@@ -139,8 +139,7 @@ void Box<P>::check_for_aligned_box_setup()
 template<>
 inline Box<PERIODIC::ON>::cartesian Box<PERIODIC::ON>::distance_vector(const cartesian& c1, const cartesian& c2) const
 {
-    cartesian distance_cartesian;
-    distance_cartesian = c2-c1;
+    cartesian distance_cartesian = c2-c1;
     distance_cartesian(0) = distance_cartesian(0) - getParameters().x * std::round(distance_cartesian(0)/(getParameters().x));
     distance_cartesian(1) = distance_cartesian(1) - getParameters().y * std::round(distance_cartesian(1)/(getParameters().y));
     distance_cartesian(2) = distance_cartesian(2) - getParameters().z * std::round(distance_cartesian(2)/(getParameters().z));
@@ -252,4 +251,20 @@ template<PERIODIC P>
 typename Box<P>::cartesian Box<P>::scaleDown(const Particle& p) const 
 {
     return scaleDown(p.coords());
+}
+
+
+
+template<PERIODIC P>
+bool Box<P>::contains(const cartesian& c) const 
+{
+    return bounding_box->contains(c);
+}
+
+
+
+template<PERIODIC P>
+bool Box<P>::contains(const Particle& p) const 
+{
+    return contains(p.coords());
 }

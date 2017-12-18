@@ -20,6 +20,7 @@
 
 void MonteCarlo::setup()
 {
+    cells.setParameters(getParameters());
     cells.setup();
 }
 

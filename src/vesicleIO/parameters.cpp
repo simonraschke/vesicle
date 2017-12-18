@@ -58,10 +58,13 @@ void Parameters::setup()
         unsigned short counter = 0;
         if(programOptions.optionsMap.count("system.mobile")) ++counter;
         if(programOptions.optionsMap.count("system.density")) ++counter;
-        if(programOptions.optionsMap.count("system.box")) ++counter;
+        if(programOptions.optionsMap.count("system.box.x") && programOptions.optionsMap.count("system.box.y") && programOptions.optionsMap.count("system.box.z")) ++counter;
 
         if(counter != 2)
-            vesCRITICAL("define 2 of the 3: system.mobile, system.density, system.box!")
+        {
+            vesCRITICAL("define 2 of the 3: system.mobile, system.density, system.box.{_}!")
+            std::raise(SIGABRT);
+        }
         else if(programOptions.optionsMap.count("system.mobile") && programOptions.optionsMap.count("system.density"))
         {
             vesLOG("system.mobile and system.density were set. Assuming cubic box")
@@ -70,18 +73,18 @@ void Parameters::setup()
             y = std::cbrt(static_cast<float>(mobile)/programOptions.optionsMap["system.density"].as<float>());
             z = std::cbrt(static_cast<float>(mobile)/programOptions.optionsMap["system.density"].as<float>());
         }
-        else if(programOptions.optionsMap.count("system.box") && programOptions.optionsMap.count("system.density"))
+        else if(programOptions.optionsMap.count("system.box.x") && programOptions.optionsMap.count("system.density"))
         {
-            x = programOptions.optionsMap["system.box"].as<std::vector<float>>()[0];
-            y = programOptions.optionsMap["system.box"].as<std::vector<float>>()[1];
-            z = programOptions.optionsMap["system.box"].as<std::vector<float>>()[2];
+            x = programOptions.optionsMap["system.box.x"].as<float>();
+            y = programOptions.optionsMap["system.box.y"].as<float>();
+            z = programOptions.optionsMap["system.box.z"].as<float>();
             mobile = std::round( programOptions.optionsMap["system.density"].as<float>() * x * y * z);
         }
-        else if(programOptions.optionsMap.count("system.box") && programOptions.optionsMap.count("system.mobile"))
+        else if(programOptions.optionsMap.count("system.box.x") && programOptions.optionsMap.count("system.mobile"))
         {
-            x = programOptions.optionsMap["system.box"].as<std::vector<float>>()[0];
-            y = programOptions.optionsMap["system.box"].as<std::vector<float>>()[1];
-            z = programOptions.optionsMap["system.box"].as<std::vector<float>>()[2];
+            x = programOptions.optionsMap["system.box.x"].as<float>();
+            y = programOptions.optionsMap["system.box.y"].as<float>();
+            z = programOptions.optionsMap["system.box.z"].as<float>();
             mobile = programOptions.optionsMap["system.mobile"].as<std::size_t>();
         }
         else 
@@ -162,7 +165,7 @@ void Parameters::setup()
         vesLOG("system.mobile                " << mobile )
         vesLOG("system.box                   " << x << " " << y << " " << z )
         vesLOG("system.timestep              " << dt )
-        vesLOG("system.termperature          " << temperature )
+        vesLOG("system.temperature           " << temperature )
         vesLOG("system.kappa                 " << kappa )
         vesLOG("system.gamma                 " << gamma )
         vesLOG("system.stepwidth_coordinates " << stepwidth_coordinates )
