@@ -22,6 +22,7 @@ void MonteCarlo::setup()
 {
     cells.setParameters(getParameters());
     cells.setup();
+    cells.deployParticles(*target_range);
 }
 
 
@@ -38,8 +39,13 @@ void MonteCarlo::step(const unsigned long& steps)
             target->save();
         });
 
-        updateCoords();
-        updateOrientations();
+        CellBasedAlgorithm::step(cells,[&](const Cell<Particle>& cell)
+        { 
+            // vesDEBUG("IN  LAMBDA")
+
+            updateCoords();
+            updateOrientations();
+        });
     }
 }
 

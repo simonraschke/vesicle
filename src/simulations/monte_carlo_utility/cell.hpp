@@ -16,27 +16,26 @@
 
 #pragma once
 
-#include "systems/box.hpp"
-#include "enhance/observer_ptr.hpp"
-// #include <array>
+#include "definitions.hpp"
+#include "cell_state.hpp"
 #include <vector>
 #include <memory>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
+#include <tbb/spin_mutex.h>
 
 
 
 template<typename T>
 class Cell
-    // : public Box<PERIODIC::ON>
 {
 public:
     typedef T particle_type;
 
 protected:
-    std::vector<enhance::observer_ptr<particle_type>> members{};
-    std::vector<enhance::observer_ptr<const Cell<particle_type>>> proximity {};
-    std::vector<enhance::observer_ptr<const Cell<particle_type>>> region {};
+    std::vector<std::reference_wrapper<particle_type>> particles{};
+    std::vector<std::reference_wrapper<Cell<particle_type>>> proximity {};
+    std::vector<std::reference_wrapper<Cell<particle_type>>> region {};
 
 public:
     // bounding box access
@@ -44,20 +43,33 @@ public:
     const Eigen::AlignedBox<float,3>& getBoundaries() const;
 
     bool contains(const Eigen::Vector3f&) const;
-    bool contains(const std::unique_ptr<particle_type>&) const;
-    bool contains(const enhance::observer_ptr<particle_type>&) const;
-
-    // template<typename P>
-    // bool isNeighbour(const Cell<P>&) const;
+    bool contains(const particle_type*) const;
 
     // proximity and region access
-    template<typename CRITERION>
-    void setupProximityAndRegion(const std::vector<Cell<particle_type>>&, CRITERION&&);
+    template<typename CONTAINER, typename CRITERION>
+    void setupProximityAndRegion(CONTAINER&, CRITERION&&);
     inline const decltype(proximity)& getProximity() const { return proximity; }
     inline const decltype(region)& getRegion() const { return region; }
 
+    // member access
+    bool try_add(particle_type&);
+
+    //state
+    CellState state {};
+
+    template<CellState::STATE S>
+    bool proximityAllInState() const;
+    template<CellState::STATE S>
+    bool proximityNoneInState() const;
+
+    template<CellState::STATE S>
+    bool regionAllInState() const;
+    template<CellState::STATE S>
+    bool regionNoneInState() const;
+
 private:
     Eigen::AlignedBox<float,3> bounding_box {};
+    tbb::spin_mutex particles_access_mutex {};
 };
 
 
@@ -89,44 +101,90 @@ inline const Eigen::AlignedBox<float,3>& Cell<T>::getBoundaries() const
 
 
 template<typename T>
-inline bool Cell<T>::contains(const std::unique_ptr<particle_type>& p) const
+inline bool Cell<T>::contains(const particle_type* other) const
 {
-    return std::any_of(std::cbegin(members),std::cend(members), p);
+    vesDEBUG(__PRETTY_FUNCTION__)
+    assert(other);
+    return std::any_of(std::cbegin(particles),std::cend(particles), [&](const particle_type& p ){ return other == &p; });
 }
 
 
 
 template<typename T>
-inline bool Cell<T>::contains(const enhance::observer_ptr<particle_type>& p) const
+template<typename CONTAINER, typename CRITERION>
+inline void Cell<T>::setupProximityAndRegion(CONTAINER& cells, CRITERION&& criterion)
 {
-    return std::any_of(std::cbegin(members),std::cend(members), p);
-}
-
-
-
-template<typename T>
-template<typename CRITERION>
-inline void Cell<T>::setupProximityAndRegion(const std::vector<Cell>& cells, CRITERION&& criterion)
-{
-    for(const auto& cell : cells)
+    vesDEBUG(__PRETTY_FUNCTION__)
+    for(Cell& cell : cells)
     {
         if(std::addressof(cell) == std::addressof(*this))
-            region.emplace_back( enhance::make_observer<const Cell<particle_type>>(&cell) );
-
+            region.emplace_back( std::ref(cell) );
         else if(criterion(*this,cell))
         {
-            proximity.emplace_back( enhance::make_observer<const Cell<particle_type>>(&cell) );
-            region.emplace_back( enhance::make_observer<const Cell<particle_type>>(&cell) );
+            proximity.emplace_back( std::ref(cell) );
+            region.emplace_back( std::ref(cell) );
         }
     }
 }
 
 
 
-// template<typename T>
-// template<typename P>
-// inline bool Cell<T>::isNeighbour(const Cell<P>& other) const
-// {
-//     Eigen::Vector3f connection_vector(bounding_box.center() - other.getBoundaries().center());
-//     return true;
-// }
+template<typename T>
+inline bool Cell<T>::try_add(particle_type& particle)
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    tbb::spin_mutex::scoped_lock lock(particles_access_mutex);
+    if(!contains(&particle) && contains(particle.coords()))
+    {
+        particles.emplace_back(std::ref(particle));
+        vesDEBUG("Cell contains particle after insertion " << std::boolalpha << contains(&particle))
+        assert(contains(&particle));
+        return true;
+    }
+    else
+    {
+        vesDEBUG("Cell contains particle after NO insertion " << std::boolalpha << contains(&particle))
+        assert(!contains(&particle));
+        return false;
+    }
+}
+
+
+
+template<typename T>
+template<CellState::STATE S>
+bool Cell<T>::proximityAllInState() const
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    return std::all_of(std::begin(proximity),std::end(proximity), [](const Cell<T>& cell){ return cell.state == S; } );
+}
+
+
+
+template<typename T>
+template<CellState::STATE S>
+bool Cell<T>::proximityNoneInState() const
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    return std::none_of(std::begin(proximity),std::end(proximity), [](const Cell<T>& cell){ return cell.state == S; } );
+}
+
+
+
+template<typename T>
+template<CellState::STATE S>
+bool Cell<T>::regionAllInState() const
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    return std::all_of(std::begin(region),std::end(region), [](const Cell<T>& cell){ return cell.state == S; } );
+}
+
+
+
+template<typename T>
+template<CellState::STATE S>
+bool Cell<T>::regionNoneInState() const
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    return std::none_of(std::begin(region),std::end(region), [](const Cell<T>& cell){ return cell.state == S; } );
+}

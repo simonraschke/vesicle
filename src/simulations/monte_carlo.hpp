@@ -18,7 +18,8 @@
 
 #include "algorithm.hpp"
 #include "monte_carlo_utility/metropolis.hpp"
-#include "monte_carlo_utility/cell_container.hpp"
+// #include "monte_carlo_utility/cell_container.hpp"
+#include "monte_carlo_utility/cell_based_algorithm.hpp"
 #include "particles/particle.hpp"
 #include <memory>
 

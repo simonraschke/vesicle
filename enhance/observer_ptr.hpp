@@ -1,9 +1,13 @@
+#define nop_FEATURE_ALLOW_IMPLICIT_CONVERSION  1
+
+
 // Copyright 2015, 2016 by Martin Moene
 //
 // enhance::observer_ptr<> is a C++98 onward implementation for std::observer_ptr as of C++17.
 //
 // This code is licensed under the MIT License (MIT).
 //
+
 
 #pragma once
 

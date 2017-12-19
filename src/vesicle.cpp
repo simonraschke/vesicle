@@ -36,25 +36,26 @@ int main(int argc, const char *argv[])
     std::signal( SIGFPE,  Controller::signal );
     std::signal( SIGKILL, Controller::signal );
 
-    SimulationControl control;
-    {
-        Parameters prms;
-        prms.programOptions.read(argc,argv);
-        prms.setup();
-        control.setParameters(prms);
-    }
-    control.setup();
-
-    Eigen::initParallel();
 #ifndef NDEBUG
+    tbb::task_scheduler_init init(1);
     tbb::task_arena limited(1);
+#else
+    Eigen::initParallel();
+    tbb::task_scheduler_init init();
+    tbb::task_arena limited();
+#endif
     limited.execute([&]
     {
+        SimulationControl control;
+        {
+            Parameters prms;
+            prms.programOptions.read(argc,argv);
+            prms.setup();
+            control.setParameters(prms);
+        }
+        control.setup();
         control.start();
     });
-#else
-    control.start();
-#endif
 
     return EXIT_SUCCESS;
 }

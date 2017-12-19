@@ -19,7 +19,7 @@
 #include <tbb/tbb.h>
 #include <memory>
 
-
+#pragma GCC diagnostic ignored "-Weffc++" // hurts, but is necessary
 
 namespace enhance
 {
@@ -84,11 +84,9 @@ namespace enhance
         template<typename...Args> inline void spawn_child  ( Args...args ) { enhance::spawn_additional_child_of  (std::forward<Args>(args)..., *task); }
         
     protected:
-//         root_task_base() : task() { task = new( tbb::task::allocate_root()) F; }
         root_task_base() : task ( new( tbb::task::allocate_root()) F ) {}
-//         root_task_base() { task = std::make_unique<F>( tbb::task::allocate_root()); }
         virtual ~root_task_base(){ tbb::task::destroy(*task); } // destroy is critical to avoid memleak
-        std::unique_ptr<F> task;
+        F* task;
     };
     
     

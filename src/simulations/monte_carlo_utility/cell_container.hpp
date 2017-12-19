@@ -18,7 +18,9 @@
 
 #include "cell.hpp"
 #include "systems/box.hpp"
+#include "enhance/random.hpp"
 #include <tbb/parallel_for_each.h>
+#include <deque>
 
 
 
@@ -28,13 +30,28 @@ class CellContainer
     , public virtual ParameterDependentComponent
 {
 public:
+    typedef Cell<CELL_MEM_T> cell_type;
+
     void setup();
 
     template<typename P1, typename P2>
     bool areNeighbourCells(const Cell<P1>&, const Cell<P2>&) const;
 
+    template<typename CONTAINER>
+    void deployParticles(const CONTAINER&);
+
+    constexpr auto begin() {return std::begin(cells); }
+    constexpr auto end() {return std::end(cells); }
+
+    // state
+    template<CellState::STATE S>
+    bool allInState() const;
+
+    template<CellState::STATE S>
+    bool noneInState() const;
+
 private:
-    std::vector<Cell<CELL_MEM_T>> cells {};
+    std::deque<cell_type> cells {};
 };
 
 
@@ -78,13 +95,13 @@ inline void CellContainer<CELL_MEM_T>::setup()
     vesDEBUG("minimum edge for a cell is " << min_edge)
     vesDEBUG("maximum number of cells per dimension is " << max_cells_dim)
 
-    const std::size_t cells_x = std::trunc( getLengthX() / (min_edge) );
+    const std::size_t cells_x = std::trunc( getLengthX() / (min_edge) ) > max_cells_dim ? max_cells_dim : std::trunc( getLengthX() / (min_edge) )  ;
     const float x_edge = getLengthX()/cells_x;
 
-    const std::size_t cells_y = std::trunc( getLengthY() / (min_edge) );
+    const std::size_t cells_y = std::trunc( getLengthY() / (min_edge) ) > max_cells_dim ? max_cells_dim : std::trunc( getLengthY() / (min_edge) )  ;
     const float y_edge = getLengthY()/cells_y;
 
-    const std::size_t cells_z = std::trunc( getLengthZ() / (min_edge) );
+    const std::size_t cells_z = std::trunc( getLengthZ() / (min_edge) ) > max_cells_dim ? max_cells_dim : std::trunc( getLengthZ() / (min_edge) )  ;
     const float z_edge = getLengthZ()/cells_z;
 
     vesDEBUG("cells in x dimension: " << cells_x << " with edge: " << x_edge)
@@ -117,23 +134,56 @@ inline void CellContainer<CELL_MEM_T>::setup()
     {
         cell.setupProximityAndRegion(cells, [&](const auto& a, const auto& b) { return areNeighbourCells(a,b); } );
         vesDEBUG(cell.getProximity().size());
+        cell.state = CellState::IDLE;
     });
 
+    #ifndef NDEBUG
     std::for_each(std::begin(cells), std::end(cells), [&](Cell<CELL_MEM_T> & cell)
     {
         vesDEBUG("size of cell proximity: " << cell.getProximity().size() )
         vesDEBUG("size of cell region:    " << cell.getRegion().size() )
         assert(cell.getProximity().size() == 26);
         assert(cell.getRegion().size() == 27);
+        assert(cell.state == CellState::IDLE);
     });
-    std::terminate();
+    #endif
+}
 
 
-    
-    
-    // #ifndef NDEBUG
-    // parallel_for_each( [&](const cell_t& origin) { for_each([&](const cell_t& other) { if (origin == other) return; assert( origin != other ); } ); });
-    // parallel_for_each( [&](const cell_t& origin) { origin.proximity.for_each( [&](const cell_t& other) { assert( origin != other ); }); });
-    // parallel_for_each( [&](const cell_t& origin) { origin.region.for_each( [&](const cell_t& other)    { if (origin == other) return; assert( origin != other ); }); });
-    // #endif
+
+template<typename CELL_MEM_T>
+template<typename CONTAINER>
+void CellContainer<CELL_MEM_T>::deployParticles(const CONTAINER& particles)
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    tbb::parallel_for_each(std::begin(particles), std::end(particles), [&](const std::unique_ptr<CELL_MEM_T>& particle)
+    {
+        bool done = false;
+        std::for_each(std::begin(cells), std::end(cells), [&](Cell<CELL_MEM_T> & cell)
+        {
+            if(done) return;
+            done = cell.try_add(*particle);
+        });
+        assert(done);
+    });
+}
+
+
+
+template<typename CELL_MEM_T>
+template<CellState::STATE S>
+bool CellContainer<CELL_MEM_T>::allInState() const
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    return std::all_of(std::begin(cells),std::end(cells), [](const Cell<CELL_MEM_T>& cell){ return cell.state == S; } );
+}
+
+
+
+template<typename CELL_MEM_T>
+template<CellState::STATE S>
+bool CellContainer<CELL_MEM_T>::noneInState() const
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    return std::none_of(std::begin(cells),std::end(cells), [](const Cell<CELL_MEM_T>& cell){ return cell.state == S; } );
 }
