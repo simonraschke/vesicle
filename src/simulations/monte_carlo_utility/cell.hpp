@@ -53,9 +53,13 @@ public:
 
     // member access
     void clearParticles();
+    void removeParticle(const particle_type&);
     bool try_add(particle_type&);
+    std::size_t size() const { return particles.size(); }
     constexpr auto begin() const {return std::begin(particles); }
     constexpr auto end() const {return std::end(particles); }
+    constexpr auto cbegin() const {return std::cbegin(particles); }
+    constexpr auto cend() const {return std::cend(particles); }
 
     //state
     CellState state {};
@@ -143,6 +147,19 @@ inline void Cell<T>::clearParticles()
 
 
 template<typename T>
+inline void Cell<T>::removeParticle(const particle_type& to_remove)
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    tbb::spin_mutex::scoped_lock lock(particles_access_mutex);
+    particles.erase( std::remove_if(std::begin(particles), std::end(particles), [&](const particle_type& to_compare)
+    { 
+        return std::addressof(to_remove) == std::addressof(to_compare);
+    ;}), particles.end() );
+}
+
+
+
+template<typename T>
 inline bool Cell<T>::try_add(particle_type& particle)
 {
     vesDEBUG(__PRETTY_FUNCTION__)
@@ -168,7 +185,6 @@ template<typename T>
 template<CellState::STATE S>
 bool Cell<T>::proximityAllInState() const
 {
-    vesDEBUG(__PRETTY_FUNCTION__)
     return std::all_of(std::begin(proximity),std::end(proximity), [](const Cell<T>& cell){ return cell.state == S; } );
 }
 
@@ -178,7 +194,6 @@ template<typename T>
 template<CellState::STATE S>
 bool Cell<T>::proximityNoneInState() const
 {
-    vesDEBUG(__PRETTY_FUNCTION__)
     return std::none_of(std::begin(proximity),std::end(proximity), [](const Cell<T>& cell){ return cell.state == S; } );
 }
 
@@ -188,7 +203,6 @@ template<typename T>
 template<CellState::STATE S>
 bool Cell<T>::regionAllInState() const
 {
-    vesDEBUG(__PRETTY_FUNCTION__)
     return std::all_of(std::begin(region),std::end(region), [](const Cell<T>& cell){ return cell.state == S; } );
 }
 
@@ -198,6 +212,5 @@ template<typename T>
 template<CellState::STATE S>
 bool Cell<T>::regionNoneInState() const
 {
-    vesDEBUG(__PRETTY_FUNCTION__)
     return std::none_of(std::begin(region),std::end(region), [](const Cell<T>& cell){ return cell.state == S; } );
 }

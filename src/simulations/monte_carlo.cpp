@@ -40,9 +40,13 @@ void MonteCarlo::step(const unsigned long& steps)
         });
 
         CellBasedAlgorithm::preparation(cells);
+
         CellBasedAlgorithm::step(cells, [&](const Cell<Particle>& cell){ doMCmove(cell);});
-        cells.reorder();
-        cells.deployParticles(*target_range);
+
+        assert(cells.membersContained()==target_range->size());
+        CellBasedAlgorithm::reorder(cells);
+        vesDEBUG("lost particles while reordering: " << std::boolalpha << (cells.membersContained()==target_range->size()) << " found " << cells.membersContained() << " should be " << target_range->size() )
+        assert(cells.membersContained()==target_range->size());
     }
 }
 

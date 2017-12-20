@@ -21,7 +21,10 @@
 #include "enhance/parallel.hpp"
 #include "cell_container.hpp"
 #include <iterator>
+#include <thread>
+#include <chrono>
 #include <tbb/parallel_for_each.h>
+// #include <tbb/threads.h>
 
 
 
@@ -36,6 +39,8 @@ public:
             cell.state = CellState::IDLE;
         });
     }
+
+
     
     template<class CELLCONTAINER, typename FUNCTOR>
     static void step( CELLCONTAINER& cells, FUNCTOR&& func )
@@ -70,6 +75,54 @@ public:
                 }
             });
         }
+        #ifndef NDEBUG
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_for(100ms);
+        #endif
         assert( cells.template allInState<CellState::STATE::FINISHED>() );
+    }
+
+
+
+    template<class CELLCONTAINER>
+    static void reorder( CELLCONTAINER& cells)
+    { 
+        vesDEBUG(__PRETTY_FUNCTION__)
+        typedef typename CELLCONTAINER::cell_type cell_type;
+        typedef typename cell_type::particle_type particle_type;
+
+        tbb::parallel_for_each(std::begin(cells), std::end(cells), [](cell_type& cell)
+        {
+            std::vector<std::reference_wrapper<particle_type>> leavers;
+            for(particle_type& particle : cell)
+            {
+                if(!cell.contains(particle.coords()))
+                {
+                    leavers.emplace_back(std::ref(particle));
+                    assert(!cell.contains(leavers.back().get().coords()));
+                }
+            }
+            
+            for(particle_type& leaver : leavers)
+            {
+                cell.removeParticle(leaver);
+                assert(!cell.contains(&leaver));
+            #ifndef NDEBUG
+                bool was_added = false;
+            #endif
+                for(cell_type& proximity_cell : cell.getProximity())
+                {
+                    if(proximity_cell.contains(leaver.coords()))
+                    {
+                    #ifndef NDEBUG
+                        was_added = proximity_cell.try_add(leaver);
+                    #else
+                        proximity_cell.try_add(leaver);
+                    #endif
+                    }
+                }
+                assert(was_added);
+            }
+        });
     }
 };

@@ -33,7 +33,6 @@ public:
     typedef Cell<CELL_MEM_T> cell_type;
 
     void setup();
-    void reorder();
 
     template<typename P1, typename P2>
     bool areNeighbourCells(const Cell<P1>&, const Cell<P2>&) const;
@@ -43,6 +42,8 @@ public:
 
     constexpr auto begin() {return std::begin(cells); }
     constexpr auto end() {return std::end(cells); }
+
+    std::size_t membersContained() const;
 
     // state
     template<CellState::STATE S>
@@ -153,6 +154,15 @@ inline void CellContainer<CELL_MEM_T>::setup()
 
 
 template<typename CELL_MEM_T>
+std::size_t CellContainer<CELL_MEM_T>::membersContained() const
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    return PARALLEL_REDUCE(std::size_t, cells, [](auto i, const cell_type& cell){ return i + cell.size(); });
+}
+
+
+
+template<typename CELL_MEM_T>
 template<typename CONTAINER>
 void CellContainer<CELL_MEM_T>::deployParticles(const CONTAINER& particles)
 {
@@ -175,7 +185,7 @@ template<typename CELL_MEM_T>
 template<CellState::STATE S>
 bool CellContainer<CELL_MEM_T>::allInState() const
 {
-    vesDEBUG(__PRETTY_FUNCTION__)
+    // vesDEBUG(__PRETTY_FUNCTION__)
     return std::all_of(std::begin(cells),std::end(cells), [](const Cell<CELL_MEM_T>& cell){ return cell.state == S; } );
 }
 
@@ -185,48 +195,8 @@ template<typename CELL_MEM_T>
 template<CellState::STATE S>
 bool CellContainer<CELL_MEM_T>::noneInState() const
 {
-    vesDEBUG(__PRETTY_FUNCTION__)
+    // vesDEBUG(__PRETTY_FUNCTION__)
     return std::none_of(std::begin(cells),std::end(cells), [](const Cell<CELL_MEM_T>& cell){ return cell.state == S; } );
 }
 
 
-
-template<typename CELL_MEM_T>
-void CellContainer<CELL_MEM_T>::reorder() 
-{
-    // this one MIGHT be not thread-safe at "put(L)"
-    // should be now. spin_mutex in member interface
-
-    tbb::parallel_for_each(std::begin(cells), std::end(cells), [&](Cell<CELL_MEM_T> & cell)
-    {
-        cell.clearParticles();
-    });
-//     tbb::parallel_for(0,(int)size_,1,[&](const SIZE& __ID)
-//     {
-//         module::Cell& CELL = cells_[__ID];
-//         if(CELL.need_reorder==true)
-//         {
-//             scalable_vector<SIZE> leavers;
-//             for(const auto& M : CELL.members())
-//             {
-//                 if(particles_[M]->left_cell) 
-//                 {
-//                     leavers.emplace_back(M);
-//                 }
-//             }
-            
-//             for(const auto& L : leavers)
-//             {
-//                 CELL.members.remove(L);
-// //             }
-// //             
-// //             for(const auto& L : leavers)
-// //             {
-//                 put(L);
-//                 particles_[L]->left_cell = false;
-//             }
-            
-//             CELL.need_reorder = false;
-//         }
-//     });
-}
