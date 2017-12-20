@@ -21,12 +21,22 @@
 #include "enhance/parallel.hpp"
 #include "cell_container.hpp"
 #include <iterator>
+#include <tbb/parallel_for_each.h>
 
 
 
 class CellBasedAlgorithm
 {
 public:
+    template<class CELLCONTAINER>
+    static void preparation( CELLCONTAINER& cells)
+    {
+        tbb::parallel_for_each(std::begin(cells), std::end(cells), [](typename CELLCONTAINER::cell_type& cell)
+        {
+            cell.state = CellState::IDLE;
+        });
+    }
+    
     template<class CELLCONTAINER, typename FUNCTOR>
     static void step( CELLCONTAINER& cells, FUNCTOR&& func )
     {

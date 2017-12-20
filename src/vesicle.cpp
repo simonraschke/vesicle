@@ -42,7 +42,7 @@ int main(int argc, const char *argv[])
 #else
     Eigen::initParallel();
     tbb::task_scheduler_init init();
-    tbb::task_arena limited();
+    tbb::task_arena limited(tbb::task_scheduler_init::default_num_threads());
 #endif
     limited.execute([&]
     {

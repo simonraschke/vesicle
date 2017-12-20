@@ -52,3 +52,32 @@ const std::unique_ptr<AcceptanceAdapter>& Algorithm::getAcceptance() const
     assert(acceptance);
     return acceptance;
 }
+
+
+
+
+void Algorithm::updateCoords()
+{
+    throw std::logic_error("called virtual function of base class");
+}
+
+
+
+void Algorithm::updateOrientations()
+{
+    throw std::logic_error("called virtual function of base class");
+}
+
+
+
+void Algorithm::updateForces()
+{
+    throw std::logic_error("called virtual function of base class");
+}
+
+
+
+void Algorithm::updateVelocities()
+{
+    throw std::logic_error("called virtual function of base class");
+}

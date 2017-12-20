@@ -52,7 +52,10 @@ public:
     inline const decltype(region)& getRegion() const { return region; }
 
     // member access
+    void clearParticles();
     bool try_add(particle_type&);
+    constexpr auto begin() const {return std::begin(particles); }
+    constexpr auto end() const {return std::end(particles); }
 
     //state
     CellState state {};
@@ -125,6 +128,16 @@ inline void Cell<T>::setupProximityAndRegion(CONTAINER& cells, CRITERION&& crite
             region.emplace_back( std::ref(cell) );
         }
     }
+}
+
+
+
+template<typename T>
+inline void Cell<T>::clearParticles()
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    tbb::spin_mutex::scoped_lock lock(particles_access_mutex);
+    particles.clear();
 }
 
 

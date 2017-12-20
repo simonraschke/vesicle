@@ -28,19 +28,18 @@
 class MonteCarlo
     : public Algorithm
 {
+    typedef CellContainer<Particle>::cell_type cell_type;
+    CellContainer<Particle> cells {};
+
 public: 
     virtual void setup() override;
     virtual void step(const unsigned long& = 1) override;
     
 protected:
-    virtual void updateCoords() override;
-    virtual void updateOrientations();
-    virtual void updateForces() override;
-    virtual void updateVelocities() override;
+    void doMCmove(const cell_type&);
+    void doCoordinatesMove(const cell_type&, Particle&);
+    void doOrientationMove(const cell_type&, Particle&);
 
     float potentialEnergy(const std::unique_ptr<Particle>&) const;
-
-private:  
-
-    CellContainer<Particle> cells {};
+    float potentialEnergyInRegion(const cell_type&, const Particle&) const;
 };

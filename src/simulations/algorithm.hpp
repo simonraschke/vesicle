@@ -53,10 +53,10 @@ public:
 protected:
     Algorithm() = default;
 
-    virtual void updateCoords() = 0;
-    // virtual void updateOrientations() = 0;
-    virtual void updateForces() = 0;
-    virtual void updateVelocities() = 0;
+    virtual void updateCoords();
+    virtual void updateOrientations();
+    virtual void updateForces();
+    virtual void updateVelocities();
 
     std::unique_ptr<Interaction> interaction {nullptr};
     std::unique_ptr<AcceptanceAdapter> acceptance {nullptr};

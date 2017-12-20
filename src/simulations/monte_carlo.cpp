@@ -39,87 +39,13 @@ void MonteCarlo::step(const unsigned long& steps)
             target->save();
         });
 
-        CellBasedAlgorithm::step(cells,[&](const Cell<Particle>& cell)
-        { 
-            // vesDEBUG("IN  LAMBDA")
-
-            updateCoords();
-            updateOrientations();
-        });
+        CellBasedAlgorithm::preparation(cells);
+        CellBasedAlgorithm::step(cells, [&](const Cell<Particle>& cell){ doMCmove(cell);});
+        cells.reorder();
+        cells.deployParticles(*target_range);
     }
 }
 
-
-
-void MonteCarlo::updateCoords()
-{
-    vesDEBUG(__PRETTY_FUNCTION__)
-
-    assert(target_range);
-    std::for_each(target_range->begin(), target_range->end(), [&](auto& target) 
-    {
-        assert(target);
-        const float dc = getParameters().stepwidth_coordinates;
-        const auto movement = Particle::cartesian
-        (
-            enhance::random<float>(-dc,dc),
-            enhance::random<float>(-dc,dc),
-            enhance::random<float>(-dc,dc)
-        );
-        const float energy_before = potentialEnergy(target);
-        target->setCoords(target->coords()+movement);
-        const float energy_after = potentialEnergy(target);
-
-        if( !acceptance->isValid(energy_after-energy_before))
-        {
-            target->setCoords(target->coordsOld());
-        }
-    });
-}
-
-
-
-void MonteCarlo::updateOrientations()
-{
-    vesDEBUG(__PRETTY_FUNCTION__)
-    
-    assert(target_range);
-    std::for_each(target_range->begin(), target_range->end(), [&](auto& target) 
-    {
-        assert(target);
-        const float da = getParameters().stepwidth_orientation;
-        const auto randomVec = Particle::cartesian
-        (
-            enhance::random<float>(-da,da),
-            enhance::random<float>(-da,da),
-            enhance::random<float>(-da,da)
-        );
-        const Eigen::AngleAxisf rotate (da, randomVec);
-
-        const float energy_before = potentialEnergy(target);
-        target->setOrientation(rotate * target->orientation());
-        const float energy_after = potentialEnergy(target);
-
-        if( !acceptance->isValid(energy_after-energy_before))
-        {
-            target->setOrientation(target->orientationOld());
-        }
-    });
-}
-
-
-
-void MonteCarlo::updateForces()
-{
-
-}
-
-
-
-void MonteCarlo::updateVelocities()
-{
-
-}
 
 
 
@@ -153,4 +79,71 @@ float MonteCarlo::potentialEnergy(const std::unique_ptr<Particle>& p1) const
     //         current = energy_sum.load();
     // });
     return !std::isnan(energy_sum.load()) ? energy_sum.load() : throw std::runtime_error("potential Energy is NAN");
+}
+
+
+
+float MonteCarlo::potentialEnergyInRegion(const cell_type& cell, const Particle& particle) const
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    float energy_sum = 0.f;
+    for(const cell_type& other_cell: cell.getRegion())
+    for(const Particle& other: other_cell)
+    // std::for_each(cell.getRegion().begin(), cell.getRegion().end(), [&](const Particle& other) 
+    {
+        if(std::addressof(particle)==std::addressof(other)) continue;
+        assert(getInteraction());
+        energy_sum += getInteraction()->potential(particle,other);
+    }
+    return !std::isnan(energy_sum) ? energy_sum : throw std::runtime_error("potential Energy is NAN");
+}
+
+
+
+void MonteCarlo::doMCmove(const cell_type& cell)
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    for(Particle& particle : cell)
+    {
+        // coordinates move
+        {
+            const auto stepwidth = getParameters().stepwidth_coordinates;
+            const auto translation = Particle::cartesian
+            (
+                enhance::random<float>(-stepwidth,stepwidth),
+                enhance::random<float>(-stepwidth,stepwidth),
+                enhance::random<float>(-stepwidth,stepwidth)
+            );
+            
+            const float energy_before = potentialEnergyInRegion(cell,particle);
+            particle.setCoords(particle.coords()+translation);
+            const float energy_after = potentialEnergyInRegion(cell,particle);
+
+            if( !acceptance->isValid(energy_after-energy_before))
+            {
+                particle.setCoords(particle.coordsOld());
+            }
+        }
+
+        // orientation move
+        {
+            const float stepwidth = getParameters().stepwidth_orientation;
+            const auto orientation = Particle::cartesian
+            (
+                enhance::random<float>(-1.f,1.f),
+                enhance::random<float>(-1.f,1.f),
+                enhance::random<float>(-1.f,1.f)
+            );
+            const Eigen::AngleAxisf rotation (stepwidth, orientation);
+
+            const float energy_before = potentialEnergyInRegion(cell,particle);
+            particle.setOrientation(rotation * particle.orientation());
+            const float energy_after = potentialEnergyInRegion(cell,particle);
+
+            if( !acceptance->isValid(energy_after-energy_before))
+            {
+                particle.setOrientation(particle.orientationOld());
+            }
+        }
+    }
 }

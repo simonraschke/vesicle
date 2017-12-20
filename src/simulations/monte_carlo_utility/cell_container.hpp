@@ -33,6 +33,7 @@ public:
     typedef Cell<CELL_MEM_T> cell_type;
 
     void setup();
+    void reorder();
 
     template<typename P1, typename P2>
     bool areNeighbourCells(const Cell<P1>&, const Cell<P2>&) const;
@@ -186,4 +187,46 @@ bool CellContainer<CELL_MEM_T>::noneInState() const
 {
     vesDEBUG(__PRETTY_FUNCTION__)
     return std::none_of(std::begin(cells),std::end(cells), [](const Cell<CELL_MEM_T>& cell){ return cell.state == S; } );
+}
+
+
+
+template<typename CELL_MEM_T>
+void CellContainer<CELL_MEM_T>::reorder() 
+{
+    // this one MIGHT be not thread-safe at "put(L)"
+    // should be now. spin_mutex in member interface
+
+    tbb::parallel_for_each(std::begin(cells), std::end(cells), [&](Cell<CELL_MEM_T> & cell)
+    {
+        cell.clearParticles();
+    });
+//     tbb::parallel_for(0,(int)size_,1,[&](const SIZE& __ID)
+//     {
+//         module::Cell& CELL = cells_[__ID];
+//         if(CELL.need_reorder==true)
+//         {
+//             scalable_vector<SIZE> leavers;
+//             for(const auto& M : CELL.members())
+//             {
+//                 if(particles_[M]->left_cell) 
+//                 {
+//                     leavers.emplace_back(M);
+//                 }
+//             }
+            
+//             for(const auto& L : leavers)
+//             {
+//                 CELL.members.remove(L);
+// //             }
+// //             
+// //             for(const auto& L : leavers)
+// //             {
+//                 put(L);
+//                 particles_[L]->left_cell = false;
+//             }
+            
+//             CELL.need_reorder = false;
+//         }
+//     });
 }
