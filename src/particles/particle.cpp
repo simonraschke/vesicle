@@ -18,6 +18,13 @@
 
 
 
+bool Particle::operator==(const Particle& other)
+{
+    return std::addressof(*this) == std::addressof(other);
+}
+
+
+
 void Particle::save()
 {
     assert(oldCoords);

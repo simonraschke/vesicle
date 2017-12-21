@@ -13,6 +13,7 @@ set(enhance_source_files
     math_utility.hpp
     parallel.hpp
     observer_ptr.hpp
+    triangular_matrix.hpp
 )
 
 add_library(enhance STATIC ${enhance_source_files})

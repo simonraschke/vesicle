@@ -86,6 +86,7 @@ private:
     std::unique_ptr<Algorithm> algorithm {nullptr};
     std::unique_ptr<Thermostat> thermostat {nullptr};
     std::unique_ptr<TrajectoryWriter> trajectory_writer {nullptr};
+    
     float time_elapsed {0.0};
 };
 

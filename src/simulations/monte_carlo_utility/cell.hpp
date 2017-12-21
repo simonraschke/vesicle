@@ -18,16 +18,18 @@
 
 #include "definitions.hpp"
 #include "cell_state.hpp"
+#include "systems/box.hpp"
 #include <vector>
 #include <memory>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
-#include <tbb/spin_mutex.h>
+#include <tbb/spin_rw_mutex.h>
 
 
 
 template<typename T>
 class Cell
+    : public Box<PERIODIC::ON>
 {
 public:
     typedef T particle_type;
@@ -42,8 +44,8 @@ public:
     void setBoundaries(const Eigen::Vector3f&, const Eigen::Vector3f&);
     const Eigen::AlignedBox<float,3>& getBoundaries() const;
 
-    bool contains(const Eigen::Vector3f&) const;
-    bool contains(const particle_type*) const;
+    bool contains(const typename particle_type::cartesian&) const;
+    bool contains(const particle_type*) ;
 
     // proximity and region access
     template<typename CONTAINER, typename CRITERION>
@@ -55,6 +57,7 @@ public:
     void clearParticles();
     void removeParticle(const particle_type&);
     bool try_add(particle_type&);
+    std::vector<std::reference_wrapper<particle_type>> getLeavers();
     std::size_t size() const { return particles.size(); }
     constexpr auto begin() const {return std::begin(particles); }
     constexpr auto end() const {return std::end(particles); }
@@ -76,7 +79,7 @@ public:
 
 private:
     Eigen::AlignedBox<float,3> bounding_box {};
-    tbb::spin_mutex particles_access_mutex {};
+    tbb::spin_rw_mutex particles_access_mutex {};
 };
 
 
@@ -92,9 +95,10 @@ inline void Cell<T>::setBoundaries(const Eigen::Vector3f& from, const Eigen::Vec
 
 
 template<typename T>
-inline bool Cell<T>::contains(const Eigen::Vector3f& vec) const
+inline bool Cell<T>::contains(const typename particle_type::cartesian& coords) const
 {
-    return bounding_box.contains(vec);
+    // vesDEBUG( " scaled coords " << scaleDown(coords).format(ROWFORMAT) )
+    return bounding_box.contains(scaleDown(coords));
 }
 
 
@@ -108,9 +112,9 @@ inline const Eigen::AlignedBox<float,3>& Cell<T>::getBoundaries() const
 
 
 template<typename T>
-inline bool Cell<T>::contains(const particle_type* other) const
+inline bool Cell<T>::contains(const particle_type* other) 
 {
-    vesDEBUG(__PRETTY_FUNCTION__)
+    tbb::spin_rw_mutex::scoped_lock lock(particles_access_mutex, false);
     assert(other);
     return std::any_of(std::cbegin(particles),std::cend(particles), [&](const particle_type& p ){ return other == &p; });
 }
@@ -140,7 +144,7 @@ template<typename T>
 inline void Cell<T>::clearParticles()
 {
     vesDEBUG(__PRETTY_FUNCTION__)
-    tbb::spin_mutex::scoped_lock lock(particles_access_mutex);
+    tbb::spin_rw_mutex::scoped_lock lock(particles_access_mutex, true);
     particles.clear();
 }
 
@@ -149,8 +153,8 @@ inline void Cell<T>::clearParticles()
 template<typename T>
 inline void Cell<T>::removeParticle(const particle_type& to_remove)
 {
-    vesDEBUG(__PRETTY_FUNCTION__)
-    tbb::spin_mutex::scoped_lock lock(particles_access_mutex);
+    // vesDEBUG(__PRETTY_FUNCTION__)
+    tbb::spin_rw_mutex::scoped_lock lock(particles_access_mutex, true);
     particles.erase( std::remove_if(std::begin(particles), std::end(particles), [&](const particle_type& to_compare)
     { 
         return std::addressof(to_remove) == std::addressof(to_compare);
@@ -162,21 +166,39 @@ inline void Cell<T>::removeParticle(const particle_type& to_remove)
 template<typename T>
 inline bool Cell<T>::try_add(particle_type& particle)
 {
-    vesDEBUG(__PRETTY_FUNCTION__)
-    tbb::spin_mutex::scoped_lock lock(particles_access_mutex);
     if(!contains(&particle) && contains(particle.coords()))
-    {
+    {   
+        tbb::spin_rw_mutex::scoped_lock lock(particles_access_mutex, true);
         particles.emplace_back(std::ref(particle));
-        vesDEBUG("Cell contains particle after insertion " << std::boolalpha << contains(&particle))
+        lock.release();
+        // vesDEBUG(__func__ << "  Cell contains particle after insertion " << std::boolalpha << contains(&particle))
         assert(contains(&particle));
         return true;
     }
     else
     {
-        vesDEBUG("Cell contains particle after NO insertion " << std::boolalpha << contains(&particle))
+        // vesDEBUG(__func__ << "  Cell contains particle after NO insertion " << std::boolalpha << contains(&particle))
         assert(!contains(&particle));
         return false;
     }
+}
+
+
+
+template<typename T>
+inline auto Cell<T>::getLeavers() -> std::vector<std::reference_wrapper<particle_type>> 
+{
+    tbb::spin_rw_mutex::scoped_lock lock(particles_access_mutex, false);
+    decltype(particles) leavers;
+    for(particle_type& particle : *this)
+    {
+        if(!contains(particle.coords()))
+        {
+            leavers.emplace_back(std::ref(particle));
+            assert(!contains(leavers.back().get().coords()));
+        }
+    }
+    return leavers;
 }
 
 

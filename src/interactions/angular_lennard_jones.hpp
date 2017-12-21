@@ -32,7 +32,7 @@ public:
     virtual bool isAnisotropic() const override;
     
 protected:
-    float chi(const Particle&, const Particle&) const; 
+    // float chi(const Particle&, const Particle&) const; 
 
     float kappa {0};
     float a {0};

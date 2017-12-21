@@ -54,6 +54,8 @@ public:
 
     cartesian scaleDown(cartesian) const ;
     cartesian scaleDown(const Particle&) const;
+    cartesian scaleDownForVMD(cartesian) const ;
+    cartesian scaleDownForVMD(const Particle&) const;
 
     bool contains(const cartesian&) const;
     bool contains(const Particle&) const;
@@ -239,9 +241,13 @@ inline Box<PERIODIC::OFF>::real Box<PERIODIC::OFF>::distance(const Particle& p1,
 template<PERIODIC P>
 typename Box<P>::cartesian Box<P>::scaleDown(cartesian c) const 
 {
-    c(0) = c(0) - getParameters().x * std::round(c(0)/(getParameters().x));
-    c(1) = c(1) - getParameters().y * std::round(c(1)/(getParameters().y));
-    c(2) = c(2) - getParameters().z * std::round(c(2)/(getParameters().z));
+    while( c(0) > getParameters().x ) c(0) -= getParameters().x;
+    while( c(1) > getParameters().y ) c(1) -= getParameters().y;
+    while( c(2) > getParameters().z ) c(2) -= getParameters().z;
+
+    while( c(0) < 0.f ) c(0) += getParameters().x;
+    while( c(1) < 0.f ) c(1) += getParameters().y;
+    while( c(2) < 0.f ) c(2) += getParameters().z;
     return c;
 }
 
@@ -251,6 +257,25 @@ template<PERIODIC P>
 typename Box<P>::cartesian Box<P>::scaleDown(const Particle& p) const 
 {
     return scaleDown(p.coords());
+}
+
+
+
+template<PERIODIC P>
+typename Box<P>::cartesian Box<P>::scaleDownForVMD(cartesian c) const 
+{
+    c(0) = c(0) - getParameters().x * std::round(c(0)/(getParameters().x));
+    c(1) = c(1) - getParameters().y * std::round(c(1)/(getParameters().y));
+    c(2) = c(2) - getParameters().z * std::round(c(2)/(getParameters().z));
+    return c;
+}
+
+
+
+template<PERIODIC P>
+typename Box<P>::cartesian Box<P>::scaleDownForVMD(const Particle& p) const 
+{
+    return scaleDownForVMD(p.coords());
 }
 
 

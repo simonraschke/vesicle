@@ -37,8 +37,8 @@ int main(int argc, const char *argv[])
     std::signal( SIGKILL, Controller::signal );
 
 #ifndef NDEBUG
-    tbb::task_scheduler_init init(1);
-    tbb::task_arena limited(1);
+    tbb::task_scheduler_init init(2);
+    tbb::task_arena limited(2);
 #else
     Eigen::initParallel();
     tbb::task_scheduler_init init();

@@ -64,15 +64,15 @@ void SimulationControl::make_nodes()
             system.addTime(system.getParameters().dt); 
             HistoryBuffer buffer;
             buffer.time = std::make_unique<float>(system.getTime()); 
-            try
-            {
-                tbb::parallel_invoke
-                (
-                    [&]{ buffer.kineticEnergy = std::make_unique<float>(system.kineticEnergy()); },
-                    [&]{ buffer.potentialEnergy = std::make_unique<float>(system.potentialEnergy()); }
-                );
-            }
-            catch(std::runtime_error& e){ vesWARNING(e.what()) }
+            // try
+            // {
+            //     tbb::parallel_invoke
+            //     (
+            //         [&]{ buffer.kineticEnergy = std::make_unique<float>(system.kineticEnergy()); },
+            //         [&]{ buffer.potentialEnergy = std::make_unique<float>(system.potentialEnergy()); }
+            //     );
+            // }
+            // catch(std::runtime_error& e){ vesWARNING(e.what()) }
             history_storage.flush(buffer);
         });
 
@@ -184,12 +184,25 @@ void SimulationControl::start()
     }
 
     std::size_t i = 0;
+    auto start = std::chrono::high_resolution_clock::now();
+
     while(SIGNAL.load() == 0)
     {
         start_node->try_put(tbb::flow::continue_msg());
         flow.wait_for_all();
-        if(i%system.getParameters().traj_skip==0) std::cout << i << std::endl;
+
+        if(i%system.getParameters().traj_skip==0) 
+        {
+            auto now = std::chrono::high_resolution_clock::now();
+            auto dura = std::chrono::duration<double>(std::chrono::duration_cast<std::chrono::milliseconds>(now - start)).count();
+            vesLOG("step " << std::setw(10) << std::right << i << " \t time:  " 
+                << std::setw(10) << std::left << dura << " s \t time/step  " 
+                << std::setw(10) << std::left << dura/system.getParameters().traj_skip*1000 << " ms \t time/step/particle  " 
+                << std::setw(10) << std::left << dura/system.getParameters().traj_skip/system.getParticles().size()*1e6 << " ns")
+            start = now;
+        }
         ++i;
+
     }
     history_storage.dumpToFile("history.dat");
 }

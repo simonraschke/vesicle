@@ -24,6 +24,7 @@
 #include <thread>
 #include <chrono>
 #include <tbb/parallel_for_each.h>
+#include <tbb/scalable_allocator.h>
 // #include <tbb/threads.h>
 
 
@@ -93,35 +94,30 @@ public:
 
         tbb::parallel_for_each(std::begin(cells), std::end(cells), [](cell_type& cell)
         {
-            std::vector<std::reference_wrapper<particle_type>> leavers;
-            for(particle_type& particle : cell)
-            {
-                if(!cell.contains(particle.coords()))
-                {
-                    leavers.emplace_back(std::ref(particle));
-                    assert(!cell.contains(leavers.back().get().coords()));
-                }
-            }
+
+            auto leavers = cell.getLeavers();
             
             for(particle_type& leaver : leavers)
             {
-                cell.removeParticle(leaver);
-                assert(!cell.contains(&leaver));
             #ifndef NDEBUG
                 bool was_added = false;
-            #endif
+                for(cell_type& proximity_cell : cell.getProximity())
+                {
+                    was_added = proximity_cell.try_add(leaver);
+                    if(was_added) break;
+                }
+                assert(was_added);
+            #else
                 for(cell_type& proximity_cell : cell.getProximity())
                 {
                     if(proximity_cell.contains(leaver.coords()))
                     {
-                    #ifndef NDEBUG
-                        was_added = proximity_cell.try_add(leaver);
-                    #else
                         proximity_cell.try_add(leaver);
-                    #endif
                     }
                 }
-                assert(was_added);
+            #endif
+                cell.removeParticle(leaver);
+                assert(!cell.contains(&leaver));
             }
         });
     }

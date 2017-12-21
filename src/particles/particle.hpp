@@ -25,6 +25,22 @@
 
 
 
+class ParticleIDGenerator
+{
+public:
+    std::size_t operator()() const
+    {
+        static std::size_t i = 0;
+        // ++i;
+        return i++;
+    }
+// private:
+    // std::size_t ID = 0;
+};
+
+
+
+
 class Particle
 {
 public:
@@ -40,8 +56,9 @@ public:
 
     virtual std::string name() const = 0;
 
-    void save();
+    bool operator==(const Particle &);
 
+    void save();
     void clearCoords();
     void clearVelocity();
     void clearForce();
@@ -62,6 +79,8 @@ public:
     void setMass(float);
     float getMass() const;
 
+    const unsigned int ID = ParticleIDGenerator()();
+
 protected:
     Particle() = default;
 
@@ -78,6 +97,7 @@ protected:
 
     std::unique_ptr<cartesian> currentOrientation {std::make_unique<cartesian>(cartesian::Zero())};
     std::unique_ptr<cartesian> oldOrientation {std::make_unique<cartesian>(cartesian::Zero())};
+
 
     tbb::spin_mutex mutex {};
 private:

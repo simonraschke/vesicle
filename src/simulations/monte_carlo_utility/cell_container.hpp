@@ -117,6 +117,7 @@ inline void CellContainer<CELL_MEM_T>::setup()
     {
         vesDEBUG("##### building cell: " << x << ' ' << y << ' ' << z)
         cells.emplace_back();
+        cells.back().setParameters(getParameters());
         const Eigen::Vector3f from = Eigen::Vector3f( x_edge*x,     y_edge*y,     z_edge*z     ) - Eigen::Vector3f(0.01, 0.01, 0.01);
         const Eigen::Vector3f to   = Eigen::Vector3f( x_edge*(x+1), y_edge*(y+1), z_edge*(z+1) ) + Eigen::Vector3f(0.01, 0.01, 0.01);
         cells.back().setBoundaries(from,to);

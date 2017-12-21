@@ -21,6 +21,7 @@
 // #include "monte_carlo_utility/cell_container.hpp"
 #include "monte_carlo_utility/cell_based_algorithm.hpp"
 #include "particles/particle.hpp"
+#include "enhance/triangular_matrix.hpp"
 #include <memory>
 
 
@@ -40,6 +41,9 @@ protected:
     void doCoordinatesMove(const cell_type&, Particle&);
     void doOrientationMove(const cell_type&, Particle&);
 
-    float potentialEnergy(const std::unique_ptr<Particle>&) const;
-    float potentialEnergyInRegion(const cell_type&, const Particle&) const;
+    // float potentialEnergy(const std::unique_ptr<Particle>&) const;
+    // float potentialEnergyInRegion(const cell_type&, const Particle&) const;
+
+    std::unique_ptr<enhance::TriangularMatrix<float>> energy_work {};
+    std::unique_ptr<enhance::TriangularMatrix<float>> energy_old {};
 };

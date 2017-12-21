@@ -108,7 +108,7 @@ void TrajectoryWriterGro::write(const HistoryStorage& history)
     for(unsigned long residue = 0; residue < target_range->size(); ++residue)
     {
         const auto& target = target_range->operator[](residue);
-        const cartesian& coords = scaleDown(target->coords());
+        const cartesian& coords = scaleDownForVMD(target->coords());
 
         if(!anisotropic)
         {

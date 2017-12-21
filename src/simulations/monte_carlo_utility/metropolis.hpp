@@ -34,7 +34,7 @@ inline bool Metropolis::isValid(float energy_difference) const
 {
     #ifndef NDEBUG
         const float tem = getParameters().temperature;
-        const float exr = std::exp(-energy_difference/getParameters().temperature);
+        const float exr = std::exp(-energy_difference/tem);
         const float ran = enhance::random<float>(0.0,1.0);
         const bool acc = exr > ran;
         // vesDEBUG("energy difference: "<< energy_difference << "  temp: " << tem << "  exp: " << exr <<"  random: " << ran << "  accepted: " << std::boolalpha << acc )
