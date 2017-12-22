@@ -42,7 +42,10 @@ namespace enhance
     }
     
 
-    
+
+    // angle between two eigen vectors
+    // vectors dont have to be normalized
+    // will give signed result
     template<typename DERIVED1, typename DERIVED2>
     constexpr float directed_angle(const DERIVED1& v1, const DERIVED2& v2)
     {
@@ -51,7 +54,8 @@ namespace enhance
     }
     
 
-    
+
+    // will give unsigned result
     template<typename DERIVED1, typename DERIVED2>
     constexpr float absolute_angle(const DERIVED1& v1, const DERIVED2& v2)
     {
@@ -60,6 +64,7 @@ namespace enhance
     
 
     
+    //directed angle normalized to 0 to 360°
     template<typename DERIVED1, typename DERIVED2>
     constexpr float normalized_angle(const DERIVED1& v1, const DERIVED2& v2)
     {
@@ -69,6 +74,8 @@ namespace enhance
         
     
     
+    // calculate rad from given deg
+    // expects floating pioint type
     template<typename T, typename ENABLER = typename std::enable_if<std::is_floating_point<T>::value>::type>
     constexpr T deg_to_rad(const T& __deg) noexcept
     {
@@ -77,6 +84,8 @@ namespace enhance
     
     
     
+    // calculate deg from given rad
+    // expects floating pioint type
     template<typename T, typename ENABLER = typename std::enable_if<std::is_floating_point<T>::value>::type>
     constexpr T rad_to_deg(const T& __rad) noexcept
     {
@@ -85,41 +94,58 @@ namespace enhance
     
     
     
+    // calculates the volume of a sphere given its radius
+    // may throw if radius is negative
     template<typename T>
-    constexpr T sphere_volume(const T& __rad) noexcept
+    constexpr T sphere_volume(const T& __rad) 
     {
+        if(__rad < 0) throw std::logic_error("radius must not be negative");
         return M_PI*__rad*__rad*__rad*4.f/3.f;
     }
     
     
     
+    // calculates the surface of a sphere given its radius
+    // may throw if radius is negative
     template<typename T>
-    constexpr T sphere_surface(const T& __rad) noexcept
+    constexpr T sphere_surface(const T& __rad) 
     {
+        if(__rad < 0) throw std::logic_error("radius must not be negative");
         return M_PI*__rad*__rad*4.f;
     }
     
     
     
+    // calculates the area of a circle given its radius
+    // may throw if radius is negative
     template<typename T>
-    constexpr T circle_area(const T& __rad) noexcept
+    constexpr T circle_area(const T& __rad) 
     {
+        if(__rad < 0) throw std::logic_error("radius must not be negative");
         return M_PI*__rad*__rad;
     }
     
     
     
+    // calculates the radius of a circle given its area
+    // may throw if area is negative
     template<typename T>
     constexpr T circle_area_to_radius(const T& __area)
     {
+        if(__area < 0) throw std::logic_error("area must not be negative");
         return std::sqrt( __area/M_PI );
     }
     
     
     
+    // calculates the volume of a cone given its base radius and heigt
+    // may throw if area is negative
+    // may throw if height is negative
     template<typename T>
-    constexpr T cone_volume(const T& __rad, const T& __height) noexcept
+    constexpr T cone_volume(const T& __rad, const T& __height) 
     {
-        return enhance::circle_area(__rad)*__height/((T)3.0);
+        if(__rad < 0) throw std::logic_error("radius must not be negative");
+        if(__height < 0) throw std::logic_error("height must not be negative");
+        return enhance::circle_area(__rad)*__height/(static_cast<T>(3));
     }
 }

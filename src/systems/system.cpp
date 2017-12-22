@@ -43,6 +43,7 @@ const PARTICLERANGE& System::getParticles() const
 const std::unique_ptr<Algorithm>& System::getAlgorithm() const
 {
     vesDEBUG(__PRETTY_FUNCTION__)
+    if(!algorithm) throw std::logic_error("algorithm is nullptr. set algorithm first");
     assert(algorithm);
     return algorithm;
 }
@@ -52,7 +53,9 @@ const std::unique_ptr<Algorithm>& System::getAlgorithm() const
 const std::unique_ptr<Interaction>& System::getInteraction() const
 {
     vesDEBUG(__PRETTY_FUNCTION__)
+    if(!algorithm) throw std::logic_error("algorithm is nullptr. set algorithm first");
     assert(algorithm);
+    if(!algorithm->getInteraction()) throw std::logic_error("interaction is nullptr. set interaction first");
     assert(algorithm->getInteraction());
     return algorithm->getInteraction();
 }
@@ -92,6 +95,7 @@ float System::potentialEnergy() const
             pre_sum += algorithm->getInteraction()->potential(particles[i],particles[j]) + algorithm->getInteraction()->potential(particles[i],particles[j]);
         }
 
+        // this works for an atomic float, but may busy wait to compare_exchange like hell if too many particles
         auto current = energy_sum.load();
         while (!energy_sum.compare_exchange_weak(current, current + pre_sum))
             current = energy_sum.load();

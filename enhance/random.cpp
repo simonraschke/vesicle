@@ -10,6 +10,14 @@ enhance::RandomEngineInit::RandomEngineInit()
 
 
 
+enhance::RandomEngineInit::RandomEngineInit(const int __seed)
+    : seed(__seed)
+{
+    pseudo_engine.seed(seed);
+}
+
+
+
 int enhance::RandomEngineInit::getSeed() const
 {
     return seed;
@@ -17,8 +25,13 @@ int enhance::RandomEngineInit::getSeed() const
 
 
 
+/*
+ * specializations of enhance::random<T>(const T,const T)
+ */
+
+
 template<>
-float enhance::random(const float& a, const float& b)
+float enhance::random(const float a, const float b)
 {
     std::uniform_real_distribution<float> dist(a,b);
     return dist(enhance::RandomEngine.pseudo_engine);
@@ -27,7 +40,7 @@ float enhance::random(const float& a, const float& b)
 
 
 template<>
-double enhance::random(const double& a, const double& b)
+double enhance::random(const double a, const double b)
 {
     std::uniform_real_distribution<double> dist(a,b);
     return dist(enhance::RandomEngine.pseudo_engine);
@@ -36,7 +49,7 @@ double enhance::random(const double& a, const double& b)
 
 
 template<>
-unsigned int enhance::random(const unsigned int& a, const unsigned int& b)
+unsigned int enhance::random(const unsigned int a, const unsigned int b)
 {
     std::uniform_int_distribution<unsigned int> dist(a,b);
     return dist(enhance::RandomEngine.pseudo_engine);
@@ -45,7 +58,7 @@ unsigned int enhance::random(const unsigned int& a, const unsigned int& b)
 
 
 template<>
-std::size_t enhance::random(const std::size_t& a, const std::size_t& b)
+std::size_t enhance::random(const std::size_t a, const std::size_t b)
 {
     std::uniform_int_distribution<std::size_t> dist(a,b);
     return dist(enhance::RandomEngine.pseudo_engine);

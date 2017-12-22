@@ -27,7 +27,7 @@
 
 
 
-struct TrajectoryWriter
+struct TrajectoryRWBase
     : public virtual ParameterDependentComponent
     , public virtual Box<PERIODIC::ON>
 {
@@ -36,43 +36,64 @@ struct TrajectoryWriter
     typedef boost::filesystem::ifstream IFSTREAM;
     typedef boost::filesystem::ofstream OFSTREAM;
 
-    // virtual void read(PATH) = 0;
     virtual void write(const HistoryStorage&) = 0;
     virtual void setFilename(std::string) = 0;
 
     void setTarget(PARTICLERANGE*);
-    void setAnisotropic(bool);
+    virtual void setAnisotropic(bool);
 
-    virtual ~TrajectoryWriter();
-
+    virtual ~TrajectoryRWBase();
+    
 protected:
     using Box<PERIODIC::ON>::scaleDown;
     using Box<PERIODIC::ON>::getLengthX;
     using Box<PERIODIC::ON>::getLengthY;
     using Box<PERIODIC::ON>::getLengthZ;
 
-    virtual void makeStartFileVMD() const = 0;
-
-    TrajectoryWriter();
+    TrajectoryRWBase();
 
     PATH working_dir;
     OFSTREAM FILE {};
     std::unique_ptr<std::string> filename {nullptr};
     enhance::observer_ptr<PARTICLERANGE> target_range {nullptr};
-    unsigned int skip_counter{1};
     bool anisotropic {false};
 };
 
 
 
-struct TrajectoryWriterGro
-    : public TrajectoryWriter
+class TrajectoryWriter
+    : public TrajectoryRWBase
 {
-    TrajectoryWriterGro();
-
-    virtual void setFilename(std::string) override;
-    virtual void write(const HistoryStorage&) override;   
+public:
+    virtual ~TrajectoryWriter() ;
+    virtual void setAnisotropic(bool);
 
 protected:
-    virtual void makeStartFileVMD() const override;
+    virtual void makeStartFileVMD() const = 0;
+    TrajectoryWriter() = default;
+
+    unsigned int skip_counter{1};
+};
+
+
+
+
+
+class TrajectoryReader
+    : public TrajectoryRWBase
+{
+public:
+    virtual ~TrajectoryReader();
+
+    void readFrame();
+
+protected:
+    TrajectoryReader() = default;
+
+    void readHeaderLine();
+    void readParticleLine();
+    void readBottomLine();
+
+private:
+
 };

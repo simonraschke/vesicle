@@ -23,13 +23,24 @@
 
 
 // Can also be used as a temporary object
+// this class is move assignable
+//
+// can be called as often as max size was set and creats particles of given type
+// class will be false if not all particles were created else true
 template<typename T, typename ENABLER = typename std::enable_if<std::is_base_of<Particle,T>::value>>
 struct ParticleFactory
 {
     ParticleFactory(std::size_t);
 
+    // false if particles to be created
     explicit operator bool() const;
+
+    // will create std::unique_ptr<> of paticle of given type
+    // will throw if called too often
+    // check operator bool() before calling
     PARTICLERANGE::value_type createParticle();
+
+    // get size information
     std::size_t size() const;
 
 private:

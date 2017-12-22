@@ -20,7 +20,7 @@
 #include <iostream>
 float AngularLennardJones::potential(const Particle& p1, const Particle& p2) const 
 {
-    cartesian distance_vec = distance_vector(p1, p2);
+    cartesian distance_vec = distanceVector(p1, p2);
 
     const float r2 = 1.f/distance_vec.squaredNorm();
     const float r6 = r2*r2*r2;
@@ -42,7 +42,7 @@ float AngularLennardJones::potential(const Particle& p1, const Particle& p2) con
 
 AngularLennardJones::cartesian AngularLennardJones::force(const Particle& p1, const Particle& p2) const 
 {
-    const cartesian distance_vec = distance_vector(p1, p2);
+    const cartesian distance_vec = distanceVector(p1, p2);
 
     const float r2 = 1.f/distance_vec.squaredNorm();
     const float r6 = r2*r2*r2;
@@ -76,7 +76,7 @@ void AngularLennardJones::setup()
 
 // float AngularLennardJones::chi(const Particle& p1, const Particle& p2) const 
 // {
-//     const cartesian normed_dist_vec = distance_vector(p1, p2).normalized() * 1.f;
+//     const cartesian normed_dist_vec = distanceVector(p1, p2).normalized() * 1.f;
 //     const cartesian p1_orien_kappa = p1.orientation()*kappa/2.f;
 //     const cartesian p2_orien_kappa = p2.orientation()*kappa/2.f;
 

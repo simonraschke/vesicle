@@ -25,6 +25,8 @@
 
 int main(int argc, const char *argv[])
 {
+    // register important signals in Controller bas class
+    // allowing civilized shutdown
     std::signal( SIGHUP,  Controller::signal );
     std::signal( SIGINT,  Controller::signal );
     std::signal( SIGQUIT, Controller::signal );
@@ -36,14 +38,19 @@ int main(int argc, const char *argv[])
     std::signal( SIGFPE,  Controller::signal );
     std::signal( SIGKILL, Controller::signal );
 
+    // should be implicit with c++11 but whatever
+    Eigen::initParallel();
+
+    // create a task arena 
 #ifndef NDEBUG
     tbb::task_scheduler_init init(2);
     tbb::task_arena limited(2);
 #else
-    Eigen::initParallel();
     tbb::task_scheduler_init init();
     tbb::task_arena limited(tbb::task_scheduler_init::default_num_threads());
 #endif
+
+    // execute in limited task arena
     limited.execute([&]
     {
         SimulationControl control;

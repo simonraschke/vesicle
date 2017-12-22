@@ -1,11 +1,9 @@
 message(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(enhance_source_files
-    history.cpp
     logger.cpp
     random.cpp
 
-    history.hpp
     logger.hpp
     random.hpp
     

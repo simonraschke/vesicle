@@ -29,7 +29,7 @@ struct Interaction
     , virtual public ParameterDependentComponent
 {
     using Box<PERIODIC::ON>::distance;
-    using Box<PERIODIC::ON>::distance_vector;
+    using Box<PERIODIC::ON>::distanceVector;
     using Box<PERIODIC::ON>::squared_distance;
     typedef Particle::cartesian cartesian;
 

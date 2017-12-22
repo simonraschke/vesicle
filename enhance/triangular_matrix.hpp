@@ -8,31 +8,67 @@
 
 namespace enhance
 {
+    // bottom half matrix implementation without diagonal elements
+    // after any resize or construction all elements will be 0
+    // thread safe
     template<typename T>
     class TriangularMatrix
     {
+        // elements of matrix overall
         std::size_t size_ = 0;
+
+        // contains the numbers of all elements before row [i]
         std::vector<std::uint32_t,tbb::scalable_allocator<std::uint32_t>> sums_ {};
+
+        // the actual data
         std::vector<T,tbb::scalable_allocator<T>> data_ {};
+
+        // access thread safe
         tbb::spin_mutex data_mutex;
         typedef tbb::spin_mutex::scoped_lock lock;
         
     public:
+        // construct and resize later
         explicit TriangularMatrix();
+
+        // construct and resize immediatly
+        // input is the size in one dimension
         TriangularMatrix(const std::size_t&);
+
+        // destroy
         ~TriangularMatrix();
 
+        // summ up all elements of data_
         T sum() noexcept;
+
+        // the minimum field of data_
         T minCoeff();
+
+        // the maximum field of data_
         T maxCoeff();
+
+        // scale data_ from [a,b]
         void scale(const T&, const T&);
+
+        // resize data_
+        // input is the size in one dimension
         void resize(const std::size_t&);
 
+        // access element of data_ directly NOT RECOMMENDED
         T& operator[](const std::size_t&);
+
+        // access element of data_ directly NOT RECOMMENDED
         const T& operator[](const std::size_t&) const;
+
+        // access element of data_ like in a matrix(a,b)
+        // will always give (a,b) even if (b,a) is called
         T& operator()(const std::size_t&, const std::size_t&);
+
+        // access element of data_ like in a matrix(a,b)
+        // will always give (a,b) even if (b,a) is called
         const T& operator()(const std::size_t&, const std::size_t&) const;
         
+        // iteration
         auto begin() noexcept       { return data_.begin(); }
         auto cbegin() const noexcept{ return data_.cbegin(); }
         auto end() noexcept         { return data_.end(); }
@@ -67,6 +103,7 @@ inline enhance::TriangularMatrix<T>::~TriangularMatrix()
 template<typename T>
 inline T& enhance::TriangularMatrix<T>::operator[](const std::size_t& i)
 {
+    lock(data_mutex);
     return data_[i];
 }
 
@@ -83,8 +120,10 @@ inline const T& enhance::TriangularMatrix<T>::operator[](const std::size_t& i) c
 template<typename T>
 inline T& enhance::TriangularMatrix<T>::operator()(const std::size_t& _row, const std::size_t& _col)
 {
-    if(! (_col < _row)) return data_[sums_[_col]+_row];
-    else return data_[sums_[_row]+_col];
+    lock(data_mutex);
+    return _col < _row ? data_[sums_[_row]+_col] : data_[sums_[_col]+_row];
+    // if(! (_col < _row)) return data_[sums_[_col]+_row];
+    // else return data_[sums_[_row]+_col];
 }
 
 
@@ -92,8 +131,9 @@ inline T& enhance::TriangularMatrix<T>::operator()(const std::size_t& _row, cons
 template<typename T>
 inline const T& enhance::TriangularMatrix<T>::operator()(const std::size_t& _row, const std::size_t& _col) const
 {
-    if(! (_col < _row)) return data_[sums_[_col]+_row];
-    else return data_[sums_[_row]+_col];
+    return _col < _row ? data_[sums_[_row]+_col] : data_[sums_[_col]+_row];
+    // if(! (_col < _row)) return data_[sums_[_col]+_row];
+    // else return data_[sums_[_row]+_col];
 }
 
 
