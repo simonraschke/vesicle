@@ -65,7 +65,7 @@ class TrajectoryWriter
     : public TrajectoryRWBase
 {
 public:
-    virtual ~TrajectoryWriter() ;
+    virtual ~TrajectoryWriter() = default ;
     virtual void setAnisotropic(bool);
 
 protected:

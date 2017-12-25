@@ -11,7 +11,7 @@ TrajectoryWriterGro::TrajectoryWriterGro()
 
 
 
-void TrajectoryWriter::setAnisotropic(bool b)
+void TrajectoryWriterGro::setAnisotropic(bool b)
 {
     vesDEBUG(__PRETTY_FUNCTION__<< "  " << b)
     anisotropic = b;
