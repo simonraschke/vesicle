@@ -93,15 +93,22 @@ void SimulationControl::setup()
     vesDEBUG(__PRETTY_FUNCTION__)
 
     {
+        // syytem is ParameterDependentComponent
         system.setParameters(getParameters());
     }
+
     // MUST
     {
+        // add particles via factory class 
         system.addParticles(ParticleFactory<ParticleMobile>(getParameters().mobile));
+
+        // and chose distribution
         system.distributeParticles<RandomDistributor>();
     }
+
     //MUST
     {
+        // chose the algorithm depending on parameters
         if(getParameters().algorithm == std::string("verlet"))
             system.setAlgorithm<Verlet>();
         else if(getParameters().algorithm == "shakeVerlet" )
@@ -112,6 +119,7 @@ void SimulationControl::setup()
         {
             system.setAlgorithm<MonteCarlo>();
 
+            // if algorithm is monte carlo add acceptance criterion
             if(getParameters().acceptance == std::string("metropolis"))
                 system.getAlgorithm()->setAcceptance<Metropolis>();
 
@@ -119,16 +127,21 @@ void SimulationControl::setup()
         }
         assert(system.getAlgorithm());
     }
+
     //MUST
     {
+        // chose interactions
         if(getParameters().interaction == "lj")
             system.setInteraction<LennardJones>();
         else if(getParameters().interaction == "alj")
             system.setInteraction<AngularLennardJones>();
         assert(system.getInteraction());
     }
+
     // OPTIONAL
     {
+        // add thermostat if wished
+        // set nullptr if monte carlo because montecarlo implements temperature in acceptance
         if(getParameters().thermostat == "andersen")
         if(getParameters().algorithm  != "montecarlo")
         {
@@ -137,21 +150,25 @@ void SimulationControl::setup()
         }
     }
     //OPTIONAL
-    {
+    {   
+        // add a trajectory writer if wished 
         if(getParameters().traj == "gro")
         {
             system.setTrajectoryWriter<TrajectoryWriterGro>();
             assert(system.getTrajectoryWriter());
         }
+
+        // tell the trajectory writer if potential is anisotropic
         if(system.getTrajectoryWriter())
         {
             system.getTrajectoryWriter()->setAnisotropic(system.getInteraction()->isAnisotropic());
         }
     }
     
+    // gernerate the node pointers
     make_nodes();
 
-    // make flow graph
+    // design of flow graph
     flow.reset();
     tbb::flow::make_edge(*start_node,*step_node);
     tbb::flow::make_edge(*step_node,*thermostat_node);
@@ -169,28 +186,33 @@ void SimulationControl::start()
     {
         HistoryBuffer buffer;
         buffer.time = std::make_unique<float>(system.getTime()); 
-        try
-        {
-            tbb::parallel_invoke
-            (
-                [&]{ buffer.kineticEnergy = std::make_unique<float>(system.kineticEnergy()); },
-                [&]{ buffer.potentialEnergy = std::make_unique<float>(system.potentialEnergy()); }
-            );
-        }
-        catch(std::runtime_error& e){ vesWARNING(e.what()) }
+        // try
+        // {
+        //     tbb::parallel_invoke
+        //     (
+        //         [&]{ buffer.kineticEnergy = std::make_unique<float>(system.kineticEnergy()); },
+        //         [&]{ buffer.potentialEnergy = std::make_unique<float>(system.potentialEnergy()); }
+        //     );
+        // }
+        // catch(std::runtime_error& e){ vesWARNING(e.what()) }
         history_storage.flush(buffer);
         if(system.getTrajectoryWriter())
             system.getTrajectoryWriter()->write(history_storage);
     }
 
+    // step and time to track speed
     std::size_t i = 0;
     auto start = std::chrono::high_resolution_clock::now();
 
     while(SIGNAL.load() == 0)
     {
+        // start flow graph from start_node
         start_node->try_put(tbb::flow::continue_msg());
+
+        // and wait for it to finish all nodes
         flow.wait_for_all();
 
+        // track speed
         if(i%system.getParameters().traj_skip==0) 
         {
             auto now = std::chrono::high_resolution_clock::now();
@@ -204,6 +226,8 @@ void SimulationControl::start()
         ++i;
 
     }
+
+    // write hstory on exit
     history_storage.dumpToFile("history.dat");
 }
 

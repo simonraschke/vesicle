@@ -31,7 +31,7 @@
 #include "interactions/lennard_jones.hpp"
 #include "interactions/angular_lennard_jones.hpp"
 #include "vesicleIO/parameters.hpp"
-#include "vesicleIO/trajectory.hpp"
+#include "vesicleIO/gro_writer.hpp"
 #include "thermostats/andersen.hpp"
 
 
@@ -46,32 +46,65 @@ public:
     void clear();
 
     // control
+
+    // add particles via factory
     template<typename T>
     void addParticles(ParticleFactory<T>&&);
+
+    // const access to particles
     const PARTICLERANGE& getParticles() const;
 
+
+    // distribute the contained particles via Distributor
     template<typename D,typename ENABLER = typename std::enable_if<std::is_base_of<Distributor,D>::value>::type>
     void distributeParticles();
 
+
+    // set simulation algorithm
     template<typename A,typename ENABLER = typename std::enable_if<std::is_base_of<Algorithm,A>::value>::type>
     void setAlgorithm();
+
+    // get Algorithm pointer
+    // will throw if nullptr
     const std::unique_ptr<Algorithm>& getAlgorithm() const;
 
+
+    // set interaction funtion
+    // interaction is part of algorithm
     template<typename I,typename ENABLER = typename std::enable_if<std::is_base_of<Interaction,I>::value>::type>
     void setInteraction();
+
+    // get Interaction pointer
+    // will throw if nullptr
+    // will throw if algorithm is nullptr
     const std::unique_ptr<Interaction>& getInteraction() const;
 
+
+    // set thermostat 
     template<typename T,typename ENABLER = typename std::enable_if<std::is_base_of<Thermostat,T>::value>::type>
     void setThermostat();
+
+    // get Thermostat pointer
     const std::unique_ptr<Thermostat>& getThermostat() const;
 
+
+    // set trajectory writer
     template<typename W,typename ENABLER = typename std::enable_if<std::is_base_of<TrajectoryWriter,W>::value>::type>
     void setTrajectoryWriter();
+
+    // get Thermostat pointer
     const std::unique_ptr<TrajectoryWriter>& getTrajectoryWriter() const;
 
+
+    // calculate the kinetic energy
+    // complexity O(n²)
     float kineticEnergy() const;
+
+    // calculate the potential energy
+    // complexity O(n²)
     float potentialEnergy() const;
 
+    // add time to time_elapsed
     void addTime(float);
     float getTime() const;
 

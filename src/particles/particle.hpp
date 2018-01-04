@@ -16,57 +16,78 @@
 
 #pragma once
 
-
 #include "definitions.hpp"
+#include "enhance/incremental_number_gen.hpp"
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <eigen3/Eigen/Core>
 #include <tbb/spin_mutex.h>
 
 
 
-class ParticleIDGenerator
-{
-public:
-    std::size_t operator()() const
-    {
-        static std::size_t i = 0;
-        // ++i;
-        return i++;
-    }
-// private:
-    // std::size_t ID = 0;
-};
+class ParticleIDGenerator : public enhance::IncrementalNumberGenerator<ParticleIDGenerator> {};
 
 
+
+/*
+CONCEPT
+
+- all particle classes inherit from Particle
+- simulation routine classes are written for containers of type 
+  container<std::unique_ptr<Particle>> and must work woth them
+  as the overriden interface of derived permits
+- members are implemented as pointers since they are smaller than
+  Eigen::Vector3 classes without performance loss
+- member verctors are initialized zero, mass is one
+- set functions are pure virtual and have to be derived
+
+*/
 
 
 class Particle
 {
 public:
+    // inheritance reuired
     virtual ~Particle() {};
     
+    // setting the floating point precision
     typedef float real;
+
+    // setting the vector type
     typedef Eigen::Matrix<real,3,1,0,3,1> cartesian;
 
+    // pure virtual setter functions
+    // derived overrides must check pointers berfore
+    // accessing underlying pointer
     virtual void setCoords(const cartesian&) = 0;
     virtual void setVelocity(const cartesian&) = 0;
     virtual void setForce(const cartesian&) = 0;
     virtual void setOrientation(const cartesian&) = 0;
 
+    // derived must set name for VMD
     virtual std::string name() const = 0;
 
+    // compare by std::addressof comparison
     bool operator==(const Particle &);
 
+    // will set all old member versions to the actual ones
     void save();
+
+    // reset members to 0
     void clearCoords();
     void clearVelocity();
     void clearForce();
     void clearOrientation();
-    // void addCoords(const cartesian&);
+
+    // adding to velocity and force for verlet purposes
     void addVelocity(const cartesian&);
     void addForce(const cartesian&);
-    // void addOrientation(const cartesian&);
+
+    // return vectors 
+    // in DEBUG mode: 
+    // - check pointers beforehand
+    // - check for NaN's
     const cartesian& coords() const;
     const cartesian& coordsOld() const;
     const cartesian& force() const;
@@ -76,29 +97,33 @@ public:
     const cartesian& orientation() const;
     const cartesian& orientationOld() const;
 
+    // setter and getter of mass member
     void setMass(float);
     float getMass() const;
 
+    // id will be set automatically
+    // id is only necessary to generate useful energy matrices
+    // for MonteCarlo simulation routine
     const unsigned int ID = ParticleIDGenerator()();
 
 protected:
+    // derive or dont use
     Particle() = default;
 
+    // members
     float mass = {1.0};
-
     std::unique_ptr<cartesian> currentCoords {std::make_unique<cartesian>(cartesian::Zero())};
     std::unique_ptr<cartesian> oldCoords {std::make_unique<cartesian>(cartesian::Zero())};
-    
     std::unique_ptr<cartesian> currentForce {std::make_unique<cartesian>(cartesian::Zero())};
     std::unique_ptr<cartesian> oldForce {std::make_unique<cartesian>(cartesian::Zero())};
-    
     std::unique_ptr<cartesian> currentVelocity {std::make_unique<cartesian>(cartesian::Zero())};
     std::unique_ptr<cartesian> oldVelocity {std::make_unique<cartesian>(cartesian::Zero())};
-
     std::unique_ptr<cartesian> currentOrientation {std::make_unique<cartesian>(cartesian::Zero())};
     std::unique_ptr<cartesian> oldOrientation {std::make_unique<cartesian>(cartesian::Zero())};
 
-
+    // lock non const member access.
+    // TO BE QUESTIONED
     tbb::spin_mutex mutex {};
+
 private:
 };

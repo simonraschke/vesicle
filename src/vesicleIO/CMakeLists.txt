@@ -1,15 +1,8 @@
 message(${CMAKE_CURRENT_SOURCE_DIR})
 
-set(IO_source_files
-    parameters.cpp
-    trajectory.cpp
-    program_options.cpp
-    
-    parameters.hpp
-    trajectory.hpp
-    program_options.hpp
-
-    history.hpp
+file(GLOB IO_source_files
+    *.cpp
+    *.hpp
 )
 
 add_library(IO STATIC ${IO_source_files})

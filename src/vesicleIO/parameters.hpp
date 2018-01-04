@@ -27,7 +27,6 @@
 
 
 // the actual Parameters class
-
 struct Parameters
 {
     // GENERAL
@@ -62,15 +61,27 @@ struct Parameters
 
 
 
-
+// A parameter containing base class to derive from
+// CARFUL: need to call setParameters on derived to use
+// think carfilly about virtual inheritance in multiple inheritance
 struct ParameterDependentComponent
 {
+    // make_unique<Parameters> from copy of argument
     void setParameters(Parameters);
+
+    // access underlying Parameters class
+    // will throw if parameters private member is nullptr
+    // prevent by calling setParameters before
     const Parameters& getParameters() const;
+
+    // destroy if derived is destroyed
     virtual ~ParameterDependentComponent() = default;
 
 protected:
+    // derived class is able to change values of parameters
     Parameters& mutableAccess();
+
+    // only construct via inheritance
     ParameterDependentComponent() = default;
 
 private:

@@ -26,6 +26,10 @@
 #include <eigen3/Eigen/Sparse>
 
 
+
+// Simulation algorithm base class to derive from
+// is Parameterdependent component
+
 class Algorithm
     : public ParameterDependentComponent
 {

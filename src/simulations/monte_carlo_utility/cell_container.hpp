@@ -68,7 +68,7 @@ inline bool CellContainer<CELL_MEM_T>::areNeighbourCells(const Cell<P1>& first, 
 {
     Box<PERIODIC::ON> periodic;
     periodic.setParameters(getParameters());
-    const Eigen::Vector3f connection_vector = periodic.distance_vector(first.getBoundaries().center(), second.getBoundaries().center()).cwiseAbs();
+    const Eigen::Vector3f connection_vector = periodic.distanceVector(first.getBoundaries().center(), second.getBoundaries().center()).cwiseAbs();
     
     if(std::addressof(first) == std::addressof(second))
     {

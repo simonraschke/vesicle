@@ -25,38 +25,65 @@
 
 
 
+// a simulation control base class to derive from
+// is parameter dependent component
+// can catch signals if registered by std::signal 
 struct Controller
     : public ParameterDependentComponent
 {
+    // destroy if derived is destroyed
     virtual ~Controller() = default;
 
+    // derived MUST contain
     virtual void setup() = 0;
     virtual void start() = 0;
     virtual void pause() = 0;
     
+    // static member function to catch signal
+    // store in atomic which is accesible by derived
     static void signal(int SIG);
 
 protected:
+    // only to derive from
     Controller() = default;
+
+    // force derived to somehow fill tbb::flow_graph
     virtual void make_nodes() = 0;
 
+    // the actual system
     System system {};
+
+    // the flow graph to fill with nodes 
+    // stores the simulation pattern
     tbb::flow::graph flow {};
 
+    // signal handling
     static std::atomic<int> SIGNAL;
     static tbb::mutex signal_mutex;
 };
 
 
 
+
+// derived from Controller
+// this will control the simulation
+// and implement virtual base class member functions
 struct SimulationControl
     : public Controller
 {
+    // setup Controller::System and members
     virtual void setup() override;
+
+    // start the flow graph and repeat until further notice
     virtual void start() override;
+
+    // pause the simulation
+    // TODO: implement
     virtual void pause() override;
     
 protected:
+    // fill the flow graph
+    // by generating the node members
     virtual void make_nodes() override;
 
 private:
