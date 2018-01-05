@@ -23,7 +23,9 @@
 #include <deque>
 
 
-
+// class owning the cells and provide an interface for them
+// is iterable
+// template parameter will be the type of Cell
 template<typename CELL_MEM_T>
 class CellContainer
     : public Box<PERIODIC::OFF>
@@ -32,8 +34,10 @@ class CellContainer
 public:
     typedef Cell<CELL_MEM_T> cell_type;
 
+    // call before usage
     void setup();
 
+    // check if two cells are neigbours
     template<typename P1, typename P2>
     bool areNeighbourCells(const Cell<P1>&, const Cell<P2>&) const;
 
@@ -97,13 +101,19 @@ inline void CellContainer<CELL_MEM_T>::setup()
     vesDEBUG("minimum edge for a cell is " << min_edge)
     vesDEBUG("maximum number of cells per dimension is " << max_cells_dim)
 
-    const std::size_t cells_x = std::trunc( getLengthX() / (min_edge) ) > max_cells_dim ? max_cells_dim : std::trunc( getLengthX() / (min_edge) )  ;
+    // calculate the amount of zells per dimension
+    std::size_t x_helper = std::trunc( getLengthX() / (min_edge) ) > max_cells_dim ? max_cells_dim : std::trunc( getLengthX() / (min_edge) )  ;
+    std::size_t y_helper = std::trunc( getLengthY() / (min_edge) ) > max_cells_dim ? max_cells_dim : std::trunc( getLengthY() / (min_edge) )  ;
+    std::size_t z_helper = std::trunc( getLengthZ() / (min_edge) ) > max_cells_dim ? max_cells_dim : std::trunc( getLengthZ() / (min_edge) )  ;
+
+    // if dimension is smaller than min_edge it will be 0, therefor set to 1
+    const std::size_t cells_x = x_helper == 0 ? 1 : x_helper;
+    const std::size_t cells_y = y_helper == 0 ? 1 : y_helper;
+    const std::size_t cells_z = z_helper == 0 ? 1 : z_helper;
+
+    // edge of cell per dimension
     const float x_edge = getLengthX()/cells_x;
-
-    const std::size_t cells_y = std::trunc( getLengthY() / (min_edge) ) > max_cells_dim ? max_cells_dim : std::trunc( getLengthY() / (min_edge) )  ;
     const float y_edge = getLengthY()/cells_y;
-
-    const std::size_t cells_z = std::trunc( getLengthZ() / (min_edge) ) > max_cells_dim ? max_cells_dim : std::trunc( getLengthZ() / (min_edge) )  ;
     const float z_edge = getLengthZ()/cells_z;
 
     vesDEBUG("cells in x dimension: " << cells_x << " with edge: " << x_edge)
