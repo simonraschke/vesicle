@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <vector>
 #include <memory>
 
 
@@ -31,10 +30,10 @@ struct HistoryBuffer
 
 
 
-#include "definitions.hpp"
+// #include "definitions.hpp"
+#include <vector>
 #include <cmath>
 #include <string>
-#include <boost/filesystem.hpp>
 #include <eigen3/Eigen/Core>
 
 
