@@ -17,5 +17,28 @@
 
 #pragma once
 
+#include "trajectory.hpp"
+#include <deque>
+#include <boost/algorithm/string.hpp>
 
 
+
+// Gromacs trajectory reader class
+// interface provided by base class
+class TrajectoryReaderGro
+    : public virtual TrajectoryReader
+{
+public:
+    TrajectoryReaderGro();
+    ~TrajectoryReaderGro() = default;
+
+    virtual void readLastFrame() override;
+
+    // set the filename and open filestream
+    virtual void setFilename(std::string) override;
+
+protected:
+    std::deque<std::string> last_frame {};
+
+private:
+};

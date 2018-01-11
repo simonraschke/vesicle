@@ -26,34 +26,48 @@
 #include <string>
 
 
+// trajectory reader and writer base class
+// provides parameters 
+//   working directory,
+//   filename and filestream
+//   box operations
 
+// TODO make setFilename to setFile und PATH with working dir
 struct TrajectoryRWBase
     : public virtual ParameterDependentComponent
     , public virtual Box<PERIODIC::ON>
 {
     typedef Particle::cartesian cartesian;
     typedef boost::filesystem::path PATH;
+    typedef boost::filesystem::fstream FSTREAM;
     typedef boost::filesystem::ifstream IFSTREAM;
     typedef boost::filesystem::ofstream OFSTREAM;
 
-    virtual void write(const HistoryStorage&) = 0;
+    // setting filename and opening filestream
     virtual void setFilename(std::string) = 0;
 
+    // set particle range to write for Writer derived class
+    // TODO might be unnecessary in reader class
     void setTarget(PARTICLERANGE*);
+
+    // are particles and interactions anisotropic
     virtual void setAnisotropic(bool);
 
+    // necessary for base classes
     virtual ~TrajectoryRWBase();
     
 protected:
+    // provide simulation box functions
     using Box<PERIODIC::ON>::scaleDown;
     using Box<PERIODIC::ON>::getLengthX;
     using Box<PERIODIC::ON>::getLengthY;
     using Box<PERIODIC::ON>::getLengthZ;
 
+    // do not construct directly
     TrajectoryRWBase();
 
     PATH working_dir;
-    OFSTREAM FILE {};
+    FSTREAM FILE {};
     std::unique_ptr<std::string> filename {nullptr};
     enhance::observer_ptr<PARTICLERANGE> target_range {nullptr};
     bool anisotropic {false};
@@ -61,12 +75,16 @@ protected:
 
 
 
+// Writer base class for trajectory
+// provides writer specific interface
 class TrajectoryWriter
     : public TrajectoryRWBase
 {
 public:
     virtual ~TrajectoryWriter() = default ;
     virtual void setAnisotropic(bool);
+
+    virtual void write(const HistoryStorage&) = 0;
 
 protected:
     virtual void makeStartFileVMD() const = 0;
@@ -77,15 +95,15 @@ protected:
 
 
 
-
-
+// Writer base class for trajectory
+// provides reader specific interface
 class TrajectoryReader
     : public TrajectoryRWBase
 {
 public:
-    virtual ~TrajectoryReader();
+    virtual ~TrajectoryReader() = default;
 
-    void readFrame();
+    virtual void readLastFrame() = 0;
 
 protected:
     TrajectoryReader() = default;

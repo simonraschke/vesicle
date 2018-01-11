@@ -2,7 +2,6 @@
 
 
 
-
 TrajectoryWriterGro::TrajectoryWriterGro()
     : TrajectoryWriter()
 {
@@ -37,24 +36,23 @@ void TrajectoryWriterGro::setFilename(std::string name)
 }
 
 
+
 void TrajectoryWriterGro::write(const HistoryStorage& history)
 {
     vesDEBUG(__PRETTY_FUNCTION__<< "  simulation time: " << history.getTime().back())
+
     ++skip_counter;
+
     if(skip_counter%getParameters().traj_skip!=0)
-    {
         return;
-    }
     else
-    {
         skip_counter = 1;
-    }
     
     assert(FILE.is_open());
     assert(filename);
     assert(target_range);
 
-    FILE << "t=" << history.getTime().back() << '\n';
+    FILE << "FRAMEBEGIN t=" << history.getTime().back() << '\n';
 
     if(anisotropic)
         FILE << target_range->size()*2 << '\n';
