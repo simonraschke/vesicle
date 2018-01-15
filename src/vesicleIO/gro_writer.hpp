@@ -1,5 +1,5 @@
 /*  
-*   Copyright 2017 Simon Raschke
+*   Copyright 2017-2018 Simon Raschke
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ struct TrajectoryWriterGro
 {
     TrajectoryWriterGro();
 
-    virtual void setFilename(std::string) override;
+    virtual void setPath(PATH) override;
     virtual void write(const HistoryStorage&) override;  
     virtual void setAnisotropic(bool) override; 
 

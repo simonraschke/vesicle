@@ -16,17 +16,15 @@
 
 #define USE_MATH_DEFINES
 
-#include "vesicleIO/parameters.hpp"
+#include "vesicleIO/gro_reader.hpp"
 #include "systems/controller.hpp"
 #include <csignal>
-#include <tbb/task_scheduler_init.h>
-#include <tbb/task_arena.h>
 
 
 
 int main(int argc, const char *argv[])
 {
-    // register important signals in Controller bas class
+    // register important signals in Controller base class static member
     // allowing civilized shutdown
     std::signal( SIGHUP,  Controller::signal );
     std::signal( SIGINT,  Controller::signal );
@@ -39,31 +37,29 @@ int main(int argc, const char *argv[])
     std::signal( SIGFPE,  Controller::signal );
     std::signal( SIGKILL, Controller::signal );
 
-    // should be implicit with c++11 but whatever
-    Eigen::initParallel();
-
-    // create a task arena 
-#ifndef NDEBUG
-    tbb::task_scheduler_init init(2);
-    tbb::task_arena limited(2);
-#else
-    tbb::task_scheduler_init init();
-    tbb::task_arena limited(tbb::task_scheduler_init::default_num_threads());
-#endif
-
-    // execute in limited task arena
-    limited.execute([&]
+    TrajectoryReaderGro reader;
     {
-        SimulationControl control;
+        Parameters prms;
+        prms.programOptions.read(argc,argv);
+        prms.setup();
+        reader.setParameters(prms);
+    }
+    reader.setPath(reader.getParameters().in_traj_path);
+    reader.readAllFrames();
+
+    // for( auto frame : reader.getFrames())
+    for( auto line : reader.getFrame(-0).second )
+    {
+        vesLOG(line);
+    }
+
+    for( auto frame : reader.getMatches(reader.getParameters().in_frames) )
+    {
+        for( auto line : frame.second )
         {
-            Parameters prms;
-            prms.programOptions.read(argc,argv);
-            prms.setup();
-            control.setParameters(prms);
+            vesLOG(line);
         }
-        control.setup();
-        control.start();
-    });
+    }
 
     return EXIT_SUCCESS;
 }

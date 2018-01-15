@@ -19,8 +19,11 @@ BOOST_AUTO_TEST_CASE(periodic_box)
 
     BOOST_CHECK_MESSAGE(periodic.contains(a), "contains a");
     BOOST_CHECK_MESSAGE(periodic.contains(b), "contains b");
-    BOOST_CHECK_MESSAGE(!periodic.contains(-a), "not contains -a");
-    BOOST_CHECK_MESSAGE(!periodic.contains(-b), "not contains -b");
+
+    // the next two should be true, because Box::contains calls Box::scaleDown
+    BOOST_CHECK_MESSAGE(periodic.contains(-a), "not contains -a");
+    BOOST_CHECK_MESSAGE(periodic.contains(-b), "not contains -b");
+    
     BOOST_CHECK_MESSAGE(periodic.distance(a,b)-2 < 1e-3, "distance");
 }
 

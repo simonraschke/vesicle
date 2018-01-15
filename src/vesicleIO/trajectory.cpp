@@ -1,5 +1,5 @@
 /*  
-*   Copyright 2017 Simon Raschke
+*   Copyright 2017-2018 Simon Raschke
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -33,6 +33,42 @@ TrajectoryRWBase::~TrajectoryRWBase()
     {
         FILE.close();
     }
+}
+
+
+
+void TrajectoryRWBase::setPath(PATH path)
+{
+    vesDEBUG(__PRETTY_FUNCTION__<< "  " << path)
+    if(!file_path && FILE.is_open())
+    {
+        FILE.close();
+    }
+
+    file_path = std::make_unique<PATH>(boost::filesystem::system_complete(working_dir/path));
+
+    FILE.open(*file_path);
+}
+
+
+
+TrajectoryRWBase::PATH TrajectoryRWBase::getFilePath() const
+{
+    return *file_path;
+}
+
+
+
+TrajectoryRWBase::PATH TrajectoryRWBase::getWorkingDir() const
+{
+    return working_dir;
+}
+
+
+
+bool TrajectoryRWBase::isOpen() const
+{
+    return FILE.is_open();
 }
 
 

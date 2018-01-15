@@ -1,5 +1,5 @@
 /*  
-*   Copyright 2017 Simon Raschke
+*   Copyright 2017-2018 Simon Raschke
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -142,17 +142,44 @@ void Parameters::setup()
     // output configuration
     {
         if(programOptions.optionsMap.count("output.traj"))
-            traj = programOptions.optionsMap["output.traj"].as<std::string>();
+            out_traj = programOptions.optionsMap["output.traj"].as<std::string>();
         else 
-            vesWARNING("output.traj not defined, no trajectory output")   
+            vesWARNING("output.out_traj not defined, no trajectory output")   
 
 
         if(programOptions.optionsMap.count("output.skip"))
-            traj_skip = programOptions.optionsMap["output.skip"].as<std::size_t>();
+            out_traj_skip = programOptions.optionsMap["output.skip"].as<std::size_t>();
         else 
         {
             vesWARNING("output.skip not defined, will print every step")
-            traj_skip = 1;
+            out_traj_skip = 1;
+        }
+    }
+
+    // input configuration
+    {
+        if(programOptions.optionsMap.count("input.traj"))
+            in_traj = programOptions.optionsMap["input.traj"].as<std::string>();
+        else 
+        {
+            vesWARNING("input.out_traj not defined, setting to \"none\"") 
+            in_traj = "none";
+        }
+
+        if(programOptions.optionsMap.count("input.path"))
+            in_traj_path = programOptions.optionsMap["input.path"].as<boost::filesystem::path>();
+        else 
+        {
+            vesWARNING("no path to input trajectory defined. setting input.traj to \"none\"") 
+            in_traj = "none";
+        }
+
+        if(programOptions.optionsMap.count("input.frames"))
+            in_frames = programOptions.optionsMap["input.frames"].as<std::string>();
+        else 
+        {
+            vesWARNING("no frame defined to read input from. setting to -1 (last frame)") 
+            in_frames = "-1";
         }
     }
 
@@ -172,8 +199,11 @@ void Parameters::setup()
         vesLOG("system.stepwidth_orientation " << stepwidth_orientation )
         vesLOG("system.cell_min_edge         " << cell_min_edge )
         vesLOG("system.max_cells_dim         " << max_cells_dim )
-        vesLOG("output.traj                  " << traj )
-        vesLOG("output.skip                  " << traj_skip )
+        vesLOG("output.out_traj              " << out_traj )
+        vesLOG("output.skip                  " << out_traj_skip )
+        vesLOG("input.traj                   " << in_traj )
+        vesLOG("input.path                   " << in_traj_path )
+        vesLOG("input.frames                 " << programOptions.optionsMap["input.frames"].as<std::string>() )
     }
 }
 

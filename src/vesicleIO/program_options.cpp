@@ -1,5 +1,5 @@
 /*  
-*   Copyright 2017 Simon Raschke
+*   Copyright 2017-2018 Simon Raschke
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -54,10 +54,16 @@ void ProgramOptions::read(int argc, const char* argv[])
     outputOptions.add_options()
         ("output.traj",  po::value<std::string>(), "[gro]")
         ("output.skip",  po::value<std::size_t>(), "print every .. step");
+    
+    po::options_description inputOptions("Input Options");
+    inputOptions.add_options()
+        ("input.traj",  po::value<std::string>(), "[none,gro]")
+        ("input.path",  po::value<boost::filesystem::path>(), "full or rel path to trajectory file")
+        ("input.frames",  po::value<std::string>(), "regular expression for frames to read");
 
     
     po::options_description allOptions;
-    allOptions.add(generalOptions).add(systemOptions).add(outputOptions);
+    allOptions.add(generalOptions).add(systemOptions).add(outputOptions).add(inputOptions);
 
     po::store(po::command_line_parser(argc,argv).options(allOptions).run(),optionsMap);
     po::notify(optionsMap);
@@ -69,6 +75,7 @@ void ProgramOptions::read(int argc, const char* argv[])
         std::clog << '\n' << generalOptions;
         std::clog << '\n' << systemOptions;
         std::clog << '\n' << outputOptions;
+        std::clog << '\n' << inputOptions;
         std::exit(EXIT_SUCCESS);
     }
     else if(boost::filesystem::exists(config_file_full_path) && !config_file_name.empty())

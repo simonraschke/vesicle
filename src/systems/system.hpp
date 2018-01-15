@@ -1,5 +1,5 @@
 /*  
-*   Copyright 2017 Simon Raschke
+*   Copyright 2017-2018 Simon Raschke
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -195,6 +195,7 @@ void System::setTrajectoryWriter()
     trajectory_writer = std::make_unique<W>();
     assert(trajectory_writer);
     trajectory_writer->setParameters(getParameters());
-    trajectory_writer->setFilename("trajectory");
+    trajectory_writer->setPath("trajectory.gro");
+    // trajectory_writer->setFilename("trajectory");
     trajectory_writer->setTarget(&particles);
 }

@@ -1,5 +1,5 @@
 /*  
-*   Copyright 2017 Simon Raschke
+*   Copyright 2017-2018 Simon Raschke
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ void SimulationControl::setup()
     //OPTIONAL
     {   
         // add a trajectory writer if wished 
-        if(getParameters().traj == "gro")
+        if(getParameters().out_traj == "gro")
         {
             system.setTrajectoryWriter<TrajectoryWriterGro>();
             assert(system.getTrajectoryWriter());
@@ -213,14 +213,14 @@ void SimulationControl::start()
         flow.wait_for_all();
 
         // track speed
-        if(i%system.getParameters().traj_skip==0) 
+        if(i%system.getParameters().out_traj_skip==0) 
         {
             auto now = std::chrono::high_resolution_clock::now();
             auto dura = std::chrono::duration<double>(std::chrono::duration_cast<std::chrono::milliseconds>(now - start)).count();
             vesLOG("step " << std::setw(10) << std::right << i << " \t time:  " 
                 << std::setw(10) << std::left << dura << " s \t time/step  " 
-                << std::setw(10) << std::left << dura/system.getParameters().traj_skip*1000 << " ms \t time/step/particle  " 
-                << std::setw(10) << std::left << dura/system.getParameters().traj_skip/system.getParticles().size()*1e6 << " ns")
+                << std::setw(10) << std::left << dura/system.getParameters().out_traj_skip*1000 << " ms \t time/step/particle  " 
+                << std::setw(10) << std::left << dura/system.getParameters().out_traj_skip/system.getParticles().size()*1e6 << " ns")
             start = now;
         }
         ++i;

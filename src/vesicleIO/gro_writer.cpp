@@ -19,17 +19,17 @@ void TrajectoryWriterGro::setAnisotropic(bool b)
 
 
 
-void TrajectoryWriterGro::setFilename(std::string name)
+void TrajectoryWriterGro::setPath(PATH path)
 {
     vesDEBUG(__PRETTY_FUNCTION__<< "  " << name)
-    if(!filename && FILE.is_open())
+    if(!file_path && FILE.is_open())
     {
         FILE.close();
     }
 
-    filename = std::make_unique<std::string>(name+".gro");
+    file_path = std::make_unique<PATH>(boost::filesystem::system_complete(working_dir/path));
 
-    FILE.open(*filename);
+    FILE.open(*file_path);
     FILE.setf(std::ios::fixed | std::ios::showpoint);
 
     makeStartFileVMD();
@@ -43,7 +43,7 @@ void TrajectoryWriterGro::write(const HistoryStorage& history)
 
     ++skip_counter;
 
-    if(skip_counter%getParameters().traj_skip!=0)
+    if(skip_counter%getParameters().out_traj_skip!=0)
         return;
     else
         skip_counter = 1;
@@ -137,7 +137,7 @@ void TrajectoryWriterGro::makeStartFileVMD() const
 
     OFSTREAM VMD;
     VMD.open(".vmdrc");
-    VMD << "mol load gro " << *filename << '\n';
+    VMD << "mol load gro " << file_path->string() << '\n';
     VMD << "light 0 on" << '\n';
     VMD << "light 1 on" << '\n';
     VMD << "light 2 on" << '\n';

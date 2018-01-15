@@ -18,7 +18,9 @@ add_compile_options(-march=nocona -mtune=generic)
 add_subdirectory(enhance)
 add_subdirectory(src)
 
-# Build executable from main
+###
+### vesicle
+###
 set(vesicle_source_files src/vesicle.cpp)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "~/bin/")
 add_executable(vesicle ${vesicle_source_files})
@@ -28,6 +30,21 @@ set( CMAKE_EXE_LINKER_FLAGS "-ltbb -pthread -ltbbmalloc -lboost_system -lboost_f
 target_link_libraries( vesicle systems IO interactions ${CMAKE_EXE_LINKER_FLAGS} )
 
 install( TARGETS vesicle RUNTIME DESTINATION bin )
+
+###
+### vesicle
+###
+set(vesicle_reader_source_files src/vesicle_reader.cpp)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "~/bin/")
+add_executable(vesicle_reader ${vesicle_reader_source_files})
+
+# Link
+set( CMAKE_EXE_LINKER_FLAGS "-ltbb -pthread -ltbbmalloc -lboost_system -lboost_filesystem -lboost_program_options" )
+target_link_libraries( vesicle_reader systems IO interactions ${CMAKE_EXE_LINKER_FLAGS} )
+
+install( TARGETS vesicle_reader RUNTIME DESTINATION bin )
+
+
 
 enable_testing()
 add_subdirectory(tests)

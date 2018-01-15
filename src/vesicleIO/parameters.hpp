@@ -1,5 +1,5 @@
 /*  
-*   Copyright 2017 Simon Raschke
+*   Copyright 2017-2018 Simon Raschke
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -51,8 +51,13 @@ struct Parameters
     std::size_t max_cells_dim {};
 
     // OUTPUT
-    std::string traj {};
-    std::size_t traj_skip {};
+    std::string out_traj {};
+    std::size_t out_traj_skip {};
+
+    // INPUT
+    std::string in_traj {};
+    boost::filesystem::path in_traj_path {};
+    std::regex in_frames {};
 
     // functions
     void setup();

@@ -1,5 +1,5 @@
 /*  
-*   Copyright 2017 Simon Raschke
+*   Copyright 2017-2018 Simon Raschke
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <iostream>
 #include <string>
 #include <csignal>
+#include <regex>
 
 
 struct ProgramOptions

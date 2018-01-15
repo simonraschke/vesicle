@@ -1,5 +1,5 @@
 /*  
-*   Copyright 2017 Simon Raschke
+*   Copyright 2017-2018 Simon Raschke
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -43,8 +43,12 @@ struct TrajectoryRWBase
     typedef boost::filesystem::ifstream IFSTREAM;
     typedef boost::filesystem::ofstream OFSTREAM;
 
-    // setting filename and opening filestream
-    virtual void setFilename(std::string) = 0;
+    // setting path to file and opening filestream
+    // will set path relative to working directory
+    virtual void setPath(PATH);
+    PATH getFilePath() const;
+    PATH getWorkingDir() const;
+    bool isOpen() const;
 
     // set particle range to write for Writer derived class
     // TODO might be unnecessary in reader class
@@ -67,8 +71,9 @@ protected:
     TrajectoryRWBase();
 
     PATH working_dir;
+    std::unique_ptr<PATH> file_path {nullptr};
     FSTREAM FILE {};
-    std::unique_ptr<std::string> filename {nullptr};
+    // std::unique_ptr<std::string> filename {nullptr};
     enhance::observer_ptr<PARTICLERANGE> target_range {nullptr};
     bool anisotropic {false};
 };
@@ -103,7 +108,7 @@ class TrajectoryReader
 public:
     virtual ~TrajectoryReader() = default;
 
-    virtual void readLastFrame() = 0;
+    virtual void readAllFrames() = 0;
 
 protected:
     TrajectoryReader() = default;
