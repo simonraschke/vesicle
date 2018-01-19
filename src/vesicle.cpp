@@ -51,6 +51,10 @@ int main(int argc, const char *argv[])
     tbb::task_arena limited(tbb::task_scheduler_init::default_num_threads());
 #endif
 
+    vesDEBUG("argc: " << argc )// << " with " << std::difference(std::begin(argv),std::end(argv)) << " argvalues")
+    for(int i = 1; i < argc; i++)
+        vesDEBUG("argv: " << argv[i])
+    
     // execute in limited task arena
     limited.execute([&]
     {

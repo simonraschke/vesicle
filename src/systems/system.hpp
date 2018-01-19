@@ -51,7 +51,8 @@ public:
     template<typename T>
     void addParticles(ParticleFactory<T>&&);
 
-    // const access to particles
+    // access to particles
+    PARTICLERANGE& getParticles();
     const PARTICLERANGE& getParticles() const;
 
 

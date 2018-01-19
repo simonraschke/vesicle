@@ -31,6 +31,7 @@ class TrajectoryReaderGro
 {
 public:
     typedef std::pair<std::size_t,std::deque<std::string>> Frame;
+    typedef std::map<Frame::first_type,Frame::second_type> FrameMap;
 
     TrajectoryReaderGro();
     ~TrajectoryReaderGro() = default;
@@ -41,13 +42,16 @@ public:
     // return last frame 
     // readAllFrames must called beforehand
     Frame getFrame(long long = -1) const;
-    std::map<Frame::first_type,Frame::second_type> getMatches(std::regex) const;
-    const std::map<Frame::first_type,Frame::second_type>& getFrames() const;
+    FrameMap getMatches(std::regex) const;
+    const FrameMap& getFrames() const;
+
+    std::size_t numParticles() const;
+    bool isAnisotropic() const;
+
+    static std::map<std::string,std::string> particleLineTokens(std::string line);
 
 protected:
-    // std::deque<std::string> last_frame {};
-
-    std::map<std::size_t,std::deque<std::string>> frames {};
+    FrameMap frames {};
 
 private:
 };

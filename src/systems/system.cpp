@@ -40,6 +40,14 @@ const PARTICLERANGE& System::getParticles() const
 
 
 
+PARTICLERANGE& System::getParticles()
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    return particles;
+}
+
+
+
 const std::unique_ptr<Algorithm>& System::getAlgorithm() const
 {
     vesDEBUG(__PRETTY_FUNCTION__)

@@ -59,4 +59,27 @@ BOOST_AUTO_TEST_CASE(system)
 }
 
 
+
+BOOST_AUTO_TEST_CASE(system_distribute_from_gro)
+{
+    const char* argv[3] = {nullptr,"--config","../../tests/test_config.ini"};
+
+    System system;
+    {
+        Parameters prms;
+        prms.programOptions.read(3,argv);
+        prms.setup();
+        system.setParameters(prms);
+    }
+    
+    system.addParticles(ParticleFactory<ParticleMobile>(system.getParameters().mobile));
+    TrajectoryDistributor dist;
+    dist.setParameters(system.getParameters());
+    // dist.setPath("../../tests/test_config.ini");
+    dist(&system.getParticles());
+
+    BOOST_CHECK_MESSAGE( system.getParticles().size() == 2, "number of particles "+std::to_string(system.getParticles().size()) ); 
+}
+
+
 BOOST_AUTO_TEST_SUITE_END()

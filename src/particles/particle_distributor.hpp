@@ -19,12 +19,16 @@
 #include "definitions.hpp"
 #include "particle.hpp"
 #include "vesicleIO/parameters.hpp"
+#include "vesicleIO/gro_reader.hpp"
 #include "enhance/random.hpp"
 #include "systems/box.hpp"
 #include "geometries/grid.hpp"
 #include <tbb/parallel_for_each.h>
 #include <atomic>
 #include <iostream>
+#include <boost/tokenizer.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
 
 
 
@@ -32,6 +36,8 @@ struct Distributor
     : public Box<PERIODIC::ON>
     , virtual public ParameterDependentComponent
 {
+    typedef PARTICLERANGE::value_type::element_type::cartesian cartesian;
+
     virtual void operator()(PARTICLERANGE*) = 0;
     
     virtual ~Distributor() = default;
@@ -47,8 +53,6 @@ protected:
 struct RandomDistributor
     : public Distributor
 {
-    typedef PARTICLERANGE::value_type::element_type::cartesian cartesian;
-
     virtual void operator()(PARTICLERANGE*) override;
 
 protected:
@@ -61,8 +65,16 @@ protected:
 struct GridDistributor
     : public Distributor
 {
-    typedef PARTICLERANGE::value_type::element_type::cartesian cartesian;
+    virtual void operator()(PARTICLERANGE*) override;
 
+protected:
+};
+
+
+
+struct TrajectoryDistributor
+    : public Distributor
+{
     virtual void operator()(PARTICLERANGE*) override;
 
 protected:

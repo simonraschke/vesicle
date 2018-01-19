@@ -21,7 +21,7 @@ void TrajectoryWriterGro::setAnisotropic(bool b)
 
 void TrajectoryWriterGro::setPath(PATH path)
 {
-    vesDEBUG(__PRETTY_FUNCTION__<< "  " << name)
+    vesDEBUG(__PRETTY_FUNCTION__<< "  " << path)
     if(!file_path && FILE.is_open())
     {
         FILE.close();
@@ -49,7 +49,7 @@ void TrajectoryWriterGro::write(const HistoryStorage& history)
         skip_counter = 1;
     
     assert(FILE.is_open());
-    assert(filename);
+    assert(file_path);
     assert(target_range);
 
     FILE << "FRAMEBEGIN t=" << history.getTime().back() << '\n';

@@ -16,8 +16,9 @@ void TrajectoryReaderGro::readAllFrames()
         throw std::logic_error("No open filestream to read from");
     else if (FILE.is_open())
     {
-        std::deque<std::string> frame {};
-        std::size_t frame_counter = 0;
+        Frame::first_type frame_counter = 0;
+        Frame::second_type frame {};
+        
         bool first_frame_header = true;
 
         for( std::string line; std::getline(FILE, line); /**/ )
@@ -65,11 +66,11 @@ TrajectoryReaderGro::Frame TrajectoryReaderGro::getFrame(long long i) const
 
 
 
-std::map<TrajectoryReaderGro::Frame::first_type,TrajectoryReaderGro::Frame::second_type> TrajectoryReaderGro::getMatches(std::regex reg) const
+TrajectoryReaderGro::FrameMap TrajectoryReaderGro::getMatches(std::regex reg) const
 {
     if(frames.empty()) throw std::runtime_error("there is no frame to return");
 
-    std::map<TrajectoryReaderGro::Frame::first_type,TrajectoryReaderGro::Frame::second_type> selection;
+    FrameMap selection;
 
     for(const Frame& frame : frames)
     {
@@ -87,8 +88,61 @@ std::map<TrajectoryReaderGro::Frame::first_type,TrajectoryReaderGro::Frame::seco
 
 
 
-const std::map<TrajectoryReaderGro::Frame::first_type,TrajectoryReaderGro::Frame::second_type>& TrajectoryReaderGro::getFrames() const
+const TrajectoryReaderGro::FrameMap& TrajectoryReaderGro::getFrames() const
 {
     if(frames.empty()) throw std::runtime_error("there is no frame to return");
     return frames;
+}
+
+
+
+std::size_t TrajectoryReaderGro::numParticles() const
+{
+    if(frames.empty()) throw std::logic_error("no frame was read");
+    std::string number = getFrame(0).second[1];
+    return std::stoll( number ) / ( isAnisotropic() ? 2 : 1 );
+}
+
+
+
+bool TrajectoryReaderGro::isAnisotropic() const
+{
+    if(frames.empty()) throw std::logic_error("no frame was read");
+    std::string number_a { *( std::begin(getFrame(0).second[2]) + 14 ) };
+    std::string number_b { *( std::begin(getFrame(0).second[3]) + 14 ) };
+    try
+    {
+        return std::string( number_a ) != std::string( number_b );
+    }
+    catch (const std::exception& e)
+    {
+        vesCRITICAL("std::stoll failed " << number_a << " " << number_b)
+        throw;
+    }
+}
+
+
+
+std::map<std::string,std::string> TrajectoryReaderGro::particleLineTokens(std::string line)
+{
+    std::map<std::string,std::string> map;
+    if(line.size() == 44)
+    {
+        line.append(std::string("  0.0000"));
+        line.append(std::string("  0.0000"));
+        line.append(std::string("  0.0000"));
+    }
+
+    map["resnum"] = line.substr(0,5);
+    map["resname"] = line.substr(5,5);
+    map["atomname"] = line.substr(10,5);
+    map["atomnum"] = line.substr(15,5);
+    map["pos x"] = line.substr(20,8);
+    map["pos y"] = line.substr(28,8);
+    map["pos z"] = line.substr(36,8);
+    map["vel x"] = line.substr(44,8);
+    map["vel y"] = line.substr(52,8);
+    map["vel z"] = line.substr(60,8);
+
+    return map;
 }

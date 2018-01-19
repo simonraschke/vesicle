@@ -44,8 +44,11 @@ void TrajectoryRWBase::setPath(PATH path)
     {
         FILE.close();
     }
-
+    
     file_path = std::make_unique<PATH>(boost::filesystem::system_complete(working_dir/path));
+    if( !boost::filesystem::exists(*file_path) )
+        throw std::runtime_error("path does not exist: " + file_path->generic_string());
+    assert(boost::filesystem::exists(*file_path));
 
     FILE.open(*file_path);
 }

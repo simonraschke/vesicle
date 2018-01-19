@@ -46,10 +46,16 @@ void RandomDistributor::operator()(PARTICLERANGE* range)
     assert(range);
     for(auto& p : *range)
     {
+        std::size_t try_counter = 0;
         while(conflicting_placement(range,p))
         {
             assert(p);
             p->setCoords(randomCoords());
+            if( ++try_counter > 1e6 )
+            {
+                vesWARNING("placing particle exceeded 1M tries")
+                throw std::runtime_error("particle placement not possible");
+            }
         }
     }
 }
@@ -125,5 +131,81 @@ void GridDistributor::operator()(PARTICLERANGE* range)
     else
     {
         throw std::logic_error("GridDistributor: More particles than grid points");
+    }
+}
+
+
+
+void TrajectoryDistributor::operator()(PARTICLERANGE* range)
+{   
+    assert(range);
+    if(getParameters().in_traj == std::string("gro"))
+    {
+        // get the lines of the last frame in regex range
+        TrajectoryReaderGro reader;
+        reader.setParameters(getParameters());
+        reader.setPath(getParameters().in_traj_path);
+        reader.readAllFrames();
+        auto frame = reader.getMatches(getParameters().in_frames).rbegin()->second;
+
+        for(std::size_t i = 0; i < reader.numParticles(); /**/)
+        {
+            Particle& particle = *((*range)[i]);
+            const std::string line = frame[i+2];
+            auto tokens = TrajectoryReaderGro::particleLineTokens(line);
+            vesDEBUG("up    " << line);
+            
+            if(reader.isAnisotropic())
+            {
+                const std::string line2 = frame[i+3];
+                auto tokens2 = TrajectoryReaderGro::particleLineTokens(line);
+                vesDEBUG("bottom" << line2);
+                {
+                    cartesian position;
+                    position(0) = (boost::lexical_cast<float>(tokens["pos x"]) + boost::lexical_cast<float>(tokens["pos x"])) /2;
+                    position(1) = (boost::lexical_cast<float>(tokens["pos y"]) + boost::lexical_cast<float>(tokens["pos y"])) /2;
+                    position(2) = (boost::lexical_cast<float>(tokens["pos z"]) + boost::lexical_cast<float>(tokens["pos z"])) /2;
+                    particle.setCoords(position);
+                }
+                {
+                    cartesian orientation;
+                    orientation(0) = ( boost::lexical_cast<float>(tokens["pos x"]) - particle.coords()(0) );
+                    orientation(1) = ( boost::lexical_cast<float>(tokens["pos y"]) - particle.coords()(1) );
+                    orientation(2) = ( boost::lexical_cast<float>(tokens["pos z"]) - particle.coords()(2) );
+                    particle.setOrientation(orientation);
+                }
+                {
+                    cartesian velocity;
+                    velocity(0) = (boost::lexical_cast<float>(tokens["vel x"]) + boost::lexical_cast<float>(tokens["vel x"])) /2;
+                    velocity(1) = (boost::lexical_cast<float>(tokens["vel y"]) + boost::lexical_cast<float>(tokens["vel y"])) /2;
+                    velocity(2) = (boost::lexical_cast<float>(tokens["vel z"]) + boost::lexical_cast<float>(tokens["vel z"])) /2;
+                    particle.setVelocity(velocity);
+                }
+                i += 2;
+            }
+            else
+            {
+                {
+                    cartesian position;
+                    position(0) = boost::lexical_cast<float>(tokens["pos x"]);
+                    position(1) = boost::lexical_cast<float>(tokens["pos y"]);
+                    position(2) = boost::lexical_cast<float>(tokens["pos z"]);
+                    particle.setCoords(position);
+                }
+                {
+                    cartesian velocity;
+                    velocity(0) = boost::lexical_cast<float>(tokens["vel x"]);
+                    velocity(1) = boost::lexical_cast<float>(tokens["vel y"]);
+                    velocity(2) = boost::lexical_cast<float>(tokens["vel z"]);
+                    particle.setVelocity(velocity);
+                }
+                ++i;
+            }
+        }
+
+    }
+    else
+    {
+        throw std::logic_error("particles cannot be distributed via " + getParameters().in_traj);
     }
 }
