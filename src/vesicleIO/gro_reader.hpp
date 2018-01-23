@@ -20,6 +20,8 @@
 #include "trajectory.hpp"
 #include <deque>
 #include <map>
+#include <algorithm>
+#include <cctype>
 #include <boost/algorithm/string.hpp>
 
 

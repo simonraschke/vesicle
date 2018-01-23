@@ -110,15 +110,15 @@ bool TrajectoryReaderGro::isAnisotropic() const
     if(frames.empty()) throw std::logic_error("no frame was read");
     std::string number_a { *( std::begin(getFrame(0).second[2]) + 14 ) };
     std::string number_b { *( std::begin(getFrame(0).second[3]) + 14 ) };
-    try
-    {
+    // try
+    // {
         return std::string( number_a ) != std::string( number_b );
-    }
-    catch (const std::exception& e)
-    {
-        vesCRITICAL("std::stoll failed " << number_a << " " << number_b)
-        throw;
-    }
+    // }
+    // catch (const std::exception& e)
+    // {
+        // vesCRITICAL("std::stoll failed " << number_a << " " << number_b)
+        // throw;
+    // }
 }
 
 
@@ -143,6 +143,16 @@ std::map<std::string,std::string> TrajectoryReaderGro::particleLineTokens(std::s
     map["vel x"] = line.substr(44,8);
     map["vel y"] = line.substr(52,8);
     map["vel z"] = line.substr(60,8);
+
+    for( auto& pair : map )
+    #ifdef BOOST_VERSION
+        boost::algorithm::erase_all(pair.second, " ");
+    #else
+        pair.second.erase(std::remove_if(std::begin(pair.second), std::end(pair.second), ::isspace), std::end(pair.second));
+    #endif
+    
+    vesDEBUG("resnum " << map["resnum"] << " resname " << map["resname"] << " atomname " << map["atomname"] << " atomnum " << map["atomnum"])
+    vesDEBUG("pos x " << map["pos x"] << " pos y " << map["pos y"] << "  pos z " << map["pos z"] << " vel x " << map["vel x"] << " vel y " << map["vel y"] << "  vel z " << map["vel z"])
 
     return map;
 }

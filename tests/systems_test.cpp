@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(system)
 }
 
 
-
+#include "enhance/output_utility.hpp"
 BOOST_AUTO_TEST_CASE(system_distribute_from_gro)
 {
     const char* argv[3] = {nullptr,"--config","../../tests/test_config.ini"};
@@ -75,10 +75,23 @@ BOOST_AUTO_TEST_CASE(system_distribute_from_gro)
     system.addParticles(ParticleFactory<ParticleMobile>(system.getParameters().mobile));
     TrajectoryDistributor dist;
     dist.setParameters(system.getParameters());
-    // dist.setPath("../../tests/test_config.ini");
     dist(&system.getParticles());
 
-    BOOST_CHECK_MESSAGE( system.getParticles().size() == 2, "number of particles "+std::to_string(system.getParticles().size()) ); 
+    BOOST_CHECK_MESSAGE( system.getParticles().size() == 2, "number of particles "+std::to_string(system.getParticles().size()) );
+
+    vesDEBUG("position " <<system.getParticles().at(0)->coords().format(ROWFORMAT))
+    {
+        const std::unique_ptr<Particle>& particle = system.getParticles().at(0);
+        BOOST_CHECK_MESSAGE( particle->coords().isApprox(Eigen::Vector3f(1,1,1),1e-3), "position is "+enhance::streamBindableToString(particle->coords().format(ROWFORMAT)) );
+        BOOST_CHECK_MESSAGE( particle->orientation().isApprox(Eigen::Vector3f(1,1,1).normalized(),1e-3), "orientation is "+enhance::streamBindableToString(particle->orientation().format(ROWFORMAT)) );
+    }
+
+    vesDEBUG("position " <<system.getParticles().at(1)->coords().format(ROWFORMAT))
+    {
+        const std::unique_ptr<Particle>& particle = system.getParticles().at(1);
+        BOOST_CHECK_MESSAGE( particle->coords().isApprox(Eigen::Vector3f(9,9,9),1e-3), "position is "+enhance::streamBindableToString(particle->coords().format(ROWFORMAT)) );
+        BOOST_CHECK_MESSAGE( particle->orientation().isApprox(Eigen::Vector3f(-1,-1,-1).normalized(),1e-3), "orientation is "+enhance::streamBindableToString(particle->orientation().format(ROWFORMAT)) );
+    }
 }
 
 

@@ -27,23 +27,23 @@ BOOST_AUTO_TEST_CASE(reader_gro)
         
         std::advance(it,1);
         BOOST_CHECK(it != std::end(frame_lines));
-        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "1MOBIL    A    1   0.655  -0.445  -0.761  0.1487  0.0505 -0.1083"), *it );
+        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "1MOBIL    A    1   1.500   1.500   1.500  0.1487  0.0505 -0.1083"), *it );
         
         std::advance(it,1);
         BOOST_CHECK(it != std::end(frame_lines));
-        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "1MOBIL    B    2   1.352  -0.797  -0.136 -0.1487 -0.0505  0.1083"), *it );
+        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "1MOBIL    B    2   0.500   0.500   0.500 -0.1487 -0.0505  0.1083"), *it );
         
         std::advance(it,1);
         BOOST_CHECK(it != std::end(frame_lines));
-        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "2MOBIL    A    3  -0.679  -0.067   1.380  0.0721  0.0756  0.1707"), *it );
+        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "2MOBIL    A    3  -1.500  -1.500  -1.500  0.0721  0.0756  0.1707"), *it );
         
         std::advance(it,1);
         BOOST_CHECK(it != std::end(frame_lines));
-        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "2MOBIL    B    4  -0.670   0.885   1.072 -0.0721 -0.0756 -0.1707"), *it );
+        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "2MOBIL    B    4  -0.500  -0.500  -0.500 -0.0721 -0.0756 -0.1707"), *it );
         
         std::advance(it,1);
         BOOST_CHECK(it != std::end(frame_lines));
-        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "3.4200 3.4200 3.4200"), *it );
+        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "10 10 10"), *it );
     }
     {
         // Any character besides zero must occur at least once
@@ -61,23 +61,23 @@ BOOST_AUTO_TEST_CASE(reader_gro)
         
         std::advance(it,1);
         BOOST_CHECK(it != std::end(frame_lines));
-        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "1MOBIL    A    1   0.655  -0.445  -0.761  0.1487  0.0505 -0.1083"), *it );
+        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "1MOBIL    A    1   1.500   1.500   1.500  0.1487  0.0505 -0.1083"), *it );
         
         std::advance(it,1);
         BOOST_CHECK(it != std::end(frame_lines));
-        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "1MOBIL    B    2   1.352  -0.797  -0.136 -0.1487 -0.0505  0.1083"), *it );
+        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "1MOBIL    B    2   0.500   0.500   0.500 -0.1487 -0.0505  0.1083"), *it );
         
         std::advance(it,1);
         BOOST_CHECK(it != std::end(frame_lines));
-        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "2MOBIL    A    3  -0.679  -0.067   1.380  0.0721  0.0756  0.1707"), *it );
+        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "2MOBIL    A    3  -1.500  -1.500  -1.500  0.0721  0.0756  0.1707"), *it );
         
         std::advance(it,1);
         BOOST_CHECK(it != std::end(frame_lines));
-        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "2MOBIL    B    4  -0.670   0.885   1.072 -0.0721 -0.0756 -0.1707"), *it );
+        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "2MOBIL    B    4  -0.500  -0.500  -0.500 -0.0721 -0.0756 -0.1707"), *it );
         
         std::advance(it,1);
         BOOST_CHECK(it != std::end(frame_lines));
-        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "3.4200 3.4200 3.4200"), *it );
+        BOOST_CHECK_MESSAGE(boost::algorithm::contains(*it, "10 10 10"), *it );
     }
 }
 

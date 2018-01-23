@@ -58,7 +58,6 @@ public:
     // Tdepending on PERIODIC ON or OFF
     // called from anywhere else
     cartesian distanceVector(const cartesian&, const cartesian&) const;
-
     // implementation for Particle base class. calls cartesian version
     cartesian distanceVector(const Particle&, const Particle&) const;
 
@@ -66,21 +65,18 @@ public:
     // distance
     // calls squared_distance and calculates std::sqrt
     real distance(const cartesian&, const cartesian&) const;
-
     // implementation for Particle base class. calls cartesian version
     real distance(const Particle&, const Particle&) const;
 
 
     // squared distance
     real squared_distance(const cartesian&, const cartesian&) const;
-
     // implementation for Particle base class. calls cartesian version
     real squared_distance(const Particle&, const Particle&) const;
 
 
     // scales down any give coordinates into the simulation box
     cartesian scaleDown(cartesian) const ;
-
     // implementation for Particle base class. calls cartesian version
     cartesian scaleDown(const Particle&) const;
 

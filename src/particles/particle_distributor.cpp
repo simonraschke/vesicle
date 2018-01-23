@@ -147,25 +147,29 @@ void TrajectoryDistributor::operator()(PARTICLERANGE* range)
         reader.setPath(getParameters().in_traj_path);
         reader.readAllFrames();
         auto frame = reader.getMatches(getParameters().in_frames).rbegin()->second;
+        unsigned short anisotropicFactor = reader.isAnisotropic() ? 2 : 1;
+        std::size_t num_particles = reader.numParticles();
+        std::size_t num_particles_lines = reader.numParticles() * anisotropicFactor;
 
-        for(std::size_t i = 0; i < reader.numParticles(); /**/)
+        for(std::size_t i = 0; i < num_particles ; ++i)
         {
             Particle& particle = *((*range)[i]);
-            const std::string line = frame[i+2];
+            const std::string line = frame[i*2+2];
             auto tokens = TrajectoryReaderGro::particleLineTokens(line);
             vesDEBUG("up    " << line);
             
             if(reader.isAnisotropic())
             {
-                const std::string line2 = frame[i+3];
-                auto tokens2 = TrajectoryReaderGro::particleLineTokens(line);
+                const std::string line2 = frame[i*2+3];
+                auto tokens2 = TrajectoryReaderGro::particleLineTokens(line2);
                 vesDEBUG("bottom" << line2);
                 {
                     cartesian position;
-                    position(0) = (boost::lexical_cast<float>(tokens["pos x"]) + boost::lexical_cast<float>(tokens["pos x"])) /2;
-                    position(1) = (boost::lexical_cast<float>(tokens["pos y"]) + boost::lexical_cast<float>(tokens["pos y"])) /2;
-                    position(2) = (boost::lexical_cast<float>(tokens["pos z"]) + boost::lexical_cast<float>(tokens["pos z"])) /2;
-                    particle.setCoords(position);
+                    position(0) = (boost::lexical_cast<float>(tokens["pos x"]) + boost::lexical_cast<float>(tokens2["pos x"])) /2;
+                    position(1) = (boost::lexical_cast<float>(tokens["pos y"]) + boost::lexical_cast<float>(tokens2["pos y"])) /2;
+                    position(2) = (boost::lexical_cast<float>(tokens["pos z"]) + boost::lexical_cast<float>(tokens2["pos z"])) /2;
+                    vesDEBUG("position" << position.format(ROWFORMAT) <<" scaled down " << scaleDown(position).format(ROWFORMAT) )
+                    particle.setCoords(scaleDown(position));
                 }
                 {
                     cartesian orientation;
@@ -176,12 +180,12 @@ void TrajectoryDistributor::operator()(PARTICLERANGE* range)
                 }
                 {
                     cartesian velocity;
-                    velocity(0) = (boost::lexical_cast<float>(tokens["vel x"]) + boost::lexical_cast<float>(tokens["vel x"])) /2;
-                    velocity(1) = (boost::lexical_cast<float>(tokens["vel y"]) + boost::lexical_cast<float>(tokens["vel y"])) /2;
-                    velocity(2) = (boost::lexical_cast<float>(tokens["vel z"]) + boost::lexical_cast<float>(tokens["vel z"])) /2;
+                    velocity(0) = (boost::lexical_cast<float>(tokens["vel x"]) + boost::lexical_cast<float>(tokens2["vel x"])) /2;
+                    velocity(1) = (boost::lexical_cast<float>(tokens["vel y"]) + boost::lexical_cast<float>(tokens2["vel y"])) /2;
+                    velocity(2) = (boost::lexical_cast<float>(tokens["vel z"]) + boost::lexical_cast<float>(tokens2["vel z"])) /2;
                     particle.setVelocity(velocity);
                 }
-                i += 2;
+                // i += 2;
             }
             else
             {
@@ -199,7 +203,7 @@ void TrajectoryDistributor::operator()(PARTICLERANGE* range)
                     velocity(2) = boost::lexical_cast<float>(tokens["vel z"]);
                     particle.setVelocity(velocity);
                 }
-                ++i;
+                // ++i;
             }
         }
 
