@@ -20,6 +20,7 @@
 #include "parameters.hpp"
 #include "history.hpp"
 #include "enhance/observer_ptr.hpp"
+#include "enhance/output_utility.hpp"
 #include "systems/box.hpp"
 #include <boost/filesystem.hpp>
 #include <iomanip>

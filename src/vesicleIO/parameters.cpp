@@ -58,12 +58,13 @@ void Parameters::setup()
         unsigned short counter = 0;
         if(programOptions.optionsMap.count("system.mobile")) ++counter;
         if(programOptions.optionsMap.count("system.density")) ++counter;
-        if(programOptions.optionsMap.count("system.box.x") && programOptions.optionsMap.count("system.box.y") && programOptions.optionsMap.count("system.box.z")) ++counter;
+        if(programOptions.optionsMap.count("system.box.x") 
+        && programOptions.optionsMap.count("system.box.y") 
+        && programOptions.optionsMap.count("system.box.z")) ++counter;
 
         if(counter != 2)
         {
             vesCRITICAL("define 2 of the 3: system.mobile, system.density, system.box.{_}!")
-            std::raise(SIGABRT);
         }
         else if(programOptions.optionsMap.count("system.mobile") && programOptions.optionsMap.count("system.density"))
         {
@@ -142,7 +143,11 @@ void Parameters::setup()
     // output configuration
     {
         if(programOptions.optionsMap.count("output.traj"))
-            out_traj = programOptions.optionsMap["output.traj"].as<std::string>();
+        {
+            std::vector<std::string> possibilities = {"none","gro"};
+            if(std::find( std::begin(possibilities), std::end(possibilities), programOptions.optionsMap["output.traj"].as<std::string>() ) != std::end(possibilities) )
+                out_traj = programOptions.optionsMap["output.traj"].as<std::string>();
+        }
         else 
             vesWARNING("output.out_traj not defined, no trajectory output")   
 
@@ -184,13 +189,17 @@ void Parameters::setup()
     }
 
     {
+        vesLOG(__PRETTY_FUNCTION__)
+        
         vesLOG("VALUE OVERVIEW")
         vesLOG("general.algorithm            " << algorithm )
         vesLOG("general.acceptance           " << acceptance )
         vesLOG("general.interaction          " << interaction )
         vesLOG("general.thermostat           " << thermostat )
         vesLOG("system.mobile                " << mobile )
-        vesLOG("system.box                   " << x << " " << y << " " << z )
+        vesLOG("system.box.x                 " << x )
+        vesLOG("system.box.y                 " << y )
+        vesLOG("system.box.z                 " << z )
         vesLOG("system.timestep              " << dt )
         vesLOG("system.temperature           " << temperature )
         vesLOG("system.kappa                 " << kappa )

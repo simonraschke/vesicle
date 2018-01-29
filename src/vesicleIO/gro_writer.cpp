@@ -29,7 +29,31 @@ void TrajectoryWriterGro::setPath(PATH path)
 
     file_path = std::make_unique<PATH>(boost::filesystem::system_complete(working_dir/path));
 
-    FILE.open(*file_path);
+    if(boost::filesystem::exists(*file_path))
+    {
+
+        // splitting the filepath
+        auto string_parts = enhance::splitAtDelimiter(file_path->string(), ".");
+
+        // making "trajectory_old.gro" from "trajectory.gro"
+        PATH destination = boost::filesystem::system_complete((*std::next(string_parts.rbegin())+std::string("_old"))+"."+*string_parts.rbegin());
+        vesLOG("trajectory file " << file_path->string() << " already exists. will backup to " << destination.string())
+
+        // and backup the old trajectory
+        boost::filesystem::copy_file(*file_path, destination, boost::filesystem::copy_option::overwrite_if_exists);
+    }
+
+    if(getParameters().in_traj == std::string("none"))
+    {
+        vesLOG("trunc open " << file_path->string())
+        FILE.open(*file_path, std::ios_base::out);
+    }
+    else
+    {
+        vesLOG("app open" << file_path->string())
+        FILE.open(*file_path, std::ios_base::app);
+    }
+
     FILE.setf(std::ios::fixed | std::ios::showpoint);
 
     makeStartFileVMD();

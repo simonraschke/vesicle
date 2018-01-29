@@ -35,6 +35,7 @@ bool Distributor::conflicting_placement(PARTICLERANGE* range, PARTICLERANGE::val
 
 void RandomDistributor::operator()(PARTICLERANGE* range)
 {
+    vesLOG("distributing particles from randomly")
     assert(range);
     tbb::parallel_for_each(range->begin(), range->end(), [&](auto& p) 
     {
@@ -84,6 +85,7 @@ RandomDistributor::cartesian RandomDistributor::randomOrientation() const
 
 void GridDistributor::operator()(PARTICLERANGE* range)
 {   
+    vesLOG("distributing particles from in grid")
     std::size_t maxX = std::floor(getLengthX()/1.122f);
     std::size_t maxY = std::floor(getLengthY()/1.122f);
     std::size_t maxZ = std::floor(getLengthZ()/1.122f);
@@ -138,6 +140,7 @@ void GridDistributor::operator()(PARTICLERANGE* range)
 
 void TrajectoryDistributor::operator()(PARTICLERANGE* range)
 {   
+    vesLOG("distributing particles from " << getParameters().in_traj_path)
     assert(range);
     if(getParameters().in_traj == std::string("gro"))
     {
@@ -147,9 +150,9 @@ void TrajectoryDistributor::operator()(PARTICLERANGE* range)
         reader.setPath(getParameters().in_traj_path);
         reader.readAllFrames();
         auto frame = reader.getMatches(getParameters().in_frames).rbegin()->second;
-        unsigned short anisotropicFactor = reader.isAnisotropic() ? 2 : 1;
-        std::size_t num_particles = reader.numParticles();
-        std::size_t num_particles_lines = reader.numParticles() * anisotropicFactor;
+        // unsigned short anisotropicFactor = reader.isAnisotropic() ? 2 : 1;
+        const std::size_t num_particles = reader.numParticles();
+        // std::size_t num_particles_lines = reader.numParticles() * anisotropicFactor;
 
         for(std::size_t i = 0; i < num_particles ; ++i)
         {

@@ -12,6 +12,7 @@ TrajectoryReaderGro::TrajectoryReaderGro()
 
 void TrajectoryReaderGro::readAllFrames()
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     if(!FILE.is_open())
         throw std::logic_error("No open filestream to read from");
     else if (FILE.is_open())
@@ -48,6 +49,7 @@ void TrajectoryReaderGro::readAllFrames()
 
 TrajectoryReaderGro::Frame TrajectoryReaderGro::getFrame(long long i) const
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     if(frames.empty()) throw std::runtime_error("there is no frame to return");
 
     if(i < 0)
@@ -68,19 +70,26 @@ TrajectoryReaderGro::Frame TrajectoryReaderGro::getFrame(long long i) const
 
 TrajectoryReaderGro::FrameMap TrajectoryReaderGro::getMatches(std::regex reg) const
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     if(frames.empty()) throw std::runtime_error("there is no frame to return");
 
     FrameMap selection;
 
-    for(const Frame& frame : frames)
+    if(std::regex_match("-1", reg))
     {
-        vesLOG("frame.first " << frame.first)
-        if(std::regex_match(std::to_string(frame.first), reg))
-        {
-            vesLOG("found: " << frame.first)
-            selection.insert(frame);
-        }
+        vesLOG("found frame: " << frames.rbegin()->first)
+        selection.insert(*frames.rbegin());
     }
+    else
+        for(const Frame& frame : frames)
+        {
+            // vesLOG("frame.first " << frame.first)
+            if(std::regex_match(std::to_string(frame.first), reg))
+            {
+                vesLOG("found frame: " << frame.first)
+                selection.insert(frame);
+            }
+        }
 
     if(selection.empty()) throw std::runtime_error("could not find any matching pattern while reading input frames");
     return selection;
@@ -90,6 +99,7 @@ TrajectoryReaderGro::FrameMap TrajectoryReaderGro::getMatches(std::regex reg) co
 
 const TrajectoryReaderGro::FrameMap& TrajectoryReaderGro::getFrames() const
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     if(frames.empty()) throw std::runtime_error("there is no frame to return");
     return frames;
 }
@@ -98,6 +108,7 @@ const TrajectoryReaderGro::FrameMap& TrajectoryReaderGro::getFrames() const
 
 std::size_t TrajectoryReaderGro::numParticles() const
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     if(frames.empty()) throw std::logic_error("no frame was read");
     std::string number = getFrame(0).second[1];
     return std::stoll( number ) / ( isAnisotropic() ? 2 : 1 );
@@ -107,6 +118,7 @@ std::size_t TrajectoryReaderGro::numParticles() const
 
 bool TrajectoryReaderGro::isAnisotropic() const
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     if(frames.empty()) throw std::logic_error("no frame was read");
     std::string number_a { *( std::begin(getFrame(0).second[2]) + 14 ) };
     std::string number_b { *( std::begin(getFrame(0).second[3]) + 14 ) };
@@ -125,6 +137,7 @@ bool TrajectoryReaderGro::isAnisotropic() const
 
 std::map<std::string,std::string> TrajectoryReaderGro::particleLineTokens(std::string line)
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     std::map<std::string,std::string> map;
     if(line.size() == 44)
     {

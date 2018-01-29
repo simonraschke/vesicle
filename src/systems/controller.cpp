@@ -101,9 +101,12 @@ void SimulationControl::setup()
     {
         // add particles via factory class 
         system.addParticles(ParticleFactory<ParticleMobile>(getParameters().mobile));
-
+        
         // and chose distribution
-        system.distributeParticles<RandomDistributor>();
+        if(getParameters().in_traj == std::string("none"))
+            system.distributeParticles<RandomDistributor>();
+        else if(getParameters().in_traj == std::string("gro"))
+            system.distributeParticles<TrajectoryDistributor>();
     }
 
     //MUST
@@ -159,6 +162,7 @@ void SimulationControl::setup()
         }
 
         // tell the trajectory writer if potential is anisotropic
+        assert(system.getTrajectoryWriter());
         if(system.getTrajectoryWriter())
         {
             system.getTrajectoryWriter()->setAnisotropic(system.getInteraction()->isAnisotropic());
@@ -224,7 +228,6 @@ void SimulationControl::start()
             start = now;
         }
         ++i;
-
     }
 
     // write hstory on exit

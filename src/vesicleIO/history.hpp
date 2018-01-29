@@ -70,6 +70,7 @@ inline void HistoryStorage::flush(HistoryBuffer& buffer)
 
 inline void HistoryStorage::dumpToFile(std::string n)
 {
+    vesDEBUG(__PRETTY_FUNCTION__)
     assert(times.size() == kineticEnergy.size());
     assert(times.size() == potentialEnergy.size());
     boost::filesystem::ofstream FILE;
