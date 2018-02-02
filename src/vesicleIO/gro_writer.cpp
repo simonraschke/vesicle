@@ -31,7 +31,6 @@ void TrajectoryWriterGro::setPath(PATH path)
 
     if(boost::filesystem::exists(*file_path))
     {
-
         // splitting the filepath
         auto string_parts = enhance::splitAtDelimiter(file_path->string(), ".");
 

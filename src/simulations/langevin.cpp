@@ -18,7 +18,7 @@
 
 
 
-void Langevin::step(const unsigned long& steps)
+void Langevin::step(const unsigned long& steps __attribute__((unused)) )
 {
     // for(unsigned long step = 0; step < steps; ++step)
     // {

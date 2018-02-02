@@ -122,15 +122,15 @@ bool TrajectoryReaderGro::isAnisotropic() const
     if(frames.empty()) throw std::logic_error("no frame was read");
     std::string number_a { *( std::begin(getFrame(0).second[2]) + 14 ) };
     std::string number_b { *( std::begin(getFrame(0).second[3]) + 14 ) };
-    // try
-    // {
+    try
+    {
         return std::string( number_a ) != std::string( number_b );
-    // }
-    // catch (const std::exception& e)
-    // {
-        // vesCRITICAL("std::stoll failed " << number_a << " " << number_b)
-        // throw;
-    // }
+    }
+    catch (const std::exception& e)
+    {
+        vesCRITICAL("string comparison failed   " << number_a << " != " << number_b)
+        throw;
+    }
 }
 
 

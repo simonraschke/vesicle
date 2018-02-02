@@ -22,10 +22,17 @@
 #include <tbb/task_scheduler_init.h>
 #include <tbb/task_arena.h>
 
+#include "vesicleIO/hdf5_handler.hpp"
 
 
 int main(int argc, const char *argv[])
 {
+    HDF5Handler h;
+    h.setFileName("testfile.h5");
+    h.createDataset<2>(H5::PredType::NATIVE_FLOAT,"testset",6,4);
+    h.writeToDataset("testset");
+    std::exit(EXIT_SUCCESS);
+
     // register important signals in Controller bas class
     // allowing civilized shutdown
     std::signal( SIGHUP,  Controller::signal );

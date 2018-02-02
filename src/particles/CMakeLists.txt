@@ -1,19 +1,12 @@
 message(${CMAKE_CURRENT_SOURCE_DIR})
 
-set(particles_source_files
-    particle.cpp
-    particle_mobile.cpp
-    particle_distributor.cpp
+find_package(Eigen3 REQUIRED NO_MODULE)
 
-    particle.hpp
-    particle_mobile.hpp
-    particle_frame.hpp
-    particle_distributor.hpp
-
-    particle_factory.hpp
+file(GLOB particles_source_files
+    *.cpp
+    *.hpp
 )
 
-find_package(Eigen3 REQUIRED NO_MODULE)
 add_library(particles STATIC ${particles_source_files})
 
 target_link_libraries(particles enhance geometries IO Eigen3::Eigen)

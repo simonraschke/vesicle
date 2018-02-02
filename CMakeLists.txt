@@ -26,20 +26,20 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "~/bin/")
 add_executable(vesicle ${vesicle_source_files})
 
 # Link
-set( CMAKE_EXE_LINKER_FLAGS "-ltbb -pthread -ltbbmalloc -lboost_system -lboost_filesystem -lboost_program_options" )
+set( CMAKE_EXE_LINKER_FLAGS "-ltbb -pthread -ltbbmalloc" )
 target_link_libraries( vesicle systems IO interactions ${CMAKE_EXE_LINKER_FLAGS} )
 
 install( TARGETS vesicle RUNTIME DESTINATION bin )
 
 ###
-### vesicle
+### vesicle reader
 ###
 set(vesicle_reader_source_files src/vesicle_reader.cpp)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "~/bin/")
 add_executable(vesicle_reader ${vesicle_reader_source_files})
 
 # Link
-set( CMAKE_EXE_LINKER_FLAGS "-ltbb -pthread -ltbbmalloc -lboost_system -lboost_filesystem -lboost_program_options" )
+set( CMAKE_EXE_LINKER_FLAGS "-ltbb -pthread -ltbbmalloc" )
 target_link_libraries( vesicle_reader systems IO interactions ${CMAKE_EXE_LINKER_FLAGS} )
 
 install( TARGETS vesicle_reader RUNTIME DESTINATION bin )

@@ -95,3 +95,10 @@ void Verlet::updateVelocities()
         target->addVelocity( (target->forceOld() + target->force())*dt_half/target->getMass() );
     });
 }
+
+
+
+void Verlet::updateOrientations()
+{
+    
+}

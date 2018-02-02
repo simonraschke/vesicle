@@ -99,7 +99,11 @@ void Parameters::setup()
 
         
         if(programOptions.optionsMap.count("system.timestep"))
+        {
             dt = programOptions.optionsMap["system.timestep"].as<float>();
+            if(algorithm == std::string("montecarlo"))
+                dt = 1;
+        }
         else 
             vesCRITICAL("system.timestep not defined")
 
@@ -164,19 +168,34 @@ void Parameters::setup()
     // input configuration
     {
         if(programOptions.optionsMap.count("input.traj"))
+        {
             in_traj = programOptions.optionsMap["input.traj"].as<std::string>();
+            if(    in_traj != std::string("none") 
+                && in_traj != std::string("gro") )
+            {
+                vesWARNING("input.traj=" << in_traj << " format not supported, setting to \"none\"")
+                in_traj = "none";
+            }
+        }
         else 
         {
-            vesWARNING("input.out_traj not defined, setting to \"none\"") 
+            vesWARNING("input.traj not defined, setting to \"none\"") 
             in_traj = "none";
         }
 
         if(programOptions.optionsMap.count("input.path"))
+        {
             in_traj_path = programOptions.optionsMap["input.path"].as<boost::filesystem::path>();
+            if(!boost::filesystem::exists(in_traj_path) && in_traj_path != std::string("none"))
+            {
+                vesCRITICAL("input.path=" << in_traj_path << " input trajectory not found, setting to \"none\"")
+                in_traj_path = "none";
+            }
+        }
         else 
         {
             vesWARNING("no path to input trajectory defined. setting input.traj to \"none\"") 
-            in_traj = "none";
+            in_traj_path = "none";
         }
 
         if(programOptions.optionsMap.count("input.frames"))
