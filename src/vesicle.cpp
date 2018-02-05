@@ -22,15 +22,39 @@
 #include <tbb/task_scheduler_init.h>
 #include <tbb/task_arena.h>
 
-#include "vesicleIO/hdf5_handler.hpp"
+#undef H5_USE_BOOST
+#define H5_USE_BOOST
+#include <boost/multi_array.hpp>
+#include "H5File.hpp"
 
 
 int main(int argc, const char *argv[])
 {
-    HDF5Handler h;
-    h.setFileName("testfile.h5");
-    h.createDataset(H5::PredType::NATIVE_FLOAT,"testset",10000,9999);
-    h.writeToDataset("testset");
+    // we create a new hdf5 file
+    const unsigned long x = 100000000;
+    const unsigned long y = 2;
+
+    boost::multi_array<float, 2> my_array(boost::extents[x][y]);
+    for (size_t i = 0; i < x; ++i) {
+        for (size_t j = 0; j < y; ++j) {
+            my_array[i][j] = 1.337 + i + j;
+        }
+    }
+
+    HighFive::File file(boost::filesystem::system_complete("data.h5").string(), HighFive::File::ReadWrite | HighFive::File::Create | HighFive::File::Truncate);
+    HighFive::DataSet dataset = file.createDataSet<float>("/boost_multi_array", HighFive::DataSpace::From(my_array));
+    
+    // lets write our vector of int to the HDF5 dataset
+    dataset.write(my_array);
+
+    // read back
+    // boost::multi_array<int, 2> result;
+    // dataset.read(result);
+
+    // for(auto i : result)
+    // for(auto j : i)
+    // vesLOG(j)
+    
     return EXIT_SUCCESS;
 
     // register important signals in Controller bas class
