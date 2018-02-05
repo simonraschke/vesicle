@@ -18,10 +18,17 @@
 
 #include "parameters.hpp"
 #include "enhance/compile_time_utility.hpp"
+#include "enhance/output_utility.hpp"
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <memory>
 #include <H5Cpp.h>
+
+#include <variant>
+#include <typeindex>
+#include <type_traits>
+
 
 
 
@@ -30,12 +37,19 @@ class HDF5Handler
     : public ParameterDependentComponent
 {
 public:
+
+    ~HDF5Handler();
+
     void setFileName(H5std_string);
 
-    template<hsize_t DIMENSIONS, typename...Args>
+    template<typename...Args>
     void createDataset(H5::PredType, H5std_string, Args...);
 
     void writeToDataset(H5std_string);
+
+    bool isSupported(H5::DataSet);
+    bool isSupported(H5::DataType);
+    
 
 protected:
     std::unique_ptr<H5std_string> file_name {nullptr};
@@ -46,15 +60,26 @@ protected:
 
 
 
-template<hsize_t DIMENSIONS, typename...Args>
+template<typename...Args>
 inline void HDF5Handler::createDataset(H5::PredType T, H5std_string dataset_name, Args...ndims)
 {
-    static_assert(enhance::variadic::size<Args...>::value == DIMENSIONS, "enhance::SizeOfParameterPack(ndims...) != DIMENSIONS");
+    vesDEBUG(__PRETTY_FUNCTION__)
+    static_assert(enhance::variadic::size<Args...>::value == 2, "enhance::SizeOfParameterPack(ndims...) != DIMENSIONS");
     static_assert(enhance::variadic::all_type<int,Args...>::value, "parameter pack does not hold all type int");
     assert(file_name);
     assert(FILE);
 
-    hsize_t dimension_sizes[DIMENSIONS] = {static_cast<hsize_t>(ndims)...};
-	H5::DataSpace dataspace( DIMENSIONS, dimension_sizes);
+    // if(!supported_types.count(std::type_index(typeid(T))))
+    //     throw std::logic_error(enhance::toStringViaStream("type" , typeid(T).name(), " not supported"));
+    // else
+    // {
+    //     vesDEBUG(enhance::toStringViaStream("type" , typeid(T).name(), " supported"))
+    // }
+
+    hsize_t dimension_sizes[2] = {static_cast<hsize_t>(ndims)...};
+	H5::DataSpace dataspace(2, dimension_sizes);
     H5::DataSet dataset = FILE->createDataSet(dataset_name, T, dataspace);
+
+    if(!isSupported(dataset))
+        throw std::logic_error("type of dataset not supported");
 }

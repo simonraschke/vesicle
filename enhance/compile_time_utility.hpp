@@ -46,4 +46,8 @@ namespace enhance
         template<typename Type, typename... T>
         using all_type = detail::and_<std::is_same<T, Type>...>;
     }
+
+
+
+    template<class T> struct always_false : std::false_type {};
 }

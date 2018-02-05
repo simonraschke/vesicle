@@ -38,6 +38,16 @@ namespace enhance
         return static_cast<std::ostringstream&>(std::ostringstream().seekp(0) << bindable).str().c_str();
     }
 
+    template <typename... Args>
+    constexpr inline std::string toStringViaStream(Args&&... args)
+    {
+        std::stringstream stream;
+        using expander = int[];
+        (void) expander {0, (void(stream << std::forward<Args>(args)),0)...};
+        return stream.str();
+    }
+
+
     inline std::list<std::string> splitAtDelimiter(std::string str, std::string delim)
     {
         std::list<std::string> stringList;
