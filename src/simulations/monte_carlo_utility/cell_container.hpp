@@ -72,19 +72,19 @@ inline bool CellContainer<CELL_MEM_T>::areNeighbourCells(const Cell<P1>& first, 
     
     if(std::addressof(first) == std::addressof(second))
     {
-        vesDEBUG(__func__ << " " << connection_vector.format(ROWFORMAT) << " return:  false  (Reason: same Cell)")
+        // vesDEBUG(__func__ << " " << connection_vector.format(ROWFORMAT) << " return:  false  (Reason: same Cell)")
         return false;
     }
     else if((connection_vector(0) < first.getBoundaries().sizes()(0) + 0.01) 
         &&  (connection_vector(1) < first.getBoundaries().sizes()(1) + 0.01) 
         &&  (connection_vector(2) < first.getBoundaries().sizes()(2) + 0.01) )
     { 
-        vesDEBUG(__func__ << " " << connection_vector.format(ROWFORMAT) << " return:  true  (Reason: in reach)")
+        // vesDEBUG(__func__ << " " << connection_vector.format(ROWFORMAT) << " return:  true  (Reason: in reach)")
         return true;
     }
     else 
     { 
-        vesDEBUG(__func__ << " " << connection_vector.format(ROWFORMAT) << " return:  false (Reason: not in reach)")
+        // vesDEBUG(__func__ << " " << connection_vector.format(ROWFORMAT) << " return:  false (Reason: not in reach)")
         return false;
     }
 }
@@ -116,16 +116,16 @@ inline void CellContainer<CELL_MEM_T>::setup()
     const float y_edge = getLengthY()/cells_y;
     const float z_edge = getLengthZ()/cells_z;
 
-    vesDEBUG("cells in x dimension: " << cells_x << " with edge: " << x_edge)
-    vesDEBUG("cells in y dimension: " << cells_y << " with edge: " << y_edge)
-    vesDEBUG("cells in z dimension: " << cells_z << " with edge: " << z_edge)
-    vesDEBUG("cells overall: " << cells_x*cells_y*cells_z)
+    // vesDEBUG("cells in x dimension: " << cells_x << " with edge: " << x_edge)
+    // vesDEBUG("cells in y dimension: " << cells_y << " with edge: " << y_edge)
+    // vesDEBUG("cells in z dimension: " << cells_z << " with edge: " << z_edge)
+    // vesDEBUG("cells overall: " << cells_x*cells_y*cells_z)
 
     for ( std::size_t x = 0; x < cells_x; ++x )
     for ( std::size_t y = 0; y < cells_y; ++y )
     for ( std::size_t z = 0; z < cells_z; ++z )
     {
-        vesDEBUG("##### building cell: " << x << ' ' << y << ' ' << z)
+        // vesDEBUG("##### building cell: " << x << ' ' << y << ' ' << z)
         cells.emplace_back();
         cells.back().setParameters(getParameters());
         const Eigen::Vector3f from = Eigen::Vector3f( x_edge*x,     y_edge*y,     z_edge*z     ) - Eigen::Vector3f(0.01, 0.01, 0.01);
@@ -133,12 +133,12 @@ inline void CellContainer<CELL_MEM_T>::setup()
         cells.back().setBoundaries(from,to);
 
         std::cerr.precision(3);
-        std::cerr << std::fixed;
-        vesDEBUG("  from:  " << from.format(ROWFORMAT))
-        vesDEBUG("  to:    " << to.format(ROWFORMAT))
-        vesDEBUG("  min    " << cells.back().getBoundaries().min().format(ROWFORMAT))
-        vesDEBUG("  max    " << cells.back().getBoundaries().max().format(ROWFORMAT))
-        vesDEBUG("  centre " << cells.back().getBoundaries().center().format(ROWFORMAT))
+        // std::cerr << std::fixed;
+        // vesDEBUG("  from:  " << from.format(ROWFORMAT))
+        // vesDEBUG("  to:    " << to.format(ROWFORMAT))
+        // vesDEBUG("  min    " << cells.back().getBoundaries().min().format(ROWFORMAT))
+        // vesDEBUG("  max    " << cells.back().getBoundaries().max().format(ROWFORMAT))
+        // vesDEBUG("  centre " << cells.back().getBoundaries().center().format(ROWFORMAT))
     }
 
     assert( cells.size() == cells_x*cells_y*cells_z );
@@ -153,8 +153,8 @@ inline void CellContainer<CELL_MEM_T>::setup()
     #ifndef NDEBUG
     std::for_each(std::begin(cells), std::end(cells), [&](Cell<CELL_MEM_T> & cell)
     {
-        vesDEBUG("size of cell proximity: " << cell.getProximity().size() )
-        vesDEBUG("size of cell region:    " << cell.getRegion().size() )
+        // vesDEBUG("size of cell proximity: " << cell.getProximity().size() )
+        // vesDEBUG("size of cell region:    " << cell.getRegion().size() )
         assert(cell.getProximity().size() == 26);
         assert(cell.getRegion().size() == 27);
         assert(cell.state == CellState::IDLE);
@@ -167,7 +167,7 @@ inline void CellContainer<CELL_MEM_T>::setup()
 template<typename CELL_MEM_T>
 std::size_t CellContainer<CELL_MEM_T>::membersContained() const
 {
-    vesDEBUG(__PRETTY_FUNCTION__)
+    // vesDEBUG(__PRETTY_FUNCTION__)
     return PARALLEL_REDUCE(std::size_t, cells, [](auto i, const cell_type& cell){ return i + cell.size(); });
 }
 
@@ -177,7 +177,7 @@ template<typename CELL_MEM_T>
 template<typename CONTAINER>
 void CellContainer<CELL_MEM_T>::deployParticles(const CONTAINER& particles)
 {
-    vesDEBUG(__PRETTY_FUNCTION__)
+    // vesDEBUG(__PRETTY_FUNCTION__)
     tbb::parallel_for_each(std::begin(particles), std::end(particles), [&](const std::unique_ptr<CELL_MEM_T>& particle)
     {
         bool done = false;

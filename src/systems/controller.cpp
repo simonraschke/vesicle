@@ -62,8 +62,8 @@ void SimulationControl::make_nodes()
         { 
             vesDEBUG("history_node")
             system.addTime(system.getParameters().dt); 
-            HistoryBuffer buffer;
-            buffer.time = std::make_unique<float>(system.getTime()); 
+            // HistoryBuffer buffer;
+            // buffer.time = std::make_unique<float>(system.getTime()); 
             // try
             // {
             //     tbb::parallel_invoke
@@ -73,7 +73,7 @@ void SimulationControl::make_nodes()
             //     );
             // }
             // catch(std::runtime_error& e){ vesWARNING(e.what()) }
-            history_storage.flush(buffer);
+            // history_storage.flush(buffer);
         });
 
 

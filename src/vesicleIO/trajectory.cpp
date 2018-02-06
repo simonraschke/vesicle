@@ -99,3 +99,10 @@ void TrajectoryWriter::setAnisotropic(bool b)
     anisotropic = b;
     // makeStartFileVMD();
 }
+
+
+
+void TrajectoryReader::clearAllFrames()
+{
+    frames.clear();
+}

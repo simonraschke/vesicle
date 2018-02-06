@@ -32,14 +32,11 @@ class TrajectoryReaderGro
     : public virtual TrajectoryReader
 {
 public:
-    typedef std::pair<std::size_t,std::deque<std::string>> Frame;
-    typedef std::map<Frame::first_type,Frame::second_type> FrameMap;
-
     TrajectoryReaderGro();
     ~TrajectoryReaderGro() = default;
 
     // read input stream and safe last frame
-    virtual void readAllFrames() override;
+    virtual void readAllFrames(bool = true) override;
 
     // return last frame 
     // readAllFrames must called beforehand
@@ -50,10 +47,10 @@ public:
     std::size_t numParticles() const;
     bool isAnisotropic() const;
 
-    static std::map<std::string,std::string> particleLineTokens(std::string line);
+    std::map<std::string,std::string> particleLineTokens(std::string line) const;
 
 protected:
-    FrameMap frames {};
+    bool isRegexMatch(const Frame&, std::regex) const;
 
 private:
 };

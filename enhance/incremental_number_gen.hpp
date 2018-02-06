@@ -33,7 +33,7 @@ namespace enhance
         virtual ~IncrementalNumberGenerator() = default;
 
     protected:
-    // make it inheritance only
+        // make it inheritance only
         IncrementalNumberGenerator() = default;
     };
 

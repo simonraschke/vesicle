@@ -23,6 +23,8 @@ float AngularLennardJones::potential(const Particle& p1, const Particle& p2) con
     cartesian distance_vec = distanceVector(p1, p2);
 
     const float r2 = 1.f/distance_vec.squaredNorm();
+    if(r2 < 1.f/9.f) return 0.f;
+
     const float r6 = r2*r2*r2;
 
     distance_vec.normalize();

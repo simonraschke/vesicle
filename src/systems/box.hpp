@@ -177,7 +177,7 @@ void Box<P>::check_for_aligned_box_setup()
 
 
 template<>
-inline Box<PERIODIC::ON>::cartesian Box<PERIODIC::ON>::distanceVector(const cartesian& c1, const cartesian& c2) const
+EIGEN_STRONG_INLINE Box<PERIODIC::ON>::cartesian Box<PERIODIC::ON>::distanceVector(const cartesian& c1, const cartesian& c2) const
 {
     cartesian distance_cartesian = c2-c1;
     distance_cartesian(0) = distance_cartesian(0) - getParameters().x * std::round(distance_cartesian(0)/(getParameters().x));
@@ -189,7 +189,7 @@ inline Box<PERIODIC::ON>::cartesian Box<PERIODIC::ON>::distanceVector(const cart
 
 
 template<>
-inline Box<PERIODIC::OFF>::cartesian Box<PERIODIC::OFF>::distanceVector(const cartesian& c1, const cartesian& c2) const
+EIGEN_STRONG_INLINE Box<PERIODIC::OFF>::cartesian Box<PERIODIC::OFF>::distanceVector(const cartesian& c1, const cartesian& c2) const
 {
     return (c2-c1);
 }
@@ -212,7 +212,7 @@ inline Box<PERIODIC::OFF>::cartesian Box<PERIODIC::OFF>::distanceVector(const ca
 
 
 template<PERIODIC P>
-inline typename Box<P>::cartesian Box<P>::distanceVector(const Particle&p1, const Particle& p2) const
+EIGEN_STRONG_INLINE typename Box<P>::cartesian Box<P>::distanceVector(const Particle&p1, const Particle& p2) const
 {
     return distanceVector(p1.coords(),p2.coords());
 }
@@ -234,7 +234,7 @@ inline typename Box<P>::cartesian Box<P>::distanceVector(const Particle&p1, cons
 // }
 
 template<PERIODIC P>
-inline typename Box<P>::real Box<P>::squared_distance(const cartesian& c1, const cartesian& c2) const 
+EIGEN_STRONG_INLINE typename Box<P>::real Box<P>::squared_distance(const cartesian& c1, const cartesian& c2) const 
 {
     return distanceVector(c1,c2).squaredNorm();
 }
@@ -256,7 +256,7 @@ inline typename Box<P>::real Box<P>::squared_distance(const cartesian& c1, const
 // }
 
 template<PERIODIC P>
-inline typename Box<P>::real Box<P>::squared_distance(const Particle& p1, const Particle& p2) const 
+EIGEN_STRONG_INLINE typename Box<P>::real Box<P>::squared_distance(const Particle& p1, const Particle& p2) const 
 {
     return squared_distance(p1.coords(),p2.coords());
 }
@@ -280,7 +280,7 @@ inline typename Box<P>::real Box<P>::squared_distance(const Particle& p1, const 
 
 
 template<PERIODIC P>
-inline typename Box<P>::real Box<P>::distance(const cartesian& c1, const cartesian& c2) const 
+EIGEN_STRONG_INLINE typename Box<P>::real Box<P>::distance(const cartesian& c1, const cartesian& c2) const 
 {
     return std::sqrt(squared_distance(c1,c2));
 }
@@ -302,7 +302,7 @@ inline typename Box<P>::real Box<P>::distance(const cartesian& c1, const cartesi
 // }
 
 template<PERIODIC P>
-inline typename Box<P>::real Box<P>::distance(const Particle& p1, const Particle& p2) const 
+EIGEN_STRONG_INLINE typename Box<P>::real Box<P>::distance(const Particle& p1, const Particle& p2) const 
 {
     return distance(p1.coords(),p2.coords());
 }

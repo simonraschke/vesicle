@@ -35,7 +35,7 @@ bool Distributor::conflicting_placement(PARTICLERANGE* range, PARTICLERANGE::val
 
 void RandomDistributor::operator()(PARTICLERANGE* range)
 {
-    vesLOG("distributing particles from randomly")
+    vesLOG("distributing particles randomly")
     assert(range);
     tbb::parallel_for_each(range->begin(), range->end(), [&](auto& p) 
     {
@@ -85,7 +85,7 @@ RandomDistributor::cartesian RandomDistributor::randomOrientation() const
 
 void GridDistributor::operator()(PARTICLERANGE* range)
 {   
-    vesLOG("distributing particles from in grid")
+    vesLOG("distributing particles on grid")
     std::size_t maxX = std::floor(getLengthX()/1.122f);
     std::size_t maxY = std::floor(getLengthY()/1.122f);
     std::size_t maxZ = std::floor(getLengthZ()/1.122f);
@@ -158,13 +158,13 @@ void TrajectoryDistributor::operator()(PARTICLERANGE* range)
         {
             Particle& particle = *((*range)[i]);
             const std::string line = frame[i*2+2];
-            auto tokens = TrajectoryReaderGro::particleLineTokens(line);
+            auto tokens = reader.particleLineTokens(line);
             vesDEBUG("up    " << line);
             
             if(reader.isAnisotropic())
             {
                 const std::string line2 = frame[i*2+3];
-                auto tokens2 = TrajectoryReaderGro::particleLineTokens(line2);
+                auto tokens2 = reader.particleLineTokens(line2);
                 vesDEBUG("bottom" << line2);
                 {
                     cartesian position;
@@ -209,7 +209,7 @@ void TrajectoryDistributor::operator()(PARTICLERANGE* range)
                 // ++i;
             }
         }
-
+        reader.clearAllFrames();
     }
     else
     {

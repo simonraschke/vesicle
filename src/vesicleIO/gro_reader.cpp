@@ -10,7 +10,7 @@ TrajectoryReaderGro::TrajectoryReaderGro()
 
 
 
-void TrajectoryReaderGro::readAllFrames()
+void TrajectoryReaderGro::readAllFrames(bool direct_match_check)
 {
     vesDEBUG(__PRETTY_FUNCTION__)
     if(!FILE.is_open())
@@ -18,29 +18,70 @@ void TrajectoryReaderGro::readAllFrames()
     else if (FILE.is_open())
     {
         Frame::first_type frame_counter = 0;
-        Frame::second_type frame {};
+        Frame::second_type frame_buffer {};
         
         bool first_frame_header = true;
 
+        // iterating the whole file
         for( std::string line; std::getline(FILE, line); /**/ )
         {
+            // if FRAMEBEGIN is in line
             if(boost::algorithm::contains(line, "FRAMEBEGIN"))
             {
+                // and its not the first line
                 if( !first_frame_header )
                 {
-                    frames.insert(std::make_pair(frame_counter,frame));
+                    // add the whole frame_buffer to container
+
+                    // directly check for regex?
+                    if(direct_match_check)
+                    {
+                        if(isRegexMatch(std::make_pair(frame_counter,frame_buffer), getParameters().in_frames))
+                        {
+                            frames.emplace_back(std::make_pair(frame_counter,frame_buffer));
+                        }
+                    }
+                    // or just add every frame
+                    // THIS IS MEMORY HEAVY 
+                    else
+                    {
+                        frames.emplace_back(std::make_pair(frame_counter,frame_buffer));
+                    }
+
+                    // increase frame counter
                     ++frame_counter;
-                    frame.clear();
+
+                    // clear the actual frame_buffer, because if you encounter
+                    // FRAMEBEGIN the next frame is reached
+                    frame_buffer.clear();
                 }
+                //first occurance of FRAMEBEGIN was obviously met
                 first_frame_header = false;
             }
-            frame.push_back(line);
+            // append line to frame_buffer
+            frame_buffer.push_back(line);
         }
 
         // do not forget to add the last frame
-        frames.insert(std::make_pair(frame_counter,frame));
+        // directly check for regex?
+        if(direct_match_check)
+        {
+            // special case if only the last frame is wanted
+            if(std::regex_match("-1", getParameters().in_frames))
+            {
+                frames.emplace_back(std::make_pair(frame_counter,frame_buffer));
+            }
+            // check for regex match if no special case
+            else if(isRegexMatch(std::make_pair(frame_counter,frame_buffer), getParameters().in_frames))
+            {
+                frames.emplace_back(std::make_pair(frame_counter,frame_buffer));
+            }
+        }
+        else
+        {
+            frames.emplace_back(std::make_pair(frame_counter,frame_buffer));
+        }
 
-        // std::move(std::begin(frame), std::end(frame), std::back_inserter(last_frame));
         vesLOG("last frame is frame " << frames.rbegin()->first )
     }
 }
@@ -77,17 +118,19 @@ TrajectoryReaderGro::FrameMap TrajectoryReaderGro::getMatches(std::regex reg) co
 
     if(std::regex_match("-1", reg))
     {
-        vesLOG("found frame: " << frames.rbegin()->first)
-        selection.insert(*frames.rbegin());
+        vesLOG("regex match found frame: " << frames.rbegin()->first)
+        // selection.insert(*frames.rbegin());
+        selection.emplace_back(*frames.rbegin());
     }
     else
         for(const Frame& frame : frames)
         {
             // vesLOG("frame.first " << frame.first)
-            if(std::regex_match(std::to_string(frame.first), reg))
+            if(isRegexMatch(frame, reg))
             {
-                vesLOG("found frame: " << frame.first)
-                selection.insert(frame);
+                vesLOG("regex match found frame: " << frame.first)
+                // selection.insert(frame);
+                selection.emplace_back(frame);
             }
         }
 
@@ -135,10 +178,10 @@ bool TrajectoryReaderGro::isAnisotropic() const
 
 
 
-std::map<std::string,std::string> TrajectoryReaderGro::particleLineTokens(std::string line)
+std::map<std::string,std::string> TrajectoryReaderGro::particleLineTokens(std::string line) const
 {
     vesDEBUG(__PRETTY_FUNCTION__)
-    std::map<std::string,std::string> map;
+    std::map<std::string,std::string> map {};
     if(line.size() == 44)
     {
         line.append(std::string("  0.0000"));
@@ -168,4 +211,12 @@ std::map<std::string,std::string> TrajectoryReaderGro::particleLineTokens(std::s
     vesDEBUG("pos x " << map["pos x"] << " pos y " << map["pos y"] << "  pos z " << map["pos z"] << " vel x " << map["vel x"] << " vel y " << map["vel y"] << "  vel z " << map["vel z"])
 
     return map;
+}
+
+
+
+
+bool TrajectoryReaderGro::isRegexMatch(const Frame& frame, std::regex reg) const
+{
+    return std::regex_match(std::to_string(frame.first), reg);
 }

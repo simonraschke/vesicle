@@ -107,9 +107,14 @@ class TrajectoryReader
     : public TrajectoryRWBase
 {
 public:
+    typedef std::pair<std::size_t,std::deque<std::string>> Frame;
+    // typedef std::map<Frame::first_type,Frame::second_type> FrameMap;
+    typedef std::vector<Frame> FrameMap;
+    
     virtual ~TrajectoryReader() = default;
 
-    virtual void readAllFrames() = 0;
+    virtual void readAllFrames(bool) = 0;
+    void clearAllFrames();
 
 protected:
     TrajectoryReader() = default;
@@ -117,6 +122,8 @@ protected:
     void readHeaderLine();
     void readParticleLine();
     void readBottomLine();
+    
+    FrameMap frames {};
 
 private:
 
