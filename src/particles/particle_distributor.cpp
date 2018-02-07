@@ -151,8 +151,10 @@ void TrajectoryDistributor::operator()(PARTICLERANGE* range)
         reader.readAllFrames();
         auto frame = reader.getMatches(getParameters().in_frames).rbegin()->second;
         // unsigned short anisotropicFactor = reader.isAnisotropic() ? 2 : 1;
-        const std::size_t num_particles = reader.numParticles();
         // std::size_t num_particles_lines = reader.numParticles() * anisotropicFactor;
+        const std::size_t num_particles = reader.numParticles();
+        if(num_particles != range->size())
+            vesWARNING("PARTICLERANGE != num_particles from" << getParameters().in_traj_path)
 
         for(std::size_t i = 0; i < num_particles ; ++i)
         {
@@ -168,18 +170,17 @@ void TrajectoryDistributor::operator()(PARTICLERANGE* range)
                 vesDEBUG("bottom" << line2);
                 {
                     cartesian position;
+                    cartesian orientation;
                     position(0) = (boost::lexical_cast<float>(tokens["pos x"]) + boost::lexical_cast<float>(tokens2["pos x"])) /2;
                     position(1) = (boost::lexical_cast<float>(tokens["pos y"]) + boost::lexical_cast<float>(tokens2["pos y"])) /2;
                     position(2) = (boost::lexical_cast<float>(tokens["pos z"]) + boost::lexical_cast<float>(tokens2["pos z"])) /2;
-                    vesDEBUG("position" << position.format(ROWFORMAT) <<" scaled down " << scaleDown(position).format(ROWFORMAT) )
+                    orientation(0) = -1.f*( boost::lexical_cast<float>(tokens["pos x"]) - position(0) );
+                    orientation(1) = -1.f*( boost::lexical_cast<float>(tokens["pos y"]) - position(1) );
+                    orientation(2) = -1.f*( boost::lexical_cast<float>(tokens["pos z"]) - position(2) );
                     particle.setCoords(scaleDown(position));
-                }
-                {
-                    cartesian orientation;
-                    orientation(0) = ( boost::lexical_cast<float>(tokens["pos x"]) - particle.coords()(0) );
-                    orientation(1) = ( boost::lexical_cast<float>(tokens["pos y"]) - particle.coords()(1) );
-                    orientation(2) = ( boost::lexical_cast<float>(tokens["pos z"]) - particle.coords()(2) );
                     particle.setOrientation(orientation);
+                    vesDEBUG("position: " << position.format(ROWFORMAT) <<"  scaled down: " << particle.coords().format(ROWFORMAT) )
+                    vesDEBUG("orientation: " << orientation.format(ROWFORMAT) << "  direclty from particle: " << particle.orientation().format(ROWFORMAT) )
                 }
                 {
                     cartesian velocity;

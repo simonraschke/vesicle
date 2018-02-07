@@ -9,6 +9,8 @@ file(GLOB particles_source_files
 
 add_library(particles STATIC ${particles_source_files})
 
+# set(THEBUILDTYPE get_target_property(VAR vesicle ))
+
 target_link_libraries(particles enhance geometries IO Eigen3::Eigen)
 target_include_directories(particles PUBLIC ${PROJECT_SOURCE_DIR})
 target_include_directories(particles PUBLIC ${PROJECT_SOURCE_DIR}/src)

@@ -1,4 +1,5 @@
 build/
 .vscode/
 *.gro
+*.h5
 Testing/

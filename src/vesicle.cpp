@@ -28,6 +28,13 @@
 
 int main(int argc, const char *argv[])
 {
+    #ifdef DEBUG
+    std::cout << "DEBUG" << std::endl;
+    #endif
+
+    #ifdef NDEBUG
+    std::cout << "NDEBUG" << std::endl;
+    #endif
     // we create a new hdf5 file
     // const unsigned long x = 100000000;
     // const unsigned long y = 2;
@@ -67,9 +74,6 @@ int main(int argc, const char *argv[])
     std::signal( SIGBUS,  Controller::signal );
     std::signal( SIGFPE,  Controller::signal );
     std::signal( SIGKILL, Controller::signal );
-
-    // should be implicit with c++11 but whatever
-    Eigen::initParallel();
 
     // create a task arena 
 #ifndef NDEBUG

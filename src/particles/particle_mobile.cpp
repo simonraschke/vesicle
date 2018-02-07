@@ -49,7 +49,9 @@ void ParticleMobile::setOrientation(const cartesian& newOrientation)
 {
     assert(!newOrientation.hasNaN());
     assert(currentOrientation);
-    *currentOrientation = newOrientation.normalized();
+    *currentOrientation = newOrientation;
+    currentOrientation->normalize();
+    assert(currentOrientation->squaredNorm()-1.f < 1e-3);
 }
 
 
