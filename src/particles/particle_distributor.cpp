@@ -160,23 +160,32 @@ void TrajectoryDistributor::operator()(PARTICLERANGE* range)
         {
             Particle& particle = *((*range)[i]);
             const std::string line = frame[i*2+2];
-            auto tokens = reader.particleLineTokens(line);
+            const auto tokens = reader.particleLineTokens(line);
             vesDEBUG("up    " << line);
             
             if(reader.isAnisotropic())
             {
                 const std::string line2 = frame[i*2+3];
-                auto tokens2 = reader.particleLineTokens(line2);
+                const auto tokens2 = reader.particleLineTokens(line2);
                 vesDEBUG("bottom" << line2);
                 {
                     cartesian position;
                     cartesian orientation;
+<<<<<<< Updated upstream
                     position(0) = (boost::lexical_cast<float>(tokens["pos x"]) + boost::lexical_cast<float>(tokens2["pos x"])) /2;
                     position(1) = (boost::lexical_cast<float>(tokens["pos y"]) + boost::lexical_cast<float>(tokens2["pos y"])) /2;
                     position(2) = (boost::lexical_cast<float>(tokens["pos z"]) + boost::lexical_cast<float>(tokens2["pos z"])) /2;
-                    orientation(0) = -1.f*( boost::lexical_cast<float>(tokens["pos x"]) - position(0) );
-                    orientation(1) = -1.f*( boost::lexical_cast<float>(tokens["pos y"]) - position(1) );
-                    orientation(2) = -1.f*( boost::lexical_cast<float>(tokens["pos z"]) - position(2) );
+                    orientation(0) = boost::lexical_cast<float>(tokens["pos x"]) - position(0);
+                    orientation(1) = boost::lexical_cast<float>(tokens["pos y"]) - position(1);
+                    orientation(2) = boost::lexical_cast<float>(tokens["pos z"]) - position(2);
+=======
+                    position(0) = (boost::lexical_cast<float>(tokens.at("pos x")) + boost::lexical_cast<float>(tokens2.at("pos x"))) /2;
+                    position(1) = (boost::lexical_cast<float>(tokens.at("pos y")) + boost::lexical_cast<float>(tokens2.at("pos y"))) /2;
+                    position(2) = (boost::lexical_cast<float>(tokens.at("pos z")) + boost::lexical_cast<float>(tokens2.at("pos z"))) /2;
+                    orientation(0) = -1.f*( boost::lexical_cast<float>(tokens.at("pos x")) - position(0) );
+                    orientation(1) = -1.f*( boost::lexical_cast<float>(tokens.at("pos y")) - position(1) );
+                    orientation(2) = -1.f*( boost::lexical_cast<float>(tokens.at("pos z")) - position(2) );
+>>>>>>> Stashed changes
                     particle.setCoords(scaleDown(position));
                     particle.setOrientation(orientation);
                     vesDEBUG("position: " << position.format(ROWFORMAT) <<"  scaled down: " << particle.coords().format(ROWFORMAT) )
@@ -184,9 +193,9 @@ void TrajectoryDistributor::operator()(PARTICLERANGE* range)
                 }
                 {
                     cartesian velocity;
-                    velocity(0) = (boost::lexical_cast<float>(tokens["vel x"]) + boost::lexical_cast<float>(tokens2["vel x"])) /2;
-                    velocity(1) = (boost::lexical_cast<float>(tokens["vel y"]) + boost::lexical_cast<float>(tokens2["vel y"])) /2;
-                    velocity(2) = (boost::lexical_cast<float>(tokens["vel z"]) + boost::lexical_cast<float>(tokens2["vel z"])) /2;
+                    velocity(0) = (boost::lexical_cast<float>(tokens.at("vel x")) + boost::lexical_cast<float>(tokens2.at("vel x"))) /2;
+                    velocity(1) = (boost::lexical_cast<float>(tokens.at("vel y")) + boost::lexical_cast<float>(tokens2.at("vel y"))) /2;
+                    velocity(2) = (boost::lexical_cast<float>(tokens.at("vel z")) + boost::lexical_cast<float>(tokens2.at("vel z"))) /2;
                     particle.setVelocity(velocity);
                 }
                 // i += 2;
@@ -195,16 +204,16 @@ void TrajectoryDistributor::operator()(PARTICLERANGE* range)
             {
                 {
                     cartesian position;
-                    position(0) = boost::lexical_cast<float>(tokens["pos x"]);
-                    position(1) = boost::lexical_cast<float>(tokens["pos y"]);
-                    position(2) = boost::lexical_cast<float>(tokens["pos z"]);
+                    position(0) = boost::lexical_cast<float>(tokens.at("pos x"));
+                    position(1) = boost::lexical_cast<float>(tokens.at("pos y"));
+                    position(2) = boost::lexical_cast<float>(tokens.at("pos z"));
                     particle.setCoords(position);
                 }
                 {
                     cartesian velocity;
-                    velocity(0) = boost::lexical_cast<float>(tokens["vel x"]);
-                    velocity(1) = boost::lexical_cast<float>(tokens["vel y"]);
-                    velocity(2) = boost::lexical_cast<float>(tokens["vel z"]);
+                    velocity(0) = boost::lexical_cast<float>(tokens.at("vel x"));
+                    velocity(1) = boost::lexical_cast<float>(tokens.at("vel y"));
+                    velocity(2) = boost::lexical_cast<float>(tokens.at("vel z"));
                     particle.setVelocity(velocity);
                 }
                 // ++i;

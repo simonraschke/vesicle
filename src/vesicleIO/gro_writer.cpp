@@ -116,9 +116,9 @@ void TrajectoryWriterGro::write(const HistoryStorage& history)
             FILE << std::setw(5) <<  "A";
             FILE << std::setw(5) <<  atom+1;
             FILE << std::setprecision(3);
-            FILE << std::setw(8) <<  coords(0) - orientation(0)*getParameters().kappa/2.f;
-            FILE << std::setw(8) <<  coords(1) - orientation(1)*getParameters().kappa/2.f;
-            FILE << std::setw(8) <<  coords(2) - orientation(2)*getParameters().kappa/2.f;
+            FILE << std::setw(8) <<  coords(0) + orientation(0)*getParameters().kappa/2.f;
+            FILE << std::setw(8) <<  coords(1) + orientation(1)*getParameters().kappa/2.f;
+            FILE << std::setw(8) <<  coords(2) + orientation(2)*getParameters().kappa/2.f;
             FILE << std::setprecision(4);
             FILE << std::setw(8) <<  displacement(0);
             FILE << std::setw(8) <<  displacement(1);
@@ -131,9 +131,9 @@ void TrajectoryWriterGro::write(const HistoryStorage& history)
             FILE << std::setw(5) <<  "B";
             FILE << std::setw(5) <<  atom+1;
             FILE << std::setprecision(3);
-            FILE << std::setw(8) <<  coords(0) + orientation(0)*getParameters().kappa/2.f;
-            FILE << std::setw(8) <<  coords(1) + orientation(1)*getParameters().kappa/2.f;
-            FILE << std::setw(8) <<  coords(2) + orientation(2)*getParameters().kappa/2.f;
+            FILE << std::setw(8) <<  coords(0) - orientation(0)*getParameters().kappa/2.f;
+            FILE << std::setw(8) <<  coords(1) - orientation(1)*getParameters().kappa/2.f;
+            FILE << std::setw(8) <<  coords(2) - orientation(2)*getParameters().kappa/2.f;
             FILE << std::setprecision(4);
             FILE << std::setw(8) <<  -displacement(0);
             FILE << std::setw(8) <<  -displacement(1);
