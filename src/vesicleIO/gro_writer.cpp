@@ -113,7 +113,7 @@ void TrajectoryWriterGro::write(const HistoryStorage& history)
             
             FILE << std::setw(5) <<  residue+1;
             FILE << std::setw(5) <<  target->name();
-            FILE << std::setw(5) <<  "A";
+            FILE << std::setw(5) <<  "B";
             FILE << std::setw(5) <<  atom+1;
             FILE << std::setprecision(3);
             FILE << std::setw(8) <<  coords(0) + orientation(0)*getParameters().kappa/2.f;
@@ -128,7 +128,7 @@ void TrajectoryWriterGro::write(const HistoryStorage& history)
 
             FILE << std::setw(5) <<  residue+1;
             FILE << std::setw(5) <<  target->name();
-            FILE << std::setw(5) <<  "B";
+            FILE << std::setw(5) <<  "A";
             FILE << std::setw(5) <<  atom+1;
             FILE << std::setprecision(3);
             FILE << std::setw(8) <<  coords(0) - orientation(0)*getParameters().kappa/2.f;

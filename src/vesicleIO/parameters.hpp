@@ -59,6 +59,12 @@ struct Parameters
     boost::filesystem::path in_traj_path {};
     std::regex in_frames {};
 
+    // ANALYSIS
+    bool epot {};
+    bool cluster {};
+    bool cluster_volume {};
+    bool cluster_histogram {};
+
     // functions
     void setup();
     ProgramOptions programOptions {};
@@ -68,8 +74,8 @@ struct Parameters
 
 
 // A parameter containing base class to derive from
-// CARFUL: need to call setParameters on derived to use
-// think carfilly about virtual inheritance in multiple inheritance
+// CARFUL: need to call setParameters on derived to not throw
+// think carfully about virtual inheritance in multiple inheritance
 struct ParameterDependentComponent
 {
     // make_unique<Parameters> from copy of argument

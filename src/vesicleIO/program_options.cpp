@@ -61,6 +61,12 @@ void ProgramOptions::read(int argc, const char* argv[])
         ("input.path",  po::value<boost::filesystem::path>(), "full or rel path to trajectory file")
         ("input.frames",  po::value<std::string>(), "regular expression for frames to read");
 
+    // po::options_description analysisOptions("Input Options");
+    // analysisOptions.add_options()
+    //     ("input.traj",  po::value<std::string>(), "[none,gro]")
+    //     ("input.path",  po::value<boost::filesystem::path>(), "full or rel path to trajectory file")
+    //     ("input.frames",  po::value<std::string>(), "regular expression for frames to read");
+
     
     po::options_description allOptions;
     allOptions.add(generalOptions).add(systemOptions).add(outputOptions).add(inputOptions);

@@ -114,6 +114,7 @@ public:
     virtual ~TrajectoryReader() = default;
 
     virtual void readAllFrames(bool) = 0;
+    virtual void readNextFrame(std::regex) = 0;
     void clearAllFrames();
 
 protected:
@@ -124,6 +125,11 @@ protected:
     void readBottomLine();
     
     FrameMap frames {};
+
+    Frame::first_type frame_counter {0};
+    Frame::second_type frame_buffer {};
+
+    std::streampos FILE_pos {0};
 
 private:
 

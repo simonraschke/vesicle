@@ -37,6 +37,7 @@ public:
 
     // read input stream and safe last frame
     virtual void readAllFrames(bool = true) override;
+    void readNextFrame(std::regex) override;
 
     // return last frame 
     // readAllFrames must called beforehand
@@ -51,6 +52,7 @@ public:
 
 protected:
     bool isRegexMatch(const Frame&, std::regex) const;
+    // void getNextRegexMatch(std::regex) const;
 
 private:
 };

@@ -171,21 +171,12 @@ void TrajectoryDistributor::operator()(PARTICLERANGE* range)
                 {
                     cartesian position;
                     cartesian orientation;
-<<<<<<< Updated upstream
-                    position(0) = (boost::lexical_cast<float>(tokens["pos x"]) + boost::lexical_cast<float>(tokens2["pos x"])) /2;
-                    position(1) = (boost::lexical_cast<float>(tokens["pos y"]) + boost::lexical_cast<float>(tokens2["pos y"])) /2;
-                    position(2) = (boost::lexical_cast<float>(tokens["pos z"]) + boost::lexical_cast<float>(tokens2["pos z"])) /2;
-                    orientation(0) = boost::lexical_cast<float>(tokens["pos x"]) - position(0);
-                    orientation(1) = boost::lexical_cast<float>(tokens["pos y"]) - position(1);
-                    orientation(2) = boost::lexical_cast<float>(tokens["pos z"]) - position(2);
-=======
                     position(0) = (boost::lexical_cast<float>(tokens.at("pos x")) + boost::lexical_cast<float>(tokens2.at("pos x"))) /2;
                     position(1) = (boost::lexical_cast<float>(tokens.at("pos y")) + boost::lexical_cast<float>(tokens2.at("pos y"))) /2;
                     position(2) = (boost::lexical_cast<float>(tokens.at("pos z")) + boost::lexical_cast<float>(tokens2.at("pos z"))) /2;
-                    orientation(0) = -1.f*( boost::lexical_cast<float>(tokens.at("pos x")) - position(0) );
-                    orientation(1) = -1.f*( boost::lexical_cast<float>(tokens.at("pos y")) - position(1) );
-                    orientation(2) = -1.f*( boost::lexical_cast<float>(tokens.at("pos z")) - position(2) );
->>>>>>> Stashed changes
+                    orientation(0) = boost::lexical_cast<float>(tokens.at("pos x")) - position(0);
+                    orientation(1) = boost::lexical_cast<float>(tokens.at("pos y")) - position(1);
+                    orientation(2) = boost::lexical_cast<float>(tokens.at("pos z")) - position(2);
                     particle.setCoords(scaleDown(position));
                     particle.setOrientation(orientation);
                     vesDEBUG("position: " << position.format(ROWFORMAT) <<"  scaled down: " << particle.coords().format(ROWFORMAT) )

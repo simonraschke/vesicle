@@ -17,8 +17,10 @@ void TrajectoryReaderGro::readAllFrames(bool direct_match_check)
         throw std::logic_error("No open filestream to read from");
     else if (FILE.is_open())
     {
-        Frame::first_type frame_counter = 0;
-        Frame::second_type frame_buffer {};
+        FILE.clear();
+        FILE.seekg(0, std::ios::beg);
+        frame_counter = 0;
+        frame_buffer.clear();
         
         bool first_frame_header = true;
 
@@ -85,6 +87,73 @@ void TrajectoryReaderGro::readAllFrames(bool direct_match_check)
         vesLOG("last frame is frame " << frames.rbegin()->first )
     }
 }
+
+
+
+
+void TrajectoryReaderGro::readNextFrame(std::regex reg)
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    if(!FILE.is_open())
+        throw std::logic_error("No open filestream to read from");
+    else if (FILE.is_open())
+    {
+        FILE.seekg(FILE_pos);
+
+        frames.clear();
+        frame_buffer.clear();
+        
+        bool first_frame_header = true;
+        bool found = false;
+
+        // iterating the whole file
+        for( std::string line; std::getline(FILE, line); FILE_pos = FILE.tellg() )
+        {
+            // if FRAMEBEGIN is in line
+            if(boost::algorithm::contains(line, "FRAMEBEGIN"))
+            {
+                // and its not the first line
+                if( !first_frame_header )
+                {
+                    // add the whole frame_buffer to container
+
+                    // directly check for regex?
+                    if(isRegexMatch(std::make_pair(frame_counter,frame_buffer),reg))
+                    {
+                        found = true;
+                        frames.emplace_back(std::make_pair(frame_counter,frame_buffer));
+                        vesLOG("appending frame " << frame_counter)
+                    }
+
+                    // increase frame counter
+                    ++frame_counter;
+
+                    // clear the actual frame_buffer, because if you encounter
+                    // FRAMEBEGIN the next frame is reached
+                    frame_buffer.clear();
+                }
+                //first occurance of FRAMEBEGIN was obviously met
+                first_frame_header = false;
+            }
+            // append line to frame_buffer
+            frame_buffer.push_back(line);
+            if(found)
+                break;
+            else 
+                FILE_pos = FILE.tellg();
+        }
+
+        if(!found)
+        {
+            vesWARNING("no frame for regex was found")
+        }
+        else 
+        {
+            vesLOG("last frame is frame " << frames.rbegin()->first )
+        }
+    }
+}
+
 
 
 

@@ -10,8 +10,8 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 # Building the libraries
 add_subdirectory(enhance)
 add_subdirectory(src)
+add_subdirectory(analysis)
 
-# add_subdirectory(analysis)
 
 
 # specific flags
@@ -21,14 +21,19 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -DNDEBUG -DEIGEN_NO_DEBUG -ffast-math")
 
 ### vesicle
 set(vesicle_source_files src/vesicle.cpp)
-# set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "~/bin/")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "~/bin/")
 add_executable(vesicle ${vesicle_source_files})
+
 target_compile_options(vesicle PRIVATE -Wall -Wextra -Wpedantic -fmax-errors=3 -mavx -Weffc++ -march=nocona -mtune=generic)
-target_compile_definitions(vesicle PUBLIC USE_MATH_DEFINES EIGEN_FAST_MATH=1 EIGEN_MAX_CPP_VER=14 EIGEN_DONT_PARALLELIZE)
-set_target_properties(vesicle PROPERTIES 
-    CXX_STANARD 14 
-    CMAKE_RUNTIME_OUTPUT_DIRECTORY "~/bin/"
+
+target_compile_definitions(vesicle PUBLIC 
+    USE_MATH_DEFINES 
+    EIGEN_FAST_MATH=1 
+    EIGEN_MAX_CPP_VER=14 
+    EIGEN_DONT_PARALLELIZE
 )
+
+set_target_properties(vesicle PROPERTIES CXX_STANARD 14)
 
 # Link
 set(CMAKE_EXE_LINKER_FLAGS "-ltbb -pthread -ltbbmalloc")
@@ -41,8 +46,4 @@ install( TARGETS vesicle RUNTIME DESTINATION bin )
 
 enable_testing()
 add_subdirectory(tests)
-<<<<<<< Updated upstream
 # add_subdirectory(HighFive)
-=======
-add_subdirectory(HighFive)
->>>>>>> Stashed changes
