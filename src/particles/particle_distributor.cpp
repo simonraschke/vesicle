@@ -18,7 +18,7 @@
 
 
 
-bool Distributor::conflicting_placement(PARTICLERANGE* range, PARTICLERANGE::value_type& p1)
+bool Distributor::conflicting_placement(PARTICLERANGE* range, const PARTICLERANGE::value_type& p1) const
 {
     std::atomic<bool> conflict {false};
     assert(range);
@@ -61,6 +61,18 @@ void RandomDistributor::operator()(PARTICLERANGE* range)
             }
         }
     }
+#ifndef NDEBUG
+    for(auto& p1 : *range)
+    {
+        for(auto& p2: *range)
+        {   
+            if(p1==p2) continue;
+            const auto sq_norm = this->distanceVector(p1->coords(),p2->coords()).squaredNorm();
+            if(sq_norm < 1.f)
+                vesCRITICAL("squared norm very small " << sq_norm)
+        }
+    }
+#endif
 }
 
 
@@ -140,7 +152,7 @@ void GridDistributor::operator()(PARTICLERANGE* range)
 
 
 
-void TrajectoryDistributor::operator()(PARTICLERANGE* range)
+void TrajectoryDistributorGro::operator()(PARTICLERANGE* range)
 {   
     vesLOG("distributing particles from " << getParameters().in_traj_path)
     assert(range);
@@ -160,7 +172,7 @@ void TrajectoryDistributor::operator()(PARTICLERANGE* range)
 
         for(std::size_t i = 0; i < num_particles ; ++i)
         {
-            Particle& particle = *((*range)[i]);
+            PARTICLERANGE::value_type::element_type& particle = *((*range)[i]);
             const std::string line = frame[i*2+2];
             const auto tokens = reader.particleLineTokens(line);
             vesDEBUG("up    " << line);
@@ -170,45 +182,12 @@ void TrajectoryDistributor::operator()(PARTICLERANGE* range)
                 const std::string line2 = frame[i*2+3];
                 const auto tokens2 = reader.particleLineTokens(line2);
                 vesDEBUG("bottom" << line2);
-                {
-                    cartesian position;
-                    cartesian orientation;
-                    position(0) = (boost::lexical_cast<float>(tokens.at("pos x")) + boost::lexical_cast<float>(tokens2.at("pos x"))) /2;
-                    position(1) = (boost::lexical_cast<float>(tokens.at("pos y")) + boost::lexical_cast<float>(tokens2.at("pos y"))) /2;
-                    position(2) = (boost::lexical_cast<float>(tokens.at("pos z")) + boost::lexical_cast<float>(tokens2.at("pos z"))) /2;
-                    orientation(0) = boost::lexical_cast<float>(tokens.at("pos x")) - position(0);
-                    orientation(1) = boost::lexical_cast<float>(tokens.at("pos y")) - position(1);
-                    orientation(2) = boost::lexical_cast<float>(tokens.at("pos z")) - position(2);
-                    particle.setCoords(scaleDown(position));
-                    particle.setOrientation(orientation);
-                    vesDEBUG("position: " << position.format(ROWFORMAT) <<"  scaled down: " << particle.coords().format(ROWFORMAT) )
-                    vesDEBUG("orientation: " << orientation.format(ROWFORMAT) << "  direclty from particle: " << particle.orientation().format(ROWFORMAT) )
-                }
-                {
-                    cartesian velocity;
-                    velocity(0) = (boost::lexical_cast<float>(tokens.at("vel x")) + boost::lexical_cast<float>(tokens2.at("vel x"))) /2;
-                    velocity(1) = (boost::lexical_cast<float>(tokens.at("vel y")) + boost::lexical_cast<float>(tokens2.at("vel y"))) /2;
-                    velocity(2) = (boost::lexical_cast<float>(tokens.at("vel z")) + boost::lexical_cast<float>(tokens2.at("vel z"))) /2;
-                    particle.setVelocity(velocity);
-                }
+                setupAnisotropicParticle(tokens, tokens2, particle);
                 // i += 2;
             }
             else
             {
-                {
-                    cartesian position;
-                    position(0) = boost::lexical_cast<float>(tokens.at("pos x"));
-                    position(1) = boost::lexical_cast<float>(tokens.at("pos y"));
-                    position(2) = boost::lexical_cast<float>(tokens.at("pos z"));
-                    particle.setCoords(position);
-                }
-                {
-                    cartesian velocity;
-                    velocity(0) = boost::lexical_cast<float>(tokens.at("vel x"));
-                    velocity(1) = boost::lexical_cast<float>(tokens.at("vel y"));
-                    velocity(2) = boost::lexical_cast<float>(tokens.at("vel z"));
-                    particle.setVelocity(velocity);
-                }
+                setupIsotropicParticle(tokens, particle);
                 // ++i;
             }
         }
@@ -219,3 +198,59 @@ void TrajectoryDistributor::operator()(PARTICLERANGE* range)
         throw std::logic_error("particles cannot be distributed via " + getParameters().in_traj);
     }
 }
+
+
+
+void TrajectoryDistributorGro::setupAnisotropicParticle(const tokens_type& tokens, const tokens_type& tokens2, PARTICLERANGE::value_type::element_type& particle)
+{
+    {
+        cartesian position;
+        cartesian orientation;
+        position(0) = (boost::lexical_cast<float>(tokens.at("pos x")) + boost::lexical_cast<float>(tokens2.at("pos x"))) /2;
+        position(1) = (boost::lexical_cast<float>(tokens.at("pos y")) + boost::lexical_cast<float>(tokens2.at("pos y"))) /2;
+        position(2) = (boost::lexical_cast<float>(tokens.at("pos z")) + boost::lexical_cast<float>(tokens2.at("pos z"))) /2;
+        orientation(0) = boost::lexical_cast<float>(tokens.at("pos x")) - position(0);
+        orientation(1) = boost::lexical_cast<float>(tokens.at("pos y")) - position(1);
+        orientation(2) = boost::lexical_cast<float>(tokens.at("pos z")) - position(2);
+        particle.setCoords(scaleDown(position));
+        particle.setOrientation(orientation);
+        vesDEBUG("position: " << position.format(ROWFORMAT) <<"  scaled down: " << particle.coords().format(ROWFORMAT) )
+        vesDEBUG("orientation: " << orientation.format(ROWFORMAT) << "  direclty from particle: " << particle.orientation().format(ROWFORMAT) )
+    }
+    {
+        cartesian velocity;
+        velocity(0) = (boost::lexical_cast<float>(tokens.at("vel x")) + boost::lexical_cast<float>(tokens2.at("vel x"))) /2;
+        velocity(1) = (boost::lexical_cast<float>(tokens.at("vel y")) + boost::lexical_cast<float>(tokens2.at("vel y"))) /2;
+        velocity(2) = (boost::lexical_cast<float>(tokens.at("vel z")) + boost::lexical_cast<float>(tokens2.at("vel z"))) /2;
+        particle.setVelocity(velocity);
+    }
+}
+
+
+
+void TrajectoryDistributorGro::setupIsotropicParticle(const tokens_type& tokens, PARTICLERANGE::value_type::element_type& particle)
+{
+    {
+        cartesian position;
+        position(0) = boost::lexical_cast<float>(tokens.at("pos x"));
+        position(1) = boost::lexical_cast<float>(tokens.at("pos y"));
+        position(2) = boost::lexical_cast<float>(tokens.at("pos z"));
+        particle.setCoords(position);
+    }
+    {
+        cartesian velocity;
+        velocity(0) = boost::lexical_cast<float>(tokens.at("vel x"));
+        velocity(1) = boost::lexical_cast<float>(tokens.at("vel y"));
+        velocity(2) = boost::lexical_cast<float>(tokens.at("vel z"));
+        particle.setVelocity(velocity);
+    }
+}
+
+
+
+// void SequentialTrajectoryDistributorGro::setSnapshot(const TrajectoryReaderGro::Frame& snap)
+// {
+//     snapshot.reset(std::make_unique(snap));
+//     assert(snapshot);
+// }
+

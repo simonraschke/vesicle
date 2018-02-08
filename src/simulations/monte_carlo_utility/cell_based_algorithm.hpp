@@ -94,12 +94,11 @@ public:
 
         tbb::parallel_for_each(std::begin(cells), std::end(cells), [](cell_type& cell)
         {
-
             auto leavers = cell.getLeavers();
             
             for(particle_type& leaver : leavers)
             {
-            #ifndef NDEBUG
+            // #ifndef NDEBUG
                 bool was_added = false;
                 for(cell_type& proximity_cell : cell.getProximity())
                 {
@@ -107,15 +106,16 @@ public:
                     if(was_added) break;
                 }
                 assert(was_added);
-            #else
-                for(cell_type& proximity_cell : cell.getProximity())
-                {
-                    if(proximity_cell.contains(leaver.coords()))
-                    {
-                        proximity_cell.try_add(leaver);
-                    }
-                }
-            #endif
+                // this somehow doesn't work. don't know why
+            // #else
+            //     for(cell_type& proximity_cell : cell.getProximity())
+            //     {
+            //         if(proximity_cell.contains(leaver.coords()))
+            //         {
+            //             proximity_cell.try_add(leaver);
+            //         }
+            //     }
+            // #endif
                 cell.removeParticle(leaver);
                 assert(!cell.contains(&leaver));
             }

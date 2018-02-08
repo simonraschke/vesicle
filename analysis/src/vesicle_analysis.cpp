@@ -14,10 +14,11 @@
 *   limitations under the License.
 */
 
+#include "systems/controller.hpp"
+#include "translator/snapshot_translator.hpp"
 #include <csignal>
 #include <tbb/task_scheduler_init.h>
 #include <tbb/task_arena.h>
-#include "systems/controller.hpp"
 
 #undef H5_USE_BOOST
 #define H5_USE_BOOST
@@ -85,7 +86,7 @@ int main(int argc, const char *argv[])
     limited.execute([&]
     {
         Parameters prms;
-        prms.programOptions.read(argc,argv);
+        prms.read(argc,argv);
         prms.setup();
         TrajectoryReaderGro reader;
         reader.setParameters(prms);
@@ -97,6 +98,8 @@ int main(int argc, const char *argv[])
             try
             {
                 auto frame = reader.getFrame(-1);
+                AnisotropicSnapshotTranslatorGro translator;
+                translator(frame);
                 // for(auto& line : frame.second)
                 // std::cout << line << std::endl;
             }

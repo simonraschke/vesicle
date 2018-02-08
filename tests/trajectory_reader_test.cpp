@@ -10,11 +10,10 @@ BOOST_AUTO_TEST_CASE(reader_gro)
 {
     const char* argv[3] = {nullptr,"--config","../../tests/test_config.ini"};
 
-
     TrajectoryReaderGro reader;
     reader.setPath("../../tests/test_trajectory.gro");
     Parameters prms;
-    prms.programOptions.read(3,argv);
+    prms.read(3,argv);
     prms.setup();
     reader.setParameters(prms);
 

@@ -18,192 +18,281 @@
 
 
 
+void Parameters::read(int argc, const char* argv[])
+{
+    namespace po = boost::program_options;
+
+    optionsMap.clear();
+    std::string config_file_name;
+    
+    po::options_description generalOptions("General Options");
+    generalOptions.add_options()
+        ("config", po::value<std::string>(&config_file_name), "read from config file")
+        ("help,h", "show help")
+        ("general.algorithm",  po::value<std::string>(&algorithm)->default_value("montecarlo"), "[verlet,shakeVerlet,langevin,montecarlo]")
+        ("general.acceptance",  po::value<std::string>(&acceptance)->default_value("metropolis"), "[metropolis]")
+        ("general.interaction",  po::value<std::string>(&interaction)->default_value("alj"), "[lj,alj]")
+        ("general.thermostat",  po::value<std::string>(&thermostat)->default_value("none"), "[none,andersen]")
+    ;
+    
+    po::options_description systemOptions("System Options");
+    systemOptions.add_options()
+        ("system.mobile,m", po::value<std::size_t>(), "number of mobile particles")
+        ("system.density,c", po::value<float>(), "particle density")
+        ("system.box.x", po::value<float>(), "box edge x")
+        ("system.box.y", po::value<float>(), "box edge y")
+        ("system.box.z", po::value<float>(), "box edge z")
+        ("system.temperature,t", po::value<float>(), "temperature")
+        ("system.timestep", po::value<float>(&dt)->default_value(0.01), "time step")
+        ("system.kappa,k", po::value<float>(&kappa)->default_value(1.0), "kappa")
+        ("system.gamma,g", po::value<float>(&gamma)->default_value(11.5), "gamma angle")
+        ("system.stepwidth_coordinates", po::value<float>(&stepwidth_coordinates)->default_value(0.2), "coordinates stepwidth (MonteCarlo only)")
+        ("system.stepwidth_orientation", po::value<float>(&stepwidth_orientation)->default_value(0.2), "orientation stepwidth (MonteCarlo only)")
+        ("system.cell_min_edge", po::value<float>(&cell_min_edge), "minimum edge length of cell")
+        ("system.max_cells_dim", po::value<std::size_t>(&max_cells_dim)->default_value(20), "maximum cells per dimension")
+    ;
+    
+    po::options_description outputOptions("Output Options");
+    outputOptions.add_options()
+        ("output.traj",  po::value<std::string>(&out_traj)->default_value("gro"), "[gro]")
+        ("output.skip",  po::value<std::size_t>(&out_traj_skip)->default_value(10000), "print every .. step")
+    ;
+    
+    po::options_description inputOptions("Input Options");
+    inputOptions.add_options()
+        ("input.traj",  po::value<std::string>(&in_traj)->default_value("none"), "[none,gro]")
+        ("input.path",  po::value<boost::filesystem::path>(&in_traj_path)->default_value("trajectory.gro"), "full or rel path to trajectory file")
+        ("input.frames",  po::value<std::string>()->default_value("-1"), "regular expression for frames to read")
+    ;
+
+    po::options_description analysisOptions("Analysis Options");
+    analysisOptions.add_options()
+        ("analysis.path", po::value<boost::filesystem::path>(&analysis_path)->default_value("data.h5"), "HDF5 file to store all information")
+        ("analysis.overwrite", po::bool_switch(&analysis_overwrite)->default_value(false), "overwrite existing file")
+        ("analysis.frames", po::value<std::string>()->default_value("^[0-9]*$"), "regular expression for frames to analyse")
+        ("analysis.full", po::bool_switch(&analysis_full)->default_value(true), "enable full analysis")
+        ("analysis.epot", po::bool_switch(&analysis_epot)->default_value(false), "enable potential energy analysis")
+        ("analysis.cluster", po::bool_switch(&analysis_cluster)->default_value(false), "enable full cluster analysis")
+        ("analysis.cluster_algorithm", po::value<std::string>(&analysis_cluster_algorithm)->default_value("DBSCAN"), "[DBSCAN]")
+        ("analysis.cluster_volume", po::bool_switch(&analysis_cluster_volume)->default_value(false), "enable cluster volume analysis")
+        ("analysis.cluster_histogram", po::bool_switch(&analysis_cluster_histogram)->default_value(false), "enable cluster size histograms")
+    ;
+    
+    po::options_description allOptions;
+    allOptions.add(generalOptions).add(systemOptions).add(outputOptions).add(inputOptions).add(analysisOptions);
+
+    po::store(po::command_line_parser(argc,argv).options(allOptions).run(),optionsMap);
+    po::notify(optionsMap);
+
+    PATH config_file_full_path = boost::filesystem::current_path() / config_file_name;
+
+    if(optionsMap.count("help"))
+    {
+        std::clog << '\n' << generalOptions;
+        std::clog << '\n' << systemOptions;
+        std::clog << '\n' << outputOptions;
+        std::clog << '\n' << inputOptions;
+        std::clog << '\n' << analysisOptions;
+        std::exit(EXIT_SUCCESS);
+    }
+    else if(boost::filesystem::exists(config_file_full_path) && !config_file_name.empty())
+    {
+        try
+        {
+            read_from_file(allOptions,optionsMap);
+        }
+        catch(boost::bad_any_cast& e)
+        {
+            vesCRITICAL(e.what())
+            std::exit(EXIT_FAILURE);
+        }
+    }
+}
+
+
+
+void Parameters::read_from_file(boost::program_options::options_description& desc, boost::program_options::variables_map& vm )
+{
+    namespace po = boost::program_options;
+
+    IFSTREAM INPUT( vm["config"].as<std::string>() );
+    
+    vm.clear();
+    
+    po::store(po::parse_config_file(INPUT,desc),vm);
+    po::notify(vm);
+}
+
+
+
 void Parameters::setup()
 {
-    if(programOptions.optionsMap.count("general.algorithm"))
-        algorithm = programOptions.optionsMap["general.algorithm"].as<std::string>();
-    else 
+    if(
+        algorithm != "verlet" &&
+        algorithm != "shakeVerlet" &&
+        algorithm != "langevin" &&
+        algorithm != "montecarlo"
+    )
     {
-        vesWARNING("general.algorithm not defined, choosing verlet")
-        algorithm = "verlet";
+        vesWARNING("general.algorithm not defined, choosing montecarlo")
+        algorithm = "montecarlo";
     }
 
-    if(programOptions.optionsMap.count("general.acceptance"))
-        acceptance = programOptions.optionsMap["general.acceptance"].as<std::string>();
-    else 
+
+
+    if(
+        acceptance != "metropolis"
+    )
     {
         vesWARNING("general.acceptance not defined, choosing metropolis")
         acceptance = "metropolis";
     }
 
-    if(programOptions.optionsMap.count("general.interaction"))
-        interaction = programOptions.optionsMap["general.interaction"].as<std::string>();
-    else 
+
+
+    if(
+        interaction != "lj" &&
+        interaction != "alj"
+    )
     {
-        vesWARNING("general.interaction not defined, choosing lj")
-        interaction = "lj";
+        vesWARNING("general.interaction not defined, choosing alj")
+        interaction = "alj";
     }
 
-    if(programOptions.optionsMap.count("general.thermostat"))
-        thermostat = programOptions.optionsMap["general.thermostat"].as<std::string>();
-    else 
+
+
+    if(
+        thermostat != "andersen" &&
+        thermostat != "none"
+    )
     {
-        vesWARNING("general.thermostat not defined, choosing andersen")
-        thermostat = "andersen";
+        vesWARNING("general.thermostat not defined, choosing none")
+        thermostat = "none";
     }
 
 
     // system configuration
     {
         unsigned short counter = 0;
-        if(programOptions.optionsMap.count("system.mobile")) ++counter;
-        if(programOptions.optionsMap.count("system.density")) ++counter;
-        if(programOptions.optionsMap.count("system.box.x") 
-        && programOptions.optionsMap.count("system.box.y") 
-        && programOptions.optionsMap.count("system.box.z")) ++counter;
+        if(optionsMap.count("system.mobile")) ++counter;
+        if(optionsMap.count("system.density")) ++counter;
+        if(optionsMap.count("system.box.x") 
+        && optionsMap.count("system.box.y") 
+        && optionsMap.count("system.box.z")) ++counter;
 
         if(counter != 2)
         {
             vesCRITICAL("define 2 of the 3: system.mobile, system.density, system.box.{_}!")
         }
-        else if(programOptions.optionsMap.count("system.mobile") && programOptions.optionsMap.count("system.density"))
+        else if(optionsMap.count("system.mobile") && optionsMap.count("system.density"))
         {
             vesLOG("system.mobile and system.density were set. Assuming cubic box")
-            mobile = programOptions.optionsMap["system.mobile"].as<std::size_t>();
-            x = std::cbrt(static_cast<float>(mobile)/programOptions.optionsMap["system.density"].as<float>());
-            y = std::cbrt(static_cast<float>(mobile)/programOptions.optionsMap["system.density"].as<float>());
-            z = std::cbrt(static_cast<float>(mobile)/programOptions.optionsMap["system.density"].as<float>());
+            mobile = optionsMap["system.mobile"].as<std::size_t>();
+            x = std::cbrt(static_cast<float>(mobile)/optionsMap["system.density"].as<float>());
+            y = std::cbrt(static_cast<float>(mobile)/optionsMap["system.density"].as<float>());
+            z = std::cbrt(static_cast<float>(mobile)/optionsMap["system.density"].as<float>());
         }
-        else if(programOptions.optionsMap.count("system.box.x") && programOptions.optionsMap.count("system.density"))
+        else if(optionsMap.count("system.box.x") && optionsMap.count("system.density"))
         {
-            x = programOptions.optionsMap["system.box.x"].as<float>();
-            y = programOptions.optionsMap["system.box.y"].as<float>();
-            z = programOptions.optionsMap["system.box.z"].as<float>();
-            mobile = std::round( programOptions.optionsMap["system.density"].as<float>() * x * y * z);
+            x = optionsMap["system.box.x"].as<float>();
+            y = optionsMap["system.box.y"].as<float>();
+            z = optionsMap["system.box.z"].as<float>();
+            mobile = std::round( optionsMap["system.density"].as<float>() * x * y * z);
         }
-        else if(programOptions.optionsMap.count("system.box.x") && programOptions.optionsMap.count("system.mobile"))
+        else if(optionsMap.count("system.box.x") && optionsMap.count("system.box.y") && optionsMap.count("system.box.z")  && optionsMap.count("system.mobile"))
         {
-            x = programOptions.optionsMap["system.box.x"].as<float>();
-            y = programOptions.optionsMap["system.box.y"].as<float>();
-            z = programOptions.optionsMap["system.box.z"].as<float>();
-            mobile = programOptions.optionsMap["system.mobile"].as<std::size_t>();
+            x = optionsMap["system.box.x"].as<float>();
+            y = optionsMap["system.box.y"].as<float>();
+            z = optionsMap["system.box.z"].as<float>();
+            mobile = optionsMap["system.mobile"].as<std::size_t>();
+            density = mobile/(x*y*z);
         }
         else 
-            vesCRITICAL("UNKNOWN ERROR")
+            vesCRITICAL("UNKNOWN ERROR: maybe box not fully defined")
 
 
-        if(programOptions.optionsMap.count("system.temperature"))
-            temperature = programOptions.optionsMap["system.temperature"].as<float>();
+        if(optionsMap.count("system.temperature"))
+            temperature = optionsMap["system.temperature"].as<float>();
         else 
             vesCRITICAL("system.temperature not defined")
 
         
-        if(programOptions.optionsMap.count("system.timestep"))
+        if(algorithm == std::string("montecarlo"))
+            dt = 1;
+
+        // degree to radians
+        gamma = enhance::deg_to_rad(gamma);
+
+        if(optionsMap.count("system.cell_min_edge"))
+            cell_min_edge = optionsMap["system.cell_min_edge"].as<float>();
+        else 
         {
-            dt = programOptions.optionsMap["system.timestep"].as<float>();
-            if(algorithm == std::string("montecarlo"))
-                dt = 1;
+            //TODO implement LJ sigma lazy ass
+            vesWARNING("system.cell_min_edge not defined, choosing 3 Lennard Jones sigma")   
+            cell_min_edge = 3.f * 1.f;
         }
-        else 
-            vesCRITICAL("system.timestep not defined")
-
-
-        if(programOptions.optionsMap.count("system.kappa"))
-            kappa = programOptions.optionsMap["system.kappa"].as<float>();
-        else 
-            vesCRITICAL("system.kappa not defined")
-
-
-        if(programOptions.optionsMap.count("system.gamma"))
-            gamma = enhance::deg_to_rad(programOptions.optionsMap["system.gamma"].as<float>());
-        else 
-            vesCRITICAL("system.gamma not defined")   
-
-
-        if(programOptions.optionsMap.count("system.stepwidth_coordinates"))
-            stepwidth_coordinates = programOptions.optionsMap["system.stepwidth_coordinates"].as<float>();
-        else 
-            vesCRITICAL("system.stepwidth_coordinates not defined")   
-
-
-        if(programOptions.optionsMap.count("system.stepwidth_orientation"))
-            stepwidth_orientation = programOptions.optionsMap["system.stepwidth_orientation"].as<float>();
-        else 
-            vesCRITICAL("system.stepwidth_orientation not defined")   
-
-
-        if(programOptions.optionsMap.count("system.cell_min_edge"))
-            cell_min_edge = programOptions.optionsMap["system.cell_min_edge"].as<float>();
-        else 
-            vesCRITICAL("system.cell_min_edge not defined")   
-
-
-        if(programOptions.optionsMap.count("system.max_cells_dim"))
-            max_cells_dim = programOptions.optionsMap["system.max_cells_dim"].as<std::size_t>();
-        else 
-            vesCRITICAL("system.max_cells_dim not defined")   
     }
 
     // output configuration
     {
-        if(programOptions.optionsMap.count("output.traj"))
+        if(
+            out_traj != "gro" &&
+            out_traj != "none"
+        )
         {
-            std::vector<std::string> possibilities = {"none","gro"};
-            if(std::find( std::begin(possibilities), std::end(possibilities), programOptions.optionsMap["output.traj"].as<std::string>() ) != std::end(possibilities) )
-                out_traj = programOptions.optionsMap["output.traj"].as<std::string>();
-        }
-        else 
             vesWARNING("output.out_traj not defined, no trajectory output")   
-
-
-        if(programOptions.optionsMap.count("output.skip"))
-            out_traj_skip = programOptions.optionsMap["output.skip"].as<std::size_t>();
-        else 
-        {
-            vesWARNING("output.skip not defined, will print every step")
-            out_traj_skip = 1;
+            out_traj = "none";
         }
     }
 
     // input configuration
     {
-        if(programOptions.optionsMap.count("input.traj"))
+        if(
+            in_traj != "gro" &&
+            in_traj != "none"
+        )
         {
-            in_traj = programOptions.optionsMap["input.traj"].as<std::string>();
-            if(    in_traj != std::string("none") 
-                && in_traj != std::string("gro") )
-            {
-                vesWARNING("input.traj=" << in_traj << " format not supported, setting to \"none\"")
-                in_traj = "none";
-            }
-        }
-        else 
-        {
-            vesWARNING("input.traj not defined, setting to \"none\"") 
+            vesWARNING("input.in_traj not defined, no trajectory input")   
             in_traj = "none";
         }
 
-        if(programOptions.optionsMap.count("input.path"))
+        // if trajectory type set to none (expecting to be valid trajectory)
+        // and path not existing
+        // and path not none
+        if(in_traj != std::string("none") && !boost::filesystem::exists(in_traj_path) && in_traj_path != std::string("none"))
         {
-            in_traj_path = programOptions.optionsMap["input.path"].as<boost::filesystem::path>();
-            if(in_traj != std::string("none") && !boost::filesystem::exists(in_traj_path) && in_traj_path != std::string("none"))
-            {
-                vesCRITICAL("input.path=" << in_traj_path << " input trajectory not found, setting to \"none\"")
-                in_traj_path = "none";
-            }
-        }
-        else 
-        {
-            vesWARNING("no path to input trajectory defined. setting input.traj to \"none\"") 
+            vesCRITICAL("input.path=" << in_traj_path << " input trajectory not found, setting to \"none\"")
             in_traj_path = "none";
         }
 
-        if(programOptions.optionsMap.count("input.frames"))
-            in_frames = programOptions.optionsMap["input.frames"].as<std::string>();
-        else 
+
+        in_frames = optionsMap["input.frames"].as<std::string>();
+    }
+
+    // analysis configuration
+    {
+        // if trajectory type set to none (expecting to be valid trajectory)
+        // and path not existing
+        // and path not none
+        if(enhance::splitAtDelimiter(analysis_path.string(),".").back() != "h5" )
         {
-            vesWARNING("no frame defined to read input from. setting to -1 (last frame)") 
-            in_frames = "-1";
+            vesCRITICAL("analysis.path=" << analysis_path << "  not a .h5 file format")
+        }
+        
+        analysis_frames = optionsMap["analysis.frames"].as<std::string>();
+        
+        if(analysis_full)
+        {
+            analysis_epot = true;
+            analysis_cluster = true;
+            analysis_cluster_volume = true;
+            analysis_cluster_histogram = true;
+        }
+
+        if(!analysis_cluster)
+        {
+            analysis_cluster_volume = false;
+            analysis_cluster_histogram = false;
         }
     }
 
@@ -216,6 +305,7 @@ void Parameters::setup()
         vesLOG("general.interaction          " << interaction )
         vesLOG("general.thermostat           " << thermostat )
         vesLOG("system.mobile                " << mobile )
+        vesLOG("system.density               " << density )
         vesLOG("system.box.x                 " << x )
         vesLOG("system.box.y                 " << y )
         vesLOG("system.box.z                 " << z )
@@ -231,7 +321,14 @@ void Parameters::setup()
         vesLOG("output.skip                  " << out_traj_skip )
         vesLOG("input.traj                   " << in_traj )
         vesLOG("input.path                   " << in_traj_path )
-        vesLOG("input.frames                 " << programOptions.optionsMap["input.frames"].as<std::string>() )
+        vesLOG("input.frames                 " << optionsMap["input.frames"].as<std::string>() )
+        vesLOG("analysis.path                " << analysis_path )
+        vesLOG("analysis.frames              " << optionsMap["analysis.frames"].as<std::string>() )
+        vesLOG("analysis.full                " << std::boolalpha << analysis_full )
+        vesLOG("analysis.cluster             " << std::boolalpha << analysis_cluster )
+        vesLOG("analysis.cluster_algorithm   " << analysis_cluster_algorithm )
+        vesLOG("analysis.cluster_volume      " << std::boolalpha << analysis_cluster_volume )
+        vesLOG("analysis.cluster_histogram   " << std::boolalpha << analysis_cluster_histogram )
     }
 }
 

@@ -16,24 +16,25 @@
 
 #pragma once
 
-#include "definitions.hpp"
-#include <boost/program_options.hpp>
-#include <boost/filesystem.hpp>
-#include <iostream>
+#include "particle_translator.hpp"
+#include "vesicleIO/gro_reader.hpp"
+#include "systems/system.hpp"
+#include <type_traits>
 #include <string>
-#include <csignal>
-#include <regex>
 
 
-struct ProgramOptions
+
+
+class AnisotropicSnapshotTranslatorGro
+    : public Translator<void>
 {
-    typedef boost::filesystem::path PATH;
-    typedef boost::filesystem::ifstream IFSTREAM;
-    typedef boost::filesystem::ofstream OFSTREAM;
+public:
+    virtual void operator()(TrajectoryReader::Frame) override;
 
-    // static void read_from_file(boost::program_options::options_description&, boost::program_options::variables_map&);
-
-    // void read(int, const char* []);
-
-    // boost::program_options::variables_map optionsMap {};
+    float time_elapsed;
+    std::size_t num_particles;
+    PARTICLERANGE particles;
+    float x;
+    float y;
+    float z;
 };

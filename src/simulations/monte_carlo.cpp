@@ -50,7 +50,13 @@ void MonteCarlo::step(const unsigned long& steps)
 
         assert(cells.membersContained()==target_range->size());
         CellBasedAlgorithm::reorder(cells);
-        vesDEBUG("lost particles while reordering: " << std::boolalpha << (cells.membersContained()==target_range->size()) << " found " << cells.membersContained() << " should be " << target_range->size() )
+        const auto num_members_is = cells.membersContained();
+        const auto num_members_should = target_range->size();
+        if(num_members_is!=num_members_should)
+        {
+            vesCRITICAL("lost particles while reordering: " << std::boolalpha << (cells.membersContained()==target_range->size()) << " found " << cells.membersContained() << " should be " << target_range->size() )
+        }
+        assert(num_members_is==num_members_should);
         assert(cells.membersContained()==target_range->size());
     }
 }

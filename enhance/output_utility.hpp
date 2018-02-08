@@ -48,9 +48,9 @@ namespace enhance
     }
 
 
-    inline std::list<std::string> splitAtDelimiter(std::string str, std::string delim)
+    inline std::deque<std::string> splitAtDelimiter(std::string str, std::string delim)
     {
-        std::list<std::string> stringList;
+        std::deque<std::string> stringList;
         boost::iter_split(stringList, str, boost::first_finder(delim));
         return stringList;
     }

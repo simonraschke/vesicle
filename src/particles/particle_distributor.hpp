@@ -46,7 +46,7 @@ struct Distributor
 protected:
     Distributor() = default;
 
-    bool conflicting_placement(PARTICLERANGE*, PARTICLERANGE::value_type&);
+    bool conflicting_placement(PARTICLERANGE*, const PARTICLERANGE::value_type&) const;
 };
 
 
@@ -72,10 +72,17 @@ protected:
 
 
 
-struct TrajectoryDistributor
+struct TrajectoryDistributorGro
     : public Distributor
 {
     virtual void operator()(PARTICLERANGE*) override;
 
 protected:
+    typedef std::result_of<decltype(&TrajectoryReaderGro::particleLineTokens)(TrajectoryReaderGro,std::string)>::type tokens_type;
+    // typedef decltype(&TrajectoryReaderGro::particleLineTokens) tokens_type;
+    virtual void setupAnisotropicParticle(const tokens_type&, const tokens_type&, PARTICLERANGE::value_type::element_type&);
+    virtual void setupIsotropicParticle(const tokens_type&,  PARTICLERANGE::value_type::element_type&);
 };
+
+
+

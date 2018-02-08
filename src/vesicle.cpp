@@ -53,7 +53,7 @@ int main(int argc, const char *argv[])
         SimulationControl control;
         {
             Parameters prms;
-            prms.programOptions.read(argc,argv);
+            prms.read(argc,argv);
             prms.setup();
             control.setParameters(prms);
         }

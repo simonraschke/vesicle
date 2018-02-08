@@ -1,6 +1,7 @@
 #define BOOST_TEST_MODULE systems
 #include <boost/test/included/unit_test.hpp>
 #include "systems/controller.hpp"
+#include "enhance/output_utility.hpp"
 
 
 BOOST_AUTO_TEST_SUITE(systems)
@@ -59,7 +60,7 @@ BOOST_AUTO_TEST_CASE(system)
 }
 
 
-#include "enhance/output_utility.hpp"
+
 BOOST_AUTO_TEST_CASE(system_distribute_from_gro)
 {
     const char* argv[3] = {nullptr,"--config","../../tests/test_config.ini"};
@@ -67,13 +68,13 @@ BOOST_AUTO_TEST_CASE(system_distribute_from_gro)
     System system;
     {
         Parameters prms;
-        prms.programOptions.read(3,argv);
+        prms.read(3,argv);
         prms.setup();
         system.setParameters(prms);
     }
     
     system.addParticles(ParticleFactory<ParticleMobile>(system.getParameters().mobile));
-    TrajectoryDistributor dist;
+    TrajectoryDistributorGro dist;
     dist.setParameters(system.getParameters());
     dist(&system.getParticles());
 

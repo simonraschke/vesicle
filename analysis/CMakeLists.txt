@@ -27,7 +27,7 @@ target_include_directories(vesicle_analysis PRIVATE
 )
 
 # Link
-target_link_libraries(vesicle_analysis systems tbb pthread tbbmalloc)
+target_link_libraries(vesicle_analysis translator systems tbb pthread tbbmalloc)
 
 install(TARGETS vesicle_analysis RUNTIME DESTINATION bin)
 

@@ -17,6 +17,7 @@
 #pragma once
 
 #include "enhance/math_utility.hpp"
+#include "enhance/output_utility.hpp"
 #include "program_options.hpp"
 #include "definitions.hpp"
 #include <memory>
@@ -30,6 +31,10 @@
 // the actual Parameters class
 struct Parameters
 {
+    typedef boost::filesystem::path PATH;
+    typedef boost::filesystem::ifstream IFSTREAM;
+    typedef boost::filesystem::ofstream OFSTREAM;
+
     // GENERAL
     std::string algorithm {};
     std::string acceptance {};
@@ -38,11 +43,12 @@ struct Parameters
 
     // SYSTEM
     std::size_t mobile {};
-    float dt {};
+    float density {};
     float x {};
     float y {};
     float z {};
     float temperature {};
+    float dt {};
     float kappa {};
     float gamma {};
     float stepwidth_coordinates {};
@@ -60,14 +66,28 @@ struct Parameters
     std::regex in_frames {};
 
     // ANALYSIS
-    bool epot {};
-    bool cluster {};
-    bool cluster_volume {};
-    bool cluster_histogram {};
+    boost::filesystem::path analysis_path {};
+    bool analysis_overwrite {};
+    std::regex analysis_frames {};
+    bool analysis_full {};
+    bool analysis_epot {};
+    bool analysis_cluster {};
+    std::string analysis_cluster_algorithm {};
+    bool analysis_cluster_volume {};
+    bool analysis_cluster_histogram {};
 
-    // functions
+    // local memberfunctions 
     void setup();
+    void read(int, const char* []);
+
+    // static member functions
+    static void read_from_file(boost::program_options::options_description&, boost::program_options::variables_map&);
+
+    // TODO get rid of
     ProgramOptions programOptions {};
+protected:
+    // the actual options map
+    boost::program_options::variables_map optionsMap {};
 };
 
 

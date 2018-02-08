@@ -41,7 +41,7 @@ void Controller::signal(int SIG)
     {
         vesWARNING(__PRETTY_FUNCTION__ << " recieverd SIGNAL " << SIG)
         vesWARNING(__PRETTY_FUNCTION__ << " TERMINATING!")
-        std::terminate();
+        std::exit(SIG);
     }
 
     tbb::mutex::scoped_lock lock(Controller::signal_mutex);
@@ -124,7 +124,7 @@ void SimulationControl::setup()
         if(getParameters().in_traj == std::string("none"))
             system.distributeParticles<RandomDistributor>();
         else if(getParameters().in_traj == std::string("gro"))
-            system.distributeParticles<TrajectoryDistributor>();
+            system.distributeParticles<TrajectoryDistributorGro>();
     }
 
     //MUST
