@@ -2,4 +2,5 @@ build/
 .vscode/
 *.gro
 *.h5
+.cmserver.*
 Testing/

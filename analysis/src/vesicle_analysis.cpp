@@ -91,15 +91,21 @@ int main(int argc, const char *argv[])
         reader.setParameters(prms);
         reader.setPath("trajectory.gro");
 
-        reader.readNextFrame(std::regex("[0-1]"));
-        auto frame = reader.getFrame(-1);
-        for(auto& line : frame.second)
-        std::cout << line << std::endl;
-        reader.readNextFrame(std::regex("[0-1]"));
-        frame = reader.getFrame(-1);
-        for(auto& line : frame.second)
-        std::cout << line << std::endl;
-
+        while(!reader.isEOF())
+        {
+            reader.readNextFrame(std::regex("^[0-9]*$"));
+            try
+            {
+                auto frame = reader.getFrame(-1);
+                // for(auto& line : frame.second)
+                // std::cout << line << std::endl;
+            }
+            catch (const std::exception& e)
+            {
+                vesWARNING(e.what())
+            }
+            vesLOG( "EOF: " << std::boolalpha << reader.isEOF() )
+        }
     });
 
     return EXIT_SUCCESS;

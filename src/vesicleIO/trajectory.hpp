@@ -50,6 +50,7 @@ struct TrajectoryRWBase
     PATH getFilePath() const;
     PATH getWorkingDir() const;
     bool isOpen() const;
+    bool isEOF() const;
 
     // set particle range to write for Writer derived class
     // TODO might be unnecessary in reader class

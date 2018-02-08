@@ -120,8 +120,10 @@ inline void CellContainer<CELL_MEM_T>::setup()
     // vesDEBUG("cells in y dimension: " << cells_y << " with edge: " << y_edge)
     // vesDEBUG("cells in z dimension: " << cells_z << " with edge: " << z_edge)
     // vesDEBUG("cells overall: " << cells_x*cells_y*cells_z)
-
-    for ( std::size_t x = 0; x < cells_x; ++x )
+    
+    vesLOG("building cell environment " << cells_x << " " << cells_y << " " << cells_z)
+    // cells.resize(cells_x*cells_y*cells_z);
+    for ( std::size_t x = 0; x < cells_x; ++x ) 
     for ( std::size_t y = 0; y < cells_y; ++y )
     for ( std::size_t z = 0; z < cells_z; ++z )
     {
@@ -143,6 +145,7 @@ inline void CellContainer<CELL_MEM_T>::setup()
 
     assert( cells.size() == cells_x*cells_y*cells_z );
 
+    vesLOG("setup cells proximity and region")
     tbb::parallel_for_each(std::begin(cells), std::end(cells), [&](Cell<CELL_MEM_T> & cell)
     {
         cell.setupProximityAndRegion(cells, [&](const auto& a, const auto& b) { return areNeighbourCells(a,b); } );

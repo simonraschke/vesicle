@@ -34,7 +34,7 @@ namespace enhance
 
     protected:
         // make it inheritance only
-        IncrementalNumberGenerator() = default;
+        // IncrementalNumberGenerator() = default;
     };
 
 }

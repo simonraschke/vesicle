@@ -76,6 +76,13 @@ bool TrajectoryRWBase::isOpen() const
 
 
 
+bool TrajectoryRWBase::isEOF() const
+{
+    return FILE.eof();
+}
+
+
+
 void TrajectoryRWBase::setTarget(PARTICLERANGE* range)
 {
     vesDEBUG(__PRETTY_FUNCTION__)

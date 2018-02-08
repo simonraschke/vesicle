@@ -96,6 +96,10 @@ void TrajectoryReaderGro::readNextFrame(std::regex reg)
     vesDEBUG(__PRETTY_FUNCTION__)
     if(!FILE.is_open())
         throw std::logic_error("No open filestream to read from");
+    else if (FILE.eof())
+    {
+        vesLOG("reached EOF")
+    }
     else if (FILE.is_open())
     {
         FILE.seekg(FILE_pos);

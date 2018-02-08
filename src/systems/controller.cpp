@@ -25,7 +25,25 @@ tbb::mutex Controller::signal_mutex {};
 
 void Controller::signal(int SIG)
 {
-    vesDEBUG(__PRETTY_FUNCTION__ << " recieverd SIGNAL " << SIG)
+    static std::size_t called_times = 0;
+    ++called_times;
+    
+    if(called_times == 1)
+    {
+        vesWARNING(__PRETTY_FUNCTION__ << " recieverd SIGNAL " << SIG)
+    }
+    else if (called_times == 2)
+    {
+        vesWARNING(__PRETTY_FUNCTION__ << " recieverd SIGNAL " << SIG)
+        vesWARNING(__PRETTY_FUNCTION__ << " still trying civilized shutdown...")
+    }
+    else if (called_times == 3)
+    {
+        vesWARNING(__PRETTY_FUNCTION__ << " recieverd SIGNAL " << SIG)
+        vesWARNING(__PRETTY_FUNCTION__ << " TERMINATING!")
+        std::terminate();
+    }
+
     tbb::mutex::scoped_lock lock(Controller::signal_mutex);
     SIGNAL.store(SIG);
 }

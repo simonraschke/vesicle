@@ -44,9 +44,11 @@ void RandomDistributor::operator()(PARTICLERANGE* range)
         p->setOrientation(randomOrientation());
     });
 
+    struct IncHelper {};
     assert(range);
     for(auto& p : *range)
     {
+        vesDEBUG(enhance::IncrementalNumberGenerator<IncHelper>()())
         std::size_t try_counter = 0;
         while(conflicting_placement(range,p))
         {

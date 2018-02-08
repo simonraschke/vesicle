@@ -23,6 +23,7 @@
 #include "enhance/random.hpp"
 #include "systems/box.hpp"
 #include "geometries/grid.hpp"
+#include "enhance/incremental_number_gen.hpp"
 #include <tbb/parallel_for_each.h>
 #include <atomic>
 #include <iostream>
@@ -54,8 +55,7 @@ struct RandomDistributor
     : public Distributor
 {
     virtual void operator()(PARTICLERANGE*) override;
-
-protected:
+    
     cartesian randomCoords() const;
     cartesian randomOrientation() const;
 };
