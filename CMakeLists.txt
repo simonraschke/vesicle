@@ -24,7 +24,7 @@ set(vesicle_source_files src/vesicle.cpp)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "~/bin/")
 add_executable(vesicle ${vesicle_source_files})
 
-target_compile_options(vesicle PRIVATE -Wall -Wextra -Wpedantic -fmax-errors=3 -mavx -Weffc++ -march=nocona -mtune=generic)
+target_compile_options(vesicle PRIVATE -Wall -Wextra -Wpedantic -fmax-errors=3 -Weffc++ -march=nocona -mtune=generic)
 
 target_compile_definitions(vesicle PUBLIC 
     USE_MATH_DEFINES 

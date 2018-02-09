@@ -32,11 +32,15 @@ namespace enhance
         return static_cast<std::ostringstream&>(std::ostringstream().seekp(0) << bindable).str();
     }
 
+
+
     template<typename Bindable_type>
     const char* streamBindableToChar( Bindable_type& bindable )
     {
         return static_cast<std::ostringstream&>(std::ostringstream().seekp(0) << bindable).str().c_str();
     }
+
+
 
     template <typename... Args>
     constexpr inline std::string toStringViaStream(Args&&... args)
@@ -46,6 +50,7 @@ namespace enhance
         (void) expander {0, (void(stream << std::forward<Args>(args)),0)...};
         return stream.str();
     }
+
 
 
     inline std::deque<std::string> splitAtDelimiter(std::string str, std::string delim)

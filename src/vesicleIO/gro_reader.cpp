@@ -161,64 +161,7 @@ void TrajectoryReaderGro::readNextFrame(std::regex reg)
 
 
 
-TrajectoryReaderGro::Frame TrajectoryReaderGro::getFrame(long long i) const
-{
-    vesDEBUG(__PRETTY_FUNCTION__)
-    if(frames.empty()) throw std::runtime_error("there is no frame to return");
 
-    if(i < 0)
-    {
-        auto rit = std::crbegin(frames);
-        std::advance(rit, std::abs(i)-1);
-        return *rit;
-    }
-    else
-    {
-        auto it = std::cbegin(frames);
-        std::advance(it, i);
-        return *it;
-    }
-}
-
-
-
-TrajectoryReaderGro::FrameMap TrajectoryReaderGro::getMatches(std::regex reg) const
-{
-    vesDEBUG(__PRETTY_FUNCTION__)
-    if(frames.empty()) throw std::runtime_error("there is no frame to return");
-
-    FrameMap selection;
-
-    if(std::regex_match("-1", reg))
-    {
-        vesLOG("regex match found frame: " << frames.rbegin()->first)
-        // selection.insert(*frames.rbegin());
-        selection.emplace_back(*frames.rbegin());
-    }
-    else
-        for(const Frame& frame : frames)
-        {
-            // vesLOG("frame.first " << frame.first)
-            if(isRegexMatch(frame, reg))
-            {
-                vesLOG("regex match found frame: " << frame.first)
-                // selection.insert(frame);
-                selection.emplace_back(frame);
-            }
-        }
-
-    if(selection.empty()) throw std::runtime_error("could not find any matching pattern while reading input frames");
-    return selection;
-}
-
-
-
-const TrajectoryReaderGro::FrameMap& TrajectoryReaderGro::getFrames() const
-{
-    vesDEBUG(__PRETTY_FUNCTION__)
-    if(frames.empty()) throw std::runtime_error("there is no frame to return");
-    return frames;
-}
 
 
 
@@ -284,12 +227,4 @@ std::map<std::string,std::string> TrajectoryReaderGro::particleLineTokens(std::s
     vesDEBUG("pos x " << map["pos x"] << " pos y " << map["pos y"] << "  pos z " << map["pos z"] << " vel x " << map["vel x"] << " vel y " << map["vel y"] << "  vel z " << map["vel z"])
 
     return map;
-}
-
-
-
-
-bool TrajectoryReaderGro::isRegexMatch(const Frame& frame, std::regex reg) const
-{
-    return std::regex_match(std::to_string(frame.first), reg);
 }

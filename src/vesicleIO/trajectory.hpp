@@ -91,13 +91,13 @@ public:
     virtual ~TrajectoryWriter() = default ;
     virtual void setAnisotropic(bool);
 
-    virtual void write(const HistoryStorage&) = 0;
+    virtual void write(const float&, bool=false) = 0;
 
 protected:
     virtual void makeStartFileVMD() const = 0;
     TrajectoryWriter() = default;
 
-    unsigned int skip_counter{1};
+    unsigned int skip_counter{0};
 };
 
 
@@ -116,10 +116,20 @@ public:
 
     virtual void readAllFrames(bool) = 0;
     virtual void readNextFrame(std::regex) = 0;
+
+
+    // return last frame
+    // readAllFrames must called beforehand
+    Frame getFrame(long long = -1) const;
+    FrameMap getMatches(std::regex) const;
+    const FrameMap& getFrames() const;
+
     void clearAllFrames();
 
 protected:
     TrajectoryReader() = default;
+
+    bool isRegexMatch(const Frame&, std::regex) const;
 
     void readHeaderLine();
     void readParticleLine();

@@ -4,12 +4,42 @@
 
 void AnisotropicSnapshotTranslatorGro::operator()(TrajectoryReader::Frame snapshot) 
 {
+    particles.clear();
+    num_particles = 0;
+    time_elapsed = 0;
+    x = y = z = 0;
+
     const auto number_of_snapshot = snapshot.first;
     const auto lines = snapshot.second;
+
     assert(boost::algorithm::contains(lines.front(), "FRAMEBEGIN"));
-    time_elapsed = boost::lexical_cast<float>(enhance::splitAtDelimiter(lines[0],"t=").at(1));
-    num_particles = boost::lexical_cast<std::size_t>(lines[0])/2;
-    particles.reserve(num_particles);
+    if(!boost::algorithm::contains(lines.front(), "FRAMEBEGIN"))
+        throw std::runtime_error("first line of snapshot missing keyword");
+
+    try
+    {
+        time_elapsed = boost::lexical_cast<float>(enhance::splitAtDelimiter(lines[0],"=").at(1));
+        vesLOG("snapshot of time " << time_elapsed)
+    }
+    catch (const boost::bad_lexical_cast& e)
+    {
+        vesWARNING("lexical cast of " + enhance::splitAtDelimiter(lines[0],"=").at(1) + " resulted in")
+        vesCRITICAL("" << e.what())
+    }
+
+    try
+    {
+        num_particles = boost::lexical_cast<std::size_t>(lines[1])/2;
+        vesLOG("number of particles " << num_particles)
+        if(particles.capacity() < num_particles)
+            particles.reserve(num_particles);
+    }
+    catch (const boost::bad_lexical_cast& e)
+    {
+        vesWARNING("lexical cast of " + lines[1]+ " resulted in")
+        vesCRITICAL("" << e.what())
+    }
+    
     for(std::size_t i = 0; i < num_particles; ++i)
     {
         const std::string line1 = lines[i*2+2];
@@ -29,7 +59,7 @@ void AnisotropicSnapshotTranslatorGro::operator()(TrajectoryReader::Frame snapsh
         //     particles.emplace_back(factory.createParticle());
         // }
         else
-            throw std::logic_error(__func__ + enhance::toStringViaStream("resname are ", tokens1.at("resname")," and ", tokens2.at("resname")));
+            throw std::logic_error(__PRETTY_FUNCTION__ + enhance::toStringViaStream(" resname are ", tokens1.at("resname")," and ", tokens2.at("resname")));
         
         particles.back()->setCoords(AnisotropicCoordsTranslatorGro()(line1,line2));
         particles.back()->setOrientation(AnisotropicOrientationTranslatorGro()(line1,line2));

@@ -8,12 +8,12 @@ Particle::cartesian AnisotropicCoordsTranslatorGro::operator()(std::string line1
     auto tokens1 = reader.particleLineTokens(line1);
     auto tokens2 = reader.particleLineTokens(line2);
 
-    if (tokens1.at("atomname") == "    B" && tokens2.at("atomname") == "    A")
+    if (tokens1.at("atomname") == "B" && tokens2.at("atomname") == "A")
         ;
-    else if (tokens1.at("atomname") == "    A" && tokens2.at("atomname") == "    B")
+    else if (tokens1.at("atomname") == "A" && tokens2.at("atomname") == "B")
         std::swap(tokens1,tokens2);
     else
-        throw std::logic_error(__func__ + enhance::toStringViaStream("atomnames are ", tokens1.at("atomname")," and ", tokens2.at("atomname")));
+        throw std::logic_error(__PRETTY_FUNCTION__ + enhance::toStringViaStream(" atomnames are ", tokens1.at("atomname")," and ", tokens2.at("atomname")));
 
     Particle::cartesian position;
     {
@@ -33,12 +33,12 @@ Particle::cartesian AnisotropicOrientationTranslatorGro::operator()(std::string 
     auto tokens1 = reader.particleLineTokens(line1);
     auto tokens2 = reader.particleLineTokens(line2);
 
-    if (tokens1.at("atomname") == "    B" && tokens2.at("atomname") == "    A")
+    if (tokens1.at("atomname") == "B" && tokens2.at("atomname") == "A")
         ;
-    else if (tokens1.at("atomname") == "    A" && tokens2.at("atomname") == "    B")
+    else if (tokens1.at("atomname") == "A" && tokens2.at("atomname") == "B")
         std::swap(tokens1,tokens2);
     else
-        throw std::logic_error(__func__ + enhance::toStringViaStream("atomnames are ", tokens1.at("atomname")," and ", tokens2.at("atomname")));
+        throw std::logic_error(__PRETTY_FUNCTION__ + enhance::toStringViaStream(" atomnames are ", tokens1.at("atomname")," and ", tokens2.at("atomname")));
 
     Particle::cartesian orientation;
     {
@@ -70,5 +70,5 @@ Particle* AnisotropicParticleTranslatorGro::operator()(std::string line1, std::s
         return particle;
     }
     else
-        throw std::logic_error(__func__ + enhance::toStringViaStream("resname are ", tokens1.at("resname")," and ", tokens2.at("resname")));
+        throw std::logic_error(__PRETTY_FUNCTION__ + enhance::toStringViaStream(" resname are ", tokens1.at("resname")," and ", tokens2.at("resname")));
 }

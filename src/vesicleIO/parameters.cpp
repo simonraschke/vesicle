@@ -67,6 +67,7 @@ void Parameters::read(int argc, const char* argv[])
 
     po::options_description analysisOptions("Analysis Options");
     analysisOptions.add_options()
+        ("analysis.input", po::value<boost::filesystem::path>(&analysis_input)->default_value("trajectory.gro"), "trajectory file to analyse")
         ("analysis.path", po::value<boost::filesystem::path>(&analysis_path)->default_value("data.h5"), "HDF5 file to store all information")
         ("analysis.overwrite", po::bool_switch(&analysis_overwrite)->default_value(false), "overwrite existing file")
         ("analysis.frames", po::value<std::string>()->default_value("^[0-9]*$"), "regular expression for frames to analyse")
@@ -274,6 +275,11 @@ void Parameters::setup()
         // if trajectory type set to none (expecting to be valid trajectory)
         // and path not existing
         // and path not none
+        if(enhance::splitAtDelimiter(analysis_input.string(),".").back() != "gro" )
+        {
+            vesCRITICAL("analysis.input=" << analysis_path << "  not a valid trajectory file format")
+        }
+        
         if(enhance::splitAtDelimiter(analysis_path.string(),".").back() != "h5" )
         {
             vesCRITICAL("analysis.path=" << analysis_path << "  not a .h5 file format")
@@ -322,6 +328,7 @@ void Parameters::setup()
         vesLOG("input.traj                   " << in_traj )
         vesLOG("input.path                   " << in_traj_path )
         vesLOG("input.frames                 " << optionsMap["input.frames"].as<std::string>() )
+        vesLOG("analysis.input               " << analysis_input )
         vesLOG("analysis.path                " << analysis_path )
         vesLOG("analysis.frames              " << optionsMap["analysis.frames"].as<std::string>() )
         vesLOG("analysis.full                " << std::boolalpha << analysis_full )

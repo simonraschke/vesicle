@@ -60,22 +60,24 @@ void TrajectoryWriterGro::setPath(PATH path)
 
 
 
-void TrajectoryWriterGro::write(const HistoryStorage& history)
+void TrajectoryWriterGro::write(const float& time_elapsed, bool FORCE)
 {
-    vesDEBUG(__PRETTY_FUNCTION__<< "  simulation time: " << history.getTime().back())
+    vesDEBUG(__PRETTY_FUNCTION__<< "  simulation time: " << time_elapsed)
 
-    ++skip_counter;
-
-    if(skip_counter%getParameters().out_traj_skip!=0)
-        return;
-    else
-        skip_counter = 1;
+    if(!FORCE)
+    {
+        ++skip_counter;
+        if(skip_counter%getParameters().out_traj_skip!=0)
+            return;
+        else
+            skip_counter = 0;
+    }
     
     assert(FILE.is_open());
     assert(file_path);
     assert(target_range);
 
-    FILE << "FRAMEBEGIN t=" << history.getTime().back() << '\n';
+    FILE << "FRAMEBEGIN t=" << time_elapsed << '\n';
 
     if(anisotropic)
         FILE << target_range->size()*2 << '\n';

@@ -66,6 +66,7 @@ struct Parameters
     std::regex in_frames {};
 
     // ANALYSIS
+    boost::filesystem::path analysis_input {};
     boost::filesystem::path analysis_path {};
     bool analysis_overwrite {};
     std::regex analysis_frames {};

@@ -42,6 +42,7 @@ struct Controller
     // static member function to catch signal
     // store in atomic which is accesible by derived
     static void signal(int SIG);
+    static std::atomic<int> SIGNAL;
 
 protected:
     // only to derive from
@@ -58,7 +59,6 @@ protected:
     tbb::flow::graph flow {};
 
     // signal handling
-    static std::atomic<int> SIGNAL;
     static tbb::mutex signal_mutex;
 };
 
@@ -92,6 +92,6 @@ private:
     std::unique_ptr<tbb::flow::broadcast_node<tbb::flow::continue_msg>> start_node{nullptr};
     std::unique_ptr<tbb::flow::continue_node<tbb::flow::continue_msg>> step_node{nullptr};
     std::unique_ptr<tbb::flow::continue_node<tbb::flow::continue_msg>> thermostat_node{nullptr};
-    std::unique_ptr<tbb::flow::continue_node<tbb::flow::continue_msg>> history_node{nullptr};
+    std::unique_ptr<tbb::flow::continue_node<tbb::flow::continue_msg>> system_adjust_node{nullptr};
     std::unique_ptr<tbb::flow::continue_node<tbb::flow::continue_msg>> trajectory_node{nullptr};
 };

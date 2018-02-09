@@ -14,20 +14,4 @@
 *   limitations under the License.
 */
 
-#pragma once
-
-#include "trajectory.hpp"
-
-
-struct TrajectoryWriterGro
-    : public TrajectoryWriter
-{
-    TrajectoryWriterGro();
-
-    virtual void setPath(PATH) override;
-    virtual void write(const float&, bool=false) override;  
-    virtual void setAnisotropic(bool) override; 
-
-protected:
-    virtual void makeStartFileVMD() const override;
-};
+#include "parser.hpp"
