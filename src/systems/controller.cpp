@@ -25,19 +25,19 @@ tbb::mutex Controller::signal_mutex {};
 
 void Controller::signal(int SIG)
 {
-    static std::size_t called_times = 0;
-    ++called_times;
+    static std::size_t got_called = 0;
+    ++got_called;
     
-    if(called_times == 1)
+    if(got_called == 1)
     {
         vesWARNING(__PRETTY_FUNCTION__ << " recieverd SIGNAL " << SIG)
     }
-    else if (called_times == 2)
+    else if (got_called == 2)
     {
         vesWARNING(__PRETTY_FUNCTION__ << " recieverd SIGNAL " << SIG)
         vesWARNING(__PRETTY_FUNCTION__ << " still trying civilized shutdown...")
     }
-    else if (called_times == 3)
+    else if (got_called == 3)
     {
         vesWARNING(__PRETTY_FUNCTION__ << " recieverd SIGNAL " << SIG)
         vesWARNING(__PRETTY_FUNCTION__ << " TERMINATING!")

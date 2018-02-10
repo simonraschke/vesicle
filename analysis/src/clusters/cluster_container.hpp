@@ -16,19 +16,25 @@
 
 #pragma once
 
-#include "particle.hpp"
+#include "cluster.hpp"
+#include "systems/box.hpp"
+#include "vesicleIO/parameters.hpp"
+#include <deque>
+#include <tbb/parallel_for_each.h>
 
 
-
-class ParticleMobile 
-    : public Particle
+class ClusterContainer
+    : public Box<PERIODIC::ON>
+    , public virtual ParameterDependentComponent
 {
 public:
-    virtual void setCoords(const cartesian&) override;
-    virtual void setVelocity(const cartesian&) override;
-    virtual void setForce(const cartesian&) override;
-    virtual void setOrientation(const cartesian&) override;
+    void setTarget(PARTICLERANGE*);
+    void setup(float = 1.4);
+    
+protected:
 
-    virtual std::string name() const override;
-    virtual PARTICLETYPE getType() const override;
+private:
+    enhance::observer_ptr<PARTICLERANGE> target_range {nullptr};
+    std::deque<Cluster> clusters;
+    tbb::concurrent_vector<ParticleSimple> particles {};
 };

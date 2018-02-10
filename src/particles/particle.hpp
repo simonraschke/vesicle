@@ -30,6 +30,9 @@ class ParticleIDGenerator : public enhance::IncrementalNumberGenerator<ParticleI
 
 
 
+enum PARTICLETYPE { UNDEFINED, MOBILE, FRAME };
+
+
 /*
 CONCEPT
 
@@ -99,12 +102,15 @@ public:
 
     // setter and getter of mass member
     void setMass(float);
-    float getMass() const;
+    real getMass() const;
 
     // id will be set automatically
     // id is only necessary to generate useful energy matrices
     // for MonteCarlo simulation routine
     const unsigned int ID = ParticleIDGenerator()();
+
+    // a simple type getter, for easier usage in ParticleSimple
+    virtual PARTICLETYPE getType() const = 0;
 
 protected:
     // derive or dont use

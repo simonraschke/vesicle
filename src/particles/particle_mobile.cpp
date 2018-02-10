@@ -60,3 +60,10 @@ std::string ParticleMobile::name() const
 {
     return "MOBIL";
 }
+
+
+
+PARTICLETYPE ParticleMobile::getType() const
+{
+    return PARTICLETYPE::MOBILE;
+}

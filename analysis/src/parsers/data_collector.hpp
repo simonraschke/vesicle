@@ -21,6 +21,7 @@
 #include "translator/snapshot_translator.hpp"
 #include "potential_energy.hpp"
 #include "systems/controller.hpp"
+#include "clusters/cluster_container.hpp"
 #include "definitions.hpp"
 
 
@@ -53,4 +54,7 @@ private:
 
     // collecting potential energy
     std::deque<PotentialEnergyParser::result_type> potential_energies {};
+
+    // collecting cluster structures
+    ClusterContainer clusters;
 };

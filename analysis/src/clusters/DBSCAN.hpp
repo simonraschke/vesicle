@@ -16,19 +16,36 @@
 
 #pragma once
 
-#include "particle.hpp"
+#include "cluster.hpp"
+#include "vesicleIO/parameters.hpp"
+#include "systems/box.hpp"
+#include <vector>
 
 
 
-class ParticleMobile 
-    : public Particle
+class DBSCAN
+    : public Box<PERIODIC::ON>
+    , public virtual ParameterDependentComponent
 {
 public:
-    virtual void setCoords(const cartesian&) override;
-    virtual void setVelocity(const cartesian&) override;
-    virtual void setForce(const cartesian&) override;
-    virtual void setOrientation(const cartesian&) override;
+    typedef std::vector<Cluster> ClusterContainer;
 
-    virtual std::string name() const override;
-    virtual PARTICLETYPE getType() const override;
+    // setup
+    void setTarget(PARTICLERANGE*);
+
+    template<typename FUNCTOR>
+    ClusterContainer run(std::size_t, FUNCTOR&&);
+    
+protected:
+private:
+    enhance::observer_ptr<PARTICLERANGE> particles;
 };
+
+
+
+template<typename FUNCTOR>
+DBSCAN::ClusterContainer DBSCAN::run(std::size_t, FUNCTOR&&)
+{
+    assert(particles);
+    
+}
