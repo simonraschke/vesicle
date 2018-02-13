@@ -17,7 +17,6 @@
 #pragma once
 
 #include "systems/system.hpp"
-#include "vesicleIO/history.hpp"
 #include <tbb/parallel_invoke.h>
 #include <tbb/flow_graph.h>
 #include <csignal>
@@ -87,8 +86,6 @@ protected:
     virtual void make_nodes() override;
 
 private:
-    HistoryStorage history_storage {};
-
     std::unique_ptr<tbb::flow::broadcast_node<tbb::flow::continue_msg>> start_node{nullptr};
     std::unique_ptr<tbb::flow::continue_node<tbb::flow::continue_msg>> step_node{nullptr};
     std::unique_ptr<tbb::flow::continue_node<tbb::flow::continue_msg>> thermostat_node{nullptr};

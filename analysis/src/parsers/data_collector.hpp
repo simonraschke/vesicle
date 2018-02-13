@@ -20,8 +20,8 @@
 #include "vesicleIO/gro_reader.hpp"
 #include "translator/snapshot_translator.hpp"
 #include "potential_energy.hpp"
+#include "cluster_parser.hpp"
 #include "systems/controller.hpp"
-#include "clusters/cluster_container.hpp"
 #include "definitions.hpp"
 
 
@@ -43,6 +43,7 @@ public:
 
 private:
     void try_potential_energy();
+    void try_cluster();
 
     boost::filesystem::path working_dir;
     std::unique_ptr<HighFive::File> FILE {nullptr};
@@ -56,5 +57,6 @@ private:
     std::deque<PotentialEnergyParser::result_type> potential_energies {};
 
     // collecting cluster structures
-    ClusterContainer clusters;
+    std::deque<PotentialEnergyParser::result_type> cluster_histograms {};
+    ClusterParser clusters;
 };

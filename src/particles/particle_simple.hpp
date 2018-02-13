@@ -16,8 +16,10 @@
 
 #pragma once
 
-#include "particles/particle.hpp"
+#include "particle.hpp"
 #include "enhance/observer_ptr.hpp"
+#include "enhance/concurrent_container.hpp"
+#include <tbb/atomic.h>
 #include <eigen3/Eigen/Core>
 #include <tbb/concurrent_vector.h>
 
@@ -36,7 +38,7 @@ public:
     // ParticleSimple(const ParticleSimple&);
 
     // copy assignment
-    // ParticleSimple& operator=(const ParticleSimple&);
+    // ParticleSimple& operator=(const ParticleSimple&&);
 
     bool operator==(Particle*) const;
     bool operator==(const Particle*) const;
@@ -50,6 +52,7 @@ public:
     float mass;
     PARTICLETYPE type;
     unsigned int ID;
-    tbb::concurrent_vector<enhance::observer_ptr<ParticleSimple>> neighbourlist;
-    enhance::observer_ptr<Particle> parent; 
+    enhance::ConcurrentDeque<enhance::observer_ptr<ParticleSimple>> regionQuery;
+    enhance::observer_ptr<Particle> parent;
+    tbb::atomic<bool> visited {false};
 };

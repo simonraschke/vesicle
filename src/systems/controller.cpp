@@ -227,9 +227,6 @@ void SimulationControl::start()
         }
         ++i;
     }
-
-    // write hstory on exit
-    history_storage.dumpToFile("history.dat");
 }
 
 

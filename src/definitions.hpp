@@ -45,6 +45,7 @@
 #define PYTHONFORMAT Eigen::IOFormat( 4,    0,                    ", ",     "\n",   "[",    "]",    "[",    "]" )
 
 
+#include <numeric>
 #include <tbb/parallel_reduce.h>
 #define PARALLEL_REDUCE(type, cont, functor)  tbb::parallel_reduce \
     (tbb::blocked_range<typename decltype(cont)::const_iterator>( std::cbegin(cont), std::cend(cont) ), \

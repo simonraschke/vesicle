@@ -35,6 +35,7 @@ void DataCollector::setup()
             boost::filesystem::system_complete(working_dir/getParameters().analysis_path).string(), 
             HighFive::File::ReadWrite
         );
+        FILE->createGroup("/cluster_histograms");
     }
     else
     {
@@ -43,12 +44,15 @@ void DataCollector::setup()
             boost::filesystem::system_complete(working_dir/getParameters().analysis_path).string(), 
             HighFive::File::ReadWrite | HighFive::File::Create | HighFive::File::Truncate
         );
+        FILE->createGroup("/cluster_histograms");
     }
 
     if(enhance::splitAtDelimiter(getParameters().analysis_input.string(),".").back() == "gro")
         reader = std::make_unique<TrajectoryReaderGro>();
     reader->setParameters(getParameters());
     reader->setPath(getParameters().analysis_input);
+
+    clusters.setParameters(getParameters());
 }
 
 
@@ -92,10 +96,14 @@ void DataCollector::collect()
 
             if(getParameters().analysis_full || getParameters().analysis_epot)
                 try_potential_energy();
+
+
+            if(getParameters().analysis_full || getParameters().analysis_cluster)
+                try_cluster();
         }
         catch (const std::exception& e)
         {
-            vesCRITICAL(e.what())
+            vesWARNING(e.what())
         }
         vesLOG( "EOF: " << std::boolalpha << reader->isEOF() )
     }
@@ -105,16 +113,33 @@ void DataCollector::collect()
 
 void DataCollector::write()
 {
-    assert(timepoints.size() == potential_energies.size());
-    boost::multi_array<float,2> potential_energies_array(boost::extents[potential_energies.size()][2]);
-    for(std::size_t i = 0; i < potential_energies.size(); ++i)
+    // potential energy
     {
-        potential_energies_array[i][0] = timepoints[i];
-        potential_energies_array[i][1] = potential_energies[i];
+        assert(timepoints.size() == potential_energies.size());
+        boost::multi_array<float,2> potential_energies_array(boost::extents[potential_energies.size()][2]);
+        for(std::size_t i = 0; i < potential_energies.size(); ++i)
+        {
+            potential_energies_array[i][0] = timepoints[i];
+            potential_energies_array[i][1] = potential_energies[i];
+        }
+
+        HighFive::DataSet dataset = FILE->createDataSet<float>("/potential_energies", HighFive::DataSpace::From(potential_energies_array));
+        dataset.write(potential_energies_array);
     }
 
-    HighFive::DataSet dataset = FILE->createDataSet<float>("/potential_energies", HighFive::DataSpace::From(potential_energies_array));
-    dataset.write(potential_energies_array);
+    // clusters
+    // {
+    //     assert(timepoints.size() == potential_energies.size());
+    //     boost::multi_array<float,2> potential_energies_array(boost::extents[translator.particles.size()][2]);
+    //     for(std::size_t i = 0; i < potential_energies.size(); ++i)
+    //     {
+    //         potential_energies_array[i][0] = timepoints[i];
+    //         potential_energies_array[i][1] = potential_energies[i];
+    //     }
+
+    //     HighFive::DataSet dataset = FILE->createDataSet<float>("/cluster_histograms", HighFive::DataSpace::From(potential_energies_array));
+    //     dataset.write(potential_energies_array);
+    // }
 }
 
 
@@ -133,4 +158,23 @@ void DataCollector::try_potential_energy()
     parser.parse();
 
     potential_energies.emplace_back(parser.result);
+}
+
+
+
+void DataCollector::try_cluster()
+{
+    clusters.setTarget(&translator.particles);
+    clusters.DBSCANrecursive(1, 1.4);
+
+    {
+        boost::multi_array<std::size_t,1> cluster_histogram(boost::extents[clusters.numClusters()]);
+        for(std::size_t i = 0; i < clusters.numClusters(); ++i)
+        {
+            cluster_histogram[i] = (clusters.begin()+i)->size();
+        }
+
+        HighFive::DataSet dataset = FILE->createDataSet<std::size_t>("/cluster_histograms/time"+boost::lexical_cast<std::string>(timepoints.back()), HighFive::DataSpace::From(cluster_histogram));
+        dataset.write(cluster_histogram);
+    }
 }

@@ -18,7 +18,6 @@
 
 #include "definitions.hpp"
 #include "parameters.hpp"
-#include "history.hpp"
 #include "enhance/observer_ptr.hpp"
 #include "enhance/output_utility.hpp"
 #include "systems/box.hpp"
