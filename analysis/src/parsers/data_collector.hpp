@@ -21,6 +21,7 @@
 #include "translator/snapshot_translator.hpp"
 #include "potential_energy.hpp"
 #include "cluster_parser.hpp"
+#include "surface_reconstruction.hpp"
 #include "systems/controller.hpp"
 #include "definitions.hpp"
 

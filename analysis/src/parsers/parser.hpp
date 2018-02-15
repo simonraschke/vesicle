@@ -20,6 +20,7 @@
 #include "systems/box.hpp"
 #include "vesicleIO/parameters.hpp"
 #include "enhance/observer_ptr.hpp"
+#include <memory>
 
 
 

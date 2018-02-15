@@ -9,6 +9,8 @@ file(GLOB particles_source_files
 
 add_library(particles STATIC ${particles_source_files})
 
+set_target_properties(particles PROPERTIES CXX_STANARD 14)
+
 # set(THEBUILDTYPE get_target_property(VAR vesicle ))
 
 target_link_libraries(particles enhance geometries IO Eigen3::Eigen)

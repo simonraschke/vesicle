@@ -89,6 +89,7 @@ void TrajectoryWriterGro::write(const float& time_elapsed, bool FORCE)
     {
         const auto& target = target_range->operator[](residue);
         const cartesian& coords = scaleDownForVMD(target->coords());
+        // const cartesian& coords = target->coords();
 
         if(!anisotropic)
         {

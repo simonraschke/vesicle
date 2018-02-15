@@ -177,4 +177,15 @@ void DataCollector::try_cluster()
         HighFive::DataSet dataset = FILE->createDataSet<std::size_t>("/cluster_histograms/time"+boost::lexical_cast<std::string>(timepoints.back()), HighFive::DataSpace::From(cluster_histogram));
         dataset.write(cluster_histogram);
     }
+
+    for(const auto& cluster : clusters)
+    {
+        if(cluster.size() < 100)
+            continue;
+        SurfaceReconstructionParser mesh(cluster);
+        mesh.parse();
+        vesLOG("volume " << mesh.getVolume() << "    surfaceArea " << mesh.getSurfaceArea())
+        mesh.printXML("cluster.vtp");
+        std::terminate();
+    }
 }

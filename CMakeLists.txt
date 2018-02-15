@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 3.1)
 project(vesicle)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
+set(CMAKE_CXX_STANDARD 14)
 
 # Building the libraries
 add_subdirectory(enhance)
