@@ -42,6 +42,21 @@ ParticleSimple::ParticleSimple(Particle* other)
 
 
 
+ParticleSimple::ParticleSimple(ParticleSimple* other)
+    : position(other->position)
+    , orientation(other->orientation)
+    , velocity(other->velocity)
+    , force(other->force)
+    , mass(other->mass)
+    , type(other->type)
+    , ID(other->ID)
+    , parent(nullptr)
+{
+
+}
+
+
+
 bool ParticleSimple::operator==(Particle* other) const
 {
     assert(other);

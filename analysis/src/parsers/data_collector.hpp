@@ -59,5 +59,5 @@ private:
 
     // collecting cluster structures
     std::deque<PotentialEnergyParser::result_type> cluster_histograms {};
-    ClusterParser clusters;
+    ClusterParser<PERIODIC::ON> clusters;
 };

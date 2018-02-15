@@ -33,27 +33,28 @@
 
 
 
-class SurfaceReconstructionParser
-    : public Parser<vtkSmartPointer<vtkMassProperties>>
+class ClusterVolumeParser
+    : public Parser<float>
 {
 public:
-    typedef ClusterParser::Cluster_t input_t;
+    typedef ClusterParser<PERIODIC::ON>::Cluster_t input_t;
     typedef input_t::MemberType::element_type member_t;
     typedef member_t::cartesian cartesian;
     typedef boost::filesystem::path PATH;
 
-    explicit SurfaceReconstructionParser(const input_t&);
+    explicit ClusterVolumeParser(const input_t&);
 
     virtual void parse() override;
 
-    float getVolume() const;
-    float getSurfaceArea() const;
+    // float getVolume() const;
+    // float getSurfaceArea() const;
 
-    void printXML(PATH) const;
+    // void printXML(PATH) const;
 
 protected:
     const input_t& cluster;
 
+    ClusterParser<PERIODIC::OFF> subclusters;
+
 private:
-    vtkSmartPointer<vtkTriangleFilter> triangleFilter {nullptr};
 };

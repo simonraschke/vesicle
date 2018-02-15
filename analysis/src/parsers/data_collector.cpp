@@ -164,8 +164,9 @@ void DataCollector::try_potential_energy()
 
 void DataCollector::try_cluster()
 {
-    clusters.setTarget(&translator.particles);
+    clusters.setTarget(translator.particles.begin(),translator.particles.end());
     clusters.DBSCANrecursive(1, 1.4);
+
 
     {
         boost::multi_array<std::size_t,1> cluster_histogram(boost::extents[clusters.numClusters()]);
@@ -182,10 +183,10 @@ void DataCollector::try_cluster()
     {
         if(cluster.size() < 100)
             continue;
-        SurfaceReconstructionParser mesh(cluster);
+        ClusterVolumeParser mesh(cluster);
         mesh.parse();
-        vesLOG("volume " << mesh.getVolume() << "    surfaceArea " << mesh.getSurfaceArea())
-        mesh.printXML("cluster.vtp");
+        vesLOG("volume " << mesh.result )
+        // mesh.printXML("cluster.vtp");
         std::terminate();
     }
 }

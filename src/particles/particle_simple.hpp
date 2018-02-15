@@ -33,6 +33,7 @@ public:
     // construction
     explicit ParticleSimple(PARTICLETYPE);
     ParticleSimple(Particle*);
+    ParticleSimple(ParticleSimple*);
     // ParticleSimple(const Particle*);
     // ParticleSimple(const ParticleSimple&);
     // ParticleSimple(const ParticleSimple&);
