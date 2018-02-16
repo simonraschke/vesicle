@@ -21,7 +21,6 @@
 DataCollector::DataCollector()
     : working_dir(boost::filesystem::current_path())
 {
-
 }
 
 
@@ -161,11 +160,12 @@ void DataCollector::try_potential_energy()
 }
 
 
+struct CompareBySize{ template<typename T> bool operator()(const T& a, const T& b){return a.size()<b.size();}};
 
 void DataCollector::try_cluster()
 {
     clusters.setTarget(translator.particles.begin(),translator.particles.end());
-    clusters.DBSCANrecursive(1, 1.4);
+    clusters.DBSCANrecursive(2, 1.4);
 
 
     {
@@ -179,14 +179,25 @@ void DataCollector::try_cluster()
         dataset.write(cluster_histogram);
     }
 
-    for(const auto& cluster : clusters)
+    tbb::concurrent_vector<ClusterVolumeParser> volumeParsers;
+    tbb::parallel_for_each(clusters.begin(), clusters.end(), [&](const auto& cluster)
     {
-        if(cluster.size() < 100)
-            continue;
-        ClusterVolumeParser mesh(cluster);
-        mesh.parse();
-        vesLOG("volume " << mesh.result )
-        // mesh.printXML("cluster.vtp");
-        std::terminate();
-    }
+        if(cluster.size() >= 20)
+        {
+            auto it = volumeParsers.emplace_back(cluster);
+            it->setParameters(getParameters());
+            it->parse();
+        }
+    });
+
+    const float volume = PARALLEL_REDUCE(float, volumeParsers, [&](float i, const auto& parser)
+    {
+        return i + parser.result;
+    });
+    
+    if(!volumeParsers.empty())
+    std::max_element(std::begin(volumeParsers), std::end(volumeParsers), [](auto& a, auto& b)
+    {
+        return a.result < b.result;
+    })->printXML("largest.vtu");
 }

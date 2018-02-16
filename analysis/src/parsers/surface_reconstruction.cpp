@@ -20,7 +20,10 @@
 
 ClusterVolumeParser::ClusterVolumeParser(const input_t& _cluster)
     : cluster(_cluster)
+    , appendFilter(vtkSmartPointer<vtkAppendFilter>::New())
 {
+    vtkObject::GlobalWarningDisplayOff();
+
     result = 0;
     subclusters.setTarget(cluster.begin(), cluster.end());
     subclusters.DBSCANrecursive(1, 1.4);
@@ -31,31 +34,48 @@ ClusterVolumeParser::ClusterVolumeParser(const input_t& _cluster)
 void ClusterVolumeParser::parse()
 {
     static const float extension = 1.4;
+    check_for_aligned_box_setup();
 
+    // go over all subclusters
     for(const auto& subcluster : subclusters)
     {
         if(subcluster.size() < 6)
             continue;
+
         // represent and manipulate 3D points
-        cartesian point;
         vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 
-        vtkSmartPointer<vtkSphereSource> sphereSource = vtkSmartPointer<vtkSphereSource>::New();
-        sphereSource->SetRadius(1.f+extension);
-
+        // go over all subcluster members
         for( const auto& member_ptr : subcluster )
         {
+            // generate a points
+            cartesian point;
             point = member_ptr->position;
+
+            // generate a sphere and place it around point
+            vtkSmartPointer<vtkSphereSource> sphereSource = vtkSmartPointer<vtkSphereSource>::New();
+            sphereSource->SetRadius(1.f+extension);
             sphereSource->SetCenter( point(0), point(1), point(2) );
+            sphereSource->SetThetaResolution(10);
+            sphereSource->SetPhiResolution(6);
             sphereSource->Update();
 
+            // save the new positioned sphere in vtkPolyData
             vtkSmartPointer<vtkPolyData> spherePolyData = sphereSource->GetOutput();
 
-            std::array<double,3> p{};
+            // store all points in vtkPoints
             for(vtkIdType i = 0; i < spherePolyData->GetNumberOfPoints(); i++)
             {
+                std::array<double,3> p{};
+
+                // store point values in array
                 spherePolyData->GetPoint(i,p.data());
-                points->InsertNextPoint(p.data());
+
+                // insert into points container if inside of box
+                // const Eigen::Vector3d point_to_check(p.data());
+                const cartesian point_to_check(Eigen::Vector3d(p.data()).cast<float>());
+                if(contains(point_to_check.cast<float>()))
+                    points->InsertNextPoint(p.data());
             }
         }
         
@@ -64,27 +84,32 @@ void ClusterVolumeParser::parse()
         polydata->SetPoints(points);
 
         // convex hull
-        vesLOG("vtkDelaunay3D")
+        vesDEBUG("vtkDelaunay3D")
         vtkSmartPointer<vtkDelaunay3D> delaunay = vtkSmartPointer<vtkDelaunay3D>::New();
         delaunay->SetInputData(polydata);
 
         // extract outer (polygonal) surface
-        vesLOG("vtkDataSetSurfaceFilter")
+        vesDEBUG("vtkDataSetSurfaceFilter")
         vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
         surfaceFilter->SetInputConnection(delaunay->GetOutputPort());
 
         // extract outer (polygonal) surface
-        vesLOG("vtkTriangleFilter")
+        vesDEBUG("vtkTriangleFilter")
         vtkSmartPointer<vtkTriangleFilter> triangleFilter = vtkSmartPointer<vtkTriangleFilter>::New();
         triangleFilter->SetInputConnection(surfaceFilter->GetOutputPort());
             
+        // append to overall mesh
+        appendFilter->AddInputConnection(triangleFilter->GetOutputPort());
+        
         // estimate volume, area, shape index of triangle mesh
-        vesLOG("vtkMassProperties")
+        vesDEBUG("vtkMassProperties")
         vtkSmartPointer<vtkMassProperties> massProperties = vtkSmartPointer<vtkMassProperties>::New();
-        massProperties->SetInputConnection(triangleFilter->GetOutputPort());
+        massProperties->SetInputConnection(surfaceFilter->GetOutputPort());
+        // massProperties->Update();
 
         result += massProperties->GetVolume();
     }
+    appendFilter->Update();
 }
 
 
@@ -109,14 +134,15 @@ void ClusterVolumeParser::parse()
 
 
 
-// void ClusterVolumeParser::printXML(PATH system_complete_path) const
-// {
+void ClusterVolumeParser::printXML(PATH system_complete_path) const
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
 
-//     if(!result)
-//         throw std::logic_error("ClusterVolumeParser::triangleFilter is nullptr");
+    if(!appendFilter)
+        throw std::logic_error("ClusterVolumeParser::triangleFilter is nullptr");
 
-//     vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
-//     writer->SetInputData(triangleFilter->GetOutput());
-//     writer->SetFileName(system_complete_path.c_str());
-//     writer->Write();
-// }
+    vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
+    writer->SetInputConnection(appendFilter->GetOutputPort());
+    writer->SetFileName(system_complete_path.c_str());
+    writer->Write();
+}

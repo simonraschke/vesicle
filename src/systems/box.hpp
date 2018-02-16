@@ -354,6 +354,7 @@ typename Box<P>::cartesian Box<P>::scaleDownForVMD(const Particle& p) const
 template<>
 inline bool Box<PERIODIC::ON>::contains(const cartesian& c) const 
 {
+    assert(bounding_box);
     return bounding_box->contains(scaleDown(c));
 }
 
@@ -362,13 +363,14 @@ inline bool Box<PERIODIC::ON>::contains(const cartesian& c) const
 template<>
 inline bool Box<PERIODIC::OFF>::contains(const cartesian& c) const 
 {
+    assert(bounding_box);
     return bounding_box->contains(c);
 }
 
 
 
 template<PERIODIC P>
-bool Box<P>::contains(const Particle& p) const 
+inline bool Box<P>::contains(const Particle& p) const 
 {
     return contains(p.coords());
 }

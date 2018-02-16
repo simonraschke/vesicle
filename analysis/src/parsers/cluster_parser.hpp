@@ -35,6 +35,9 @@ public:
     typedef enhance::observer_ptr<Particle_t> Particle_ptr_t;
     typedef enhance::ConcurrentDeque<Particle_ptr_t> Cluster_t;
     typedef std::deque<Cluster_t> ClusterList;
+    typedef ClusterList::iterator iterator;
+    typedef ClusterList::const_iterator const_iterator;
+
 
     // void setTarget(PARTICLERANGE*);
     template<typename iterator_t>
@@ -50,6 +53,8 @@ public:
     typename ClusterList::iterator end();
     typename ClusterList::const_iterator begin() const;
     typename ClusterList::const_iterator end() const;
+    typename ClusterList::const_iterator cbegin() const;
+    typename ClusterList::const_iterator cend() const;
     
 protected:
     template<typename FUNCTOR>
@@ -77,7 +82,7 @@ void ClusterParser<P>::setTarget(iterator_t _begin, iterator_t _end)
         particles.emplace_back(particle.get());
     });
 
-    vesLOG("DBSCAN analysing " << particles.size() << " particles")
+    // vesLOG("DBSCAN analysing " << particles.size() << " particles")
 }
 
 
@@ -149,7 +154,8 @@ void ClusterParser<P>::DBSCANrecursive(std::size_t min_points, float distance_th
         });
     }
 
-    vesLOG("DBSCAN found " << clusters.size() << " clusters with " << numParticles() << " particles")
+    assert(particles.size() == numParticles() );
+    // vesLOG("DBSCAN found " << clusters.size() << " clusters with " << numParticles() << " particles")
 }
 
 
@@ -233,6 +239,22 @@ ClusterParser<P>::ClusterList::const_iterator ClusterParser<P>::begin() const
 
 template<PERIODIC P>
 ClusterParser<P>::ClusterList::const_iterator ClusterParser<P>::end() const
+{
+    return std::end(clusters);
+}
+
+
+
+template<PERIODIC P>
+ClusterParser<P>::ClusterList::const_iterator ClusterParser<P>::cbegin() const
+{
+    return std::begin(clusters);
+}
+
+
+
+template<PERIODIC P>
+ClusterParser<P>::ClusterList::const_iterator ClusterParser<P>::cend() const
 {
     return std::end(clusters);
 }

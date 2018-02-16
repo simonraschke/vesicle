@@ -27,8 +27,10 @@
 #include <vtkDataSetSurfaceFilter.h>
 #include <vtkTriangleFilter.h>
 #include <vtkContourFilter.h>
-#include <vtkXMLPolyDataWriter.h>
 #include <vtkSphereSource.h>
+#include <vtkAppendFilter.h>
+#include <vtkXMLPolyDataWriter.h>
+#include <vtkXMLUnstructuredGridWriter.h>
 
 
 
@@ -49,7 +51,7 @@ public:
     // float getVolume() const;
     // float getSurfaceArea() const;
 
-    // void printXML(PATH) const;
+    void printXML(PATH) const;
 
 protected:
     const input_t& cluster;
@@ -57,4 +59,5 @@ protected:
     ClusterParser<PERIODIC::OFF> subclusters;
 
 private:
+    vtkSmartPointer<vtkAppendFilter> appendFilter {nullptr};
 };
