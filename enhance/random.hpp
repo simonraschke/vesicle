@@ -45,7 +45,7 @@ namespace enhance
         const int seed;
 
     // call via enhance::RandomEngine.pseudo_engine
-    }RandomEngine;
+    } thread_local RandomEngine;
 
 
 

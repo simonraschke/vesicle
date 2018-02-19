@@ -18,28 +18,32 @@
 
 
 
-ClusterVolumeParser::ClusterVolumeParser(const input_t& _cluster)
+ClusterStructureParser::ClusterStructureParser(const input_t& _cluster)
     : cluster(_cluster)
-    , appendFilter(vtkSmartPointer<vtkAppendFilter>::New())
+    // , appendFilter(vtkSmartPointer<vtkAppendFilter>::New())
 {
     vtkObject::GlobalWarningDisplayOff();
-
-    result = 0;
+    result = vtkSmartPointer<vtkAppendFilter>::New();
+    // result = 0;
     subclusters.setTarget(cluster.begin(), cluster.end());
-    subclusters.DBSCANrecursive(1, 1.4);
 }
 
 
 
-void ClusterVolumeParser::parse()
+void ClusterStructureParser::parse()
 {
-    static const float extension = 1.4;
+    if(getParameters().analysis_cluster_algorithm == "DBSCAN")
+        subclusters.DBSCANrecursive(getParameters().analysis_cluster_minimum_size, getParameters().analysis_cluster_distance_threshold);
+    else
+        vesCRITICAL("cluster algorithm " << getParameters().analysis_cluster_algorithm << " unknown")
+    
+    static const float extension = getParameters().analysis_cluster_volume_extension;
     check_for_aligned_box_setup();
 
     // go over all subclusters
     for(const auto& subcluster : subclusters)
     {
-        if(subcluster.size() < 6)
+        if(subcluster.size() < 3)
             continue;
 
         // represent and manipulate 3D points
@@ -99,50 +103,51 @@ void ClusterVolumeParser::parse()
         triangleFilter->SetInputConnection(surfaceFilter->GetOutputPort());
             
         // append to overall mesh
-        appendFilter->AddInputConnection(triangleFilter->GetOutputPort());
+        result->AddInputConnection(triangleFilter->GetOutputPort());
         
         // estimate volume, area, shape index of triangle mesh
         vesDEBUG("vtkMassProperties")
         vtkSmartPointer<vtkMassProperties> massProperties = vtkSmartPointer<vtkMassProperties>::New();
         massProperties->SetInputConnection(surfaceFilter->GetOutputPort());
-        // massProperties->Update();
+        massProperties->Update();
 
-        result += massProperties->GetVolume();
+        volume += massProperties->GetVolume();
+        surface_area += massProperties->GetSurfaceArea();
     }
-    appendFilter->Update();
+    result->Update();
 }
 
 
 
-// float ClusterVolumeParser::getVolume() const
-// {
-//     if(result)
-//         return result->GetVolume();
-//     else
-//         throw std::logic_error("ClusterVolumeParser::structureProperties is nullptr");
-// }
+float ClusterStructureParser::getVolume() const
+{
+    if(result)
+        return volume;
+    else
+        throw std::logic_error("ClusterStructureParser::result is nullptr. No structure");
+}
 
 
 
-// float ClusterVolumeParser::getSurfaceArea() const
-// {
-//     if(result)
-//         return result->GetSurfaceArea();
-//     else
-//         throw std::logic_error("ClusterVolumeParser::structureProperties is nullptr");
-// }
+float ClusterStructureParser::getSurfaceArea() const
+{
+    if(result)
+        return surface_area;
+    else
+        throw std::logic_error("ClusterStructureParser::result is nullptr. No structure");
+}
 
 
 
-void ClusterVolumeParser::printXML(PATH system_complete_path) const
+void ClusterStructureParser::printXML(PATH system_complete_path) const
 {
     vesDEBUG(__PRETTY_FUNCTION__)
 
-    if(!appendFilter)
-        throw std::logic_error("ClusterVolumeParser::triangleFilter is nullptr");
+    if(!result)
+        throw std::logic_error("ClusterStructureParser::result is nullptr. No structure");
 
     vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
-    writer->SetInputConnection(appendFilter->GetOutputPort());
+    writer->SetInputConnection(result->GetOutputPort());
     writer->SetFileName(system_complete_path.c_str());
     writer->Write();
 }

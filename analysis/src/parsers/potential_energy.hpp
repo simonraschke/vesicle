@@ -20,6 +20,7 @@
 #include "interactions/angular_lennard_jones.hpp"
 #include "interactions/lennard_jones.hpp"
 #include <atomic>
+#include <tbb/atomic.h>
 #include <tbb/parallel_for.h>
 
 

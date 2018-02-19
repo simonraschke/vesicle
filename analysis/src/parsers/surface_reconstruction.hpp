@@ -35,8 +35,8 @@
 
 
 
-class ClusterVolumeParser
-    : public Parser<float>
+class ClusterStructureParser
+    : public Parser<vtkSmartPointer<vtkAppendFilter>>
 {
 public:
     typedef ClusterParser<PERIODIC::ON>::Cluster_t input_t;
@@ -44,20 +44,21 @@ public:
     typedef member_t::cartesian cartesian;
     typedef boost::filesystem::path PATH;
 
-    explicit ClusterVolumeParser(const input_t&);
+    explicit ClusterStructureParser(const input_t&);
 
     virtual void parse() override;
 
-    // float getVolume() const;
-    // float getSurfaceArea() const;
+    float getVolume() const;
+    float getSurfaceArea() const;
 
     void printXML(PATH) const;
 
 protected:
     const input_t& cluster;
-
+    float volume = 0;
+    float surface_area = 0;
     ClusterParser<PERIODIC::OFF> subclusters;
 
 private:
-    vtkSmartPointer<vtkAppendFilter> appendFilter {nullptr};
+    // vtkSmartPointer<vtkAppendFilter> appendFilter {nullptr};
 };

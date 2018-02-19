@@ -29,7 +29,7 @@ void PotentialEnergyParser::parse()
             pre_sum += interaction->potential(target_range->at(i),target_range->at(j));
         }
 
-        // this works for an atomic float, but may busy wait to compare_exchange like hell if too many particles
+        // this works for an std::atomic float, but may busy wait to compare_exchange like hell if too many particles
         auto current = energy_sum.load();
         while (!energy_sum.compare_exchange_weak(current, current + pre_sum))
             current = energy_sum.load();

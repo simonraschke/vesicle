@@ -22,9 +22,8 @@
 
 
 
-int main(int argc, const char *argv[])
+int main(int argc, const char *argv[]) try
 {
-
     // register important signals in Controller bas class
     // allowing civilized shutdown
     std::signal( SIGHUP,  Controller::signal );
@@ -38,28 +37,31 @@ int main(int argc, const char *argv[])
     std::signal( SIGFPE,  Controller::signal );
     std::signal( SIGKILL, Controller::signal );
 
+    Parameters prms;
+    prms.read(argc,argv);
+    prms.setup();
+
     // create a task arena 
 #ifndef NDEBUG
-    tbb::task_scheduler_init init(2);
-    tbb::task_arena limited(2);
+    tbb::task_scheduler_init init(1);
+    tbb::task_arena limited(1);
 #else
     tbb::task_scheduler_init init();
-    tbb::task_arena limited(tbb::task_scheduler_init::default_num_threads());
+    tbb::task_arena limited(prms.cpu_threads);
 #endif
     
     // execute in limited task arena
     limited.execute([&]
     {
         SimulationControl control;
-        {
-            Parameters prms;
-            prms.read(argc,argv);
-            prms.setup();
-            control.setParameters(prms);
-        }
+        control.setParameters(prms);
         control.setup();
         control.start();
     });
 
     return EXIT_SUCCESS;
+}
+catch(std::exception& e)
+{
+    vesLOG("caught exception at main scope: " << e.what() )
 }

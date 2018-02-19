@@ -25,6 +25,8 @@ void MonteCarlo::setup()
     cells.deployParticles(*target_range);
     energy_work.reset(new enhance::TriangularMatrix<float>(target_range->size()));
     energy_old.reset(new enhance::TriangularMatrix<float>(target_range->size()));
+    sw_position.setup(1000*getParameters().mobile, getParameters().sw_position_min, getParameters().sw_position_max, getParameters().sw_position_target);
+    sw_orientation.setup(1000*getParameters().mobile, getParameters().sw_orientation_min, getParameters().sw_orientation_max, getParameters().sw_orientation_target);
 }
 
 
@@ -63,44 +65,6 @@ void MonteCarlo::step(const unsigned long& steps)
 
 
 
-
-// float MonteCarlo::potentialEnergy(const std::unique_ptr<Particle>& p1) const
-// {
-//     std::atomic<float> energy_sum {0.f};
-//     tbb::parallel_for_each(target_range->begin(), target_range->end(), [&](auto& target) 
-//     {
-//         assert(p1);
-//         assert(target);
-//         if(p1==target) return;
-//         assert(getInteraction());
-//         const float energy = getInteraction()->potential(p1,target);
-
-//         auto current = energy_sum.load();
-//         while (!energy_sum.compare_exchange_weak(current, current + energy))
-//             current = energy_sum.load();
-//     });
-//     return !std::isnan(energy_sum.load()) ? energy_sum.load() : throw std::runtime_error("potential Energy is NAN");
-// }
-
-
-
-// float MonteCarlo::potentialEnergyInRegion(const cell_type& cell, const Particle& particle) const
-// {
-//     // vesDEBUG(__PRETTY_FUNCTION__)
-//     float energy_sum = 0.f;
-//     for(const cell_type& other_cell: cell.getRegion())
-//     for(const Particle& other: other_cell)
-//     // std::for_each(cell.getRegion().begin(), cell.getRegion().end(), [&](const Particle& other) 
-//     {
-//         if(std::addressof(particle)==std::addressof(other)) continue;
-//         assert(getInteraction());
-//         energy_sum += getInteraction()->potential(particle,other);
-//     }
-//     return !std::isnan(energy_sum) ? energy_sum : throw std::runtime_error("potential Energy is NAN");
-// }
-
-
-
 void MonteCarlo::doMCmove(const cell_type& cell)
 {
     // vesDEBUG(__PRETTY_FUNCTION__)
@@ -108,7 +72,8 @@ void MonteCarlo::doMCmove(const cell_type& cell)
     {
         // coordinates move
         {
-            const auto stepwidth = getParameters().stepwidth_coordinates;
+            // const auto stepwidth = getParameters().sw_position;
+            const auto stepwidth = sw_position();
             const auto translation = Particle::cartesian
             (
                 enhance::random<float>(-stepwidth,stepwidth),
@@ -132,6 +97,7 @@ void MonteCarlo::doMCmove(const cell_type& cell)
             // rejection
             if(!acceptance->isValid(delta_energy))
             {
+                sw_position.rejected();
                 particle.setCoords(particle.coordsOld());
                 for(const auto& region_cell : cell.getRegion())
                 {
@@ -142,11 +108,15 @@ void MonteCarlo::doMCmove(const cell_type& cell)
                     }
                 }
             }
+            // acctance
+            else
+                sw_position.accepted();
         }
 
         // orientation move
         {
-            const float stepwidth = getParameters().stepwidth_orientation;
+            // const float stepwidth = getParameters().sw_orientation;
+            const float stepwidth = sw_orientation();
             const auto orientation = Particle::cartesian
             (
                 enhance::random<float>(-1.f,1.f),
@@ -166,12 +136,11 @@ void MonteCarlo::doMCmove(const cell_type& cell)
                     delta_energy += (*energy_work)(particle.ID, other.ID) - (*energy_old)(particle.ID, other.ID);
                 }
             }
-            // const float energy_before = potentialEnergyInRegion(cell,particle);
-            // const float energy_after = potentialEnergyInRegion(cell,particle);
 
             // rejection
             if(!acceptance->isValid(delta_energy))
             {
+                sw_orientation.rejected();
                 particle.setOrientation(particle.orientationOld());
                 for(const auto& region_cell : cell.getRegion())
                 {
@@ -182,6 +151,9 @@ void MonteCarlo::doMCmove(const cell_type& cell)
                     }
                 }
             }
+            // acctance
+            else
+                sw_orientation.accepted();
         }
     }
 }

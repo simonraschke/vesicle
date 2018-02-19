@@ -55,9 +55,10 @@ private:
     std::deque<float> timepoints {};
 
     // collecting potential energy
-    std::deque<PotentialEnergyParser::result_type> potential_energies {};
+    std::deque<float> potential_energies {};
 
     // collecting cluster structures
-    std::deque<PotentialEnergyParser::result_type> cluster_histograms {};
     ClusterParser<PERIODIC::ON> clusters;
+    std::deque<float> cluster_volumes {};
+    std::deque<float> cluster_surface_areas {};
 };

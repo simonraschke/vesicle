@@ -196,16 +196,18 @@ void SimulationControl::start()
     // step and time to track speed
     std::size_t i = 1;
     double dura = 0;
+    double since_beginning = 0;
+    auto the_very_beginning = std::chrono::high_resolution_clock::now();
     auto now = std::chrono::high_resolution_clock::now();
     auto start = std::chrono::high_resolution_clock::now();
 
     // print initial trajectory for start time
     if(system.getTrajectoryWriter())
-    {
         system.getTrajectoryWriter()->write(system.getTime(),true);
-    }
 
-    while(SIGNAL.load() == 0)
+    const auto time_max = getParameters().time_max;
+
+    while(SIGNAL.load() == 0 && system.getTime() <= time_max)
     {
         // start flow graph from start_node
         start_node->try_put(tbb::flow::continue_msg());
@@ -218,11 +220,15 @@ void SimulationControl::start()
         {
             now = std::chrono::high_resolution_clock::now();
             dura = std::chrono::duration<double>(std::chrono::duration_cast<std::chrono::milliseconds>(now - start)).count();
-            vesLOG( "simulation time elapsed " << std::setw(10) << std::left << system.getTime() << " \tstep " 
-                << std::setw(10) << std::right << i << " \t time:  " 
-                << std::setw(10) << std::left << dura << " s \t time/step  " 
-                << std::setw(10) << std::left << dura/system.getParameters().out_traj_skip*1000 << " ms \t time/step/particle  " 
-                << std::setw(10) << std::left << dura/system.getParameters().out_traj_skip/system.getParticles().size()*1e6 << " ns")
+            since_beginning = std::chrono::duration<double>(std::chrono::duration_cast<std::chrono::seconds>(now - the_very_beginning)).count();
+            vesLOG( "simulation time elapsed " << std::setw(10) << std::right << system.getTime() << " | step " 
+                << std::setw(10) << std::right << i << " | time:  " 
+                << std::setw(10) << std::right << dura << " s | time/step  " 
+                << std::setw(6) << std::right << dura/system.getParameters().out_traj_skip*1000 << " ms | time/step/particle  " 
+                << std::setw(6) << std::right << dura/system.getParameters().out_traj_skip/system.getParticles().size()*1e6 << " ns | "
+                << "time per day " << std::setw(12) << std::right << (24.0*60*60)/since_beginning*system.getTime()
+                << " | time to target " << std::setw(12) << std::right << getParameters().time_max/((24.0*60*60)/since_beginning*system.getTime()) << " d"
+            )
             start = now;
         }
         ++i;

@@ -20,6 +20,7 @@
 #include "monte_carlo_utility/metropolis.hpp"
 // #include "monte_carlo_utility/cell_container.hpp"
 #include "monte_carlo_utility/cell_based_algorithm.hpp"
+#include "monte_carlo_utility/stepwidth_alignment_unit.hpp"
 #include "particles/particle.hpp"
 #include "enhance/triangular_matrix.hpp"
 #include <memory>
@@ -36,6 +37,9 @@ public:
     virtual void setup() override;
     virtual void step(const unsigned long& = 1) override;
     
+    StepwidhtAlignmentUnit sw_position;
+    StepwidhtAlignmentUnit sw_orientation;
+    
 protected:
     void doMCmove(const cell_type&);
     void doCoordinatesMove(const cell_type&, Particle&);
@@ -43,6 +47,7 @@ protected:
 
     // float potentialEnergy(const std::unique_ptr<Particle>&) const;
     // float potentialEnergyInRegion(const cell_type&, const Particle&) const;
+
 
     std::unique_ptr<enhance::TriangularMatrix<float>> energy_work {};
     std::unique_ptr<enhance::TriangularMatrix<float>> energy_old {};

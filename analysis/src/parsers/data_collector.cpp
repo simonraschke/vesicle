@@ -88,8 +88,8 @@ void DataCollector::collect()
         reader->readNextFrame(std::regex("^[0-9]*$"));
         try
         {
-            auto frame = reader->getFrame(-1);
-            translator(frame);
+            auto snapshot = reader->getFrame(-1);
+            translator(snapshot);
             
             timepoints.emplace_back(translator.time_elapsed);
 
@@ -126,19 +126,33 @@ void DataCollector::write()
         dataset.write(potential_energies_array);
     }
 
-    // clusters
-    // {
-    //     assert(timepoints.size() == potential_energies.size());
-    //     boost::multi_array<float,2> potential_energies_array(boost::extents[translator.particles.size()][2]);
-    //     for(std::size_t i = 0; i < potential_energies.size(); ++i)
-    //     {
-    //         potential_energies_array[i][0] = timepoints[i];
-    //         potential_energies_array[i][1] = potential_energies[i];
-    //     }
+    // clusters volumes
+    {
+        assert(timepoints.size() == cluster_volumes.size());
+        boost::multi_array<float,2> cluster_volumes_array(boost::extents[cluster_volumes.size()][2]);
+        for(std::size_t i = 0; i < cluster_volumes.size(); ++i)
+        {
+            cluster_volumes_array[i][0] = timepoints[i];
+            cluster_volumes_array[i][1] = cluster_volumes[i];
+        }
 
-    //     HighFive::DataSet dataset = FILE->createDataSet<float>("/cluster_histograms", HighFive::DataSpace::From(potential_energies_array));
-    //     dataset.write(potential_energies_array);
-    // }
+        HighFive::DataSet dataset = FILE->createDataSet<float>("/cluster_volumes", HighFive::DataSpace::From(cluster_volumes_array));
+        dataset.write(cluster_volumes_array);
+    }
+
+    // clusters surface areas
+    {
+        assert(timepoints.size() == cluster_surface_areas.size());
+        boost::multi_array<float,2> cluster_surface_areas_array(boost::extents[cluster_surface_areas.size()][2]);
+        for(std::size_t i = 0; i < cluster_surface_areas.size(); ++i)
+        {
+            cluster_surface_areas_array[i][0] = timepoints[i];
+            cluster_surface_areas_array[i][1] = cluster_surface_areas[i];
+        }
+
+        HighFive::DataSet dataset = FILE->createDataSet<float>("/cluster_surface_areas", HighFive::DataSpace::From(cluster_surface_areas_array));
+        dataset.write(cluster_surface_areas_array);
+    }
 }
 
 
@@ -160,13 +174,16 @@ void DataCollector::try_potential_energy()
 }
 
 
-struct CompareBySize{ template<typename T> bool operator()(const T& a, const T& b){return a.size()<b.size();}};
 
 void DataCollector::try_cluster()
 {
-    clusters.setTarget(translator.particles.begin(),translator.particles.end());
-    clusters.DBSCANrecursive(2, 1.4);
-
+    {
+        clusters.setTarget(translator.particles.begin(),translator.particles.end());
+        if(getParameters().analysis_cluster_algorithm == "DBSCAN")
+            clusters.DBSCANrecursive(getParameters().analysis_cluster_minimum_size, getParameters().analysis_cluster_distance_threshold);
+        else
+            vesCRITICAL("cluster algorithm " << getParameters().analysis_cluster_algorithm << " unknown")
+    }
 
     {
         boost::multi_array<std::size_t,1> cluster_histogram(boost::extents[clusters.numClusters()]);
@@ -179,25 +196,32 @@ void DataCollector::try_cluster()
         dataset.write(cluster_histogram);
     }
 
-    tbb::concurrent_vector<ClusterVolumeParser> volumeParsers;
-    tbb::parallel_for_each(clusters.begin(), clusters.end(), [&](const auto& cluster)
     {
-        if(cluster.size() >= 20)
+        tbb::concurrent_vector<ClusterStructureParser> volumeParsers;
+        tbb::parallel_for_each(clusters.begin(), clusters.end(), [&](const auto& cluster)
         {
-            auto it = volumeParsers.emplace_back(cluster);
-            it->setParameters(getParameters());
-            it->parse();
-        }
-    });
+            if(cluster.size() >= getParameters().analysis_cluster_significant_size)
+            {
+                auto it = volumeParsers.emplace_back(cluster);
+                it->setParameters(getParameters());
+                it->parse();
+            }
+        });
 
-    const float volume = PARALLEL_REDUCE(float, volumeParsers, [&](float i, const auto& parser)
-    {
-        return i + parser.result;
-    });
-    
-    if(!volumeParsers.empty())
-    std::max_element(std::begin(volumeParsers), std::end(volumeParsers), [](auto& a, auto& b)
-    {
-        return a.result < b.result;
-    })->printXML("largest.vtu");
+        cluster_volumes.emplace_back(PARALLEL_REDUCE(float, volumeParsers, [&](float i, const auto& parser)
+        {
+            return i + parser.getVolume();
+        }));
+
+        cluster_surface_areas.emplace_back(PARALLEL_REDUCE(float, volumeParsers, [&](float i, const auto& parser)
+        {
+            return i + parser.getSurfaceArea();
+        }));
+        
+        if(!volumeParsers.empty())
+        std::max_element(std::begin(volumeParsers), std::end(volumeParsers), [](auto& a, auto& b)
+        {
+            return a.result < b.result;
+        })->printXML("largest.vtu");
+    }
 }

@@ -98,7 +98,6 @@ public:
             
             for(particle_type& leaver : leavers)
             {
-            // #ifndef NDEBUG
                 bool was_added = false;
                 for(cell_type& proximity_cell : cell.getProximity())
                 {
@@ -106,16 +105,6 @@ public:
                     if(was_added) break;
                 }
                 assert(was_added);
-                // this somehow doesn't work. don't know why
-            // #else
-            //     for(cell_type& proximity_cell : cell.getProximity())
-            //     {
-            //         if(proximity_cell.contains(leaver.coords()))
-            //         {
-            //             proximity_cell.try_add(leaver);
-            //         }
-            //     }
-            // #endif
                 cell.removeParticle(leaver);
                 assert(!cell.contains(&leaver));
             }

@@ -24,6 +24,7 @@
 #include <boost/filesystem.hpp>
 #include <iomanip>
 #include <string>
+#include <regex>
 
 
 // trajectory reader and writer base class

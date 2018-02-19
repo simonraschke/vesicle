@@ -18,12 +18,16 @@
 
 #include "enhance/math_utility.hpp"
 #include "enhance/output_utility.hpp"
-#include "program_options.hpp"
 #include "definitions.hpp"
 #include <memory>
 #include <exception>
 #include <cassert>
 #include <string>
+#include <limits>
+#include <regex>
+#include <tbb/task_scheduler_init.h>
+#include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
 
 
 
@@ -36,6 +40,7 @@ struct Parameters
     typedef boost::filesystem::ofstream OFSTREAM;
 
     // GENERAL
+    std::size_t cpu_threads {};
     std::string algorithm {};
     std::string acceptance {};
     std::string interaction {};
@@ -49,10 +54,15 @@ struct Parameters
     float z {};
     float temperature {};
     float dt {};
+    float time_max {};
     float kappa {};
     float gamma {};
-    float stepwidth_coordinates {};
-    float stepwidth_orientation {};
+    float sw_position_min {};
+    float sw_position_max {};
+    float sw_position_target {};
+    float sw_orientation_min {};
+    float sw_orientation_max {};
+    float sw_orientation_target {};
     float cell_min_edge {};
     std::size_t max_cells_dim {};
 
@@ -74,6 +84,10 @@ struct Parameters
     bool analysis_epot {};
     bool analysis_cluster {};
     std::string analysis_cluster_algorithm {};
+    std::size_t analysis_cluster_minimum_size {};
+    std::size_t analysis_cluster_significant_size {};
+    float analysis_cluster_distance_threshold {};
+    float analysis_cluster_volume_extension {};
     bool analysis_cluster_volume {};
     bool analysis_cluster_histogram {};
 
@@ -83,9 +97,7 @@ struct Parameters
 
     // static member functions
     static void read_from_file(boost::program_options::options_description&, boost::program_options::variables_map&);
-
-    // TODO get rid of
-    ProgramOptions programOptions {};
+    
 protected:
     // the actual options map
     boost::program_options::variables_map optionsMap {};
