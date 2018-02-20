@@ -5,6 +5,7 @@
 void AnisotropicSnapshotTranslatorGro::operator()(TrajectoryReader::Frame snapshot) 
 {
     particles.clear();
+    ParticleIDGenerator().reset();
     num_particles = 0;
     time_elapsed = 0;
     x = y = z = 0;
@@ -53,11 +54,11 @@ void AnisotropicSnapshotTranslatorGro::operator()(TrajectoryReader::Frame snapsh
             ParticleFactory<ParticleMobile> factory(1);
             particles.emplace_back(factory.createParticle());
         }
-        // else if ( boost::algorithm::contains(tokens1.at("resname"), "FRAME") && boost::algorithm::contains(tokens2.at("resname"), "FRAME") )
-        // {
-        //     ParticleFactory<ParticleFrame> factory(1);
-        //     particles.emplace_back(factory.createParticle());
-        // }
+        else if ( boost::algorithm::contains(tokens1.at("resname"), "FRAME") && boost::algorithm::contains(tokens2.at("resname"), "FRAME") )
+        {
+            ParticleFactory<ParticleFrame> factory(1);
+            particles.emplace_back(factory.createParticle());
+        }
         else
             throw std::logic_error(__PRETTY_FUNCTION__ + enhance::toStringViaStream(" resname are ", tokens1.at("resname")," and ", tokens2.at("resname")));
         

@@ -46,6 +46,8 @@ void Parameters::read(int argc, const char* argv[])
         ("system.temperature,t", po::value<float>(), "temperature")
         ("system.timestep", po::value<float>(&dt)->default_value(0.01), "time step")
         ("system.time_max", po::value<float>(&time_max)->default_value(FLT_MAX), "time step")
+        ("system.ljepsilon,k", po::value<float>(&LJepsilon)->default_value(1.0), "kappa")
+        ("system.ljsigma,k", po::value<float>(&LJsigma)->default_value(1.0), "kappa")
         ("system.kappa,k", po::value<float>(&kappa)->default_value(1.0), "kappa")
         ("system.gamma,g", po::value<float>(&gamma)->default_value(11.5), "gamma angle")
         ("system.sw_position_min", po::value<float>(&sw_position_min)->default_value(0.05), "position stepwidth min (MonteCarlo only)")
@@ -332,6 +334,8 @@ void Parameters::setup()
         vesLOG("system.temperature                  " << temperature )
         vesLOG("system.kappa                        " << kappa )
         vesLOG("system.gamma                        " << gamma )
+        vesLOG("system.ljepsilon                    " << LJepsilon )
+        vesLOG("system.ljsigma                      " << LJsigma )
         vesLOG("system.sw_position_min              " << sw_position_min )
         vesLOG("system.sw_position_max              " << sw_position_max )
         vesLOG("system.sw_position_target           " << sw_position_target )
@@ -358,6 +362,28 @@ void Parameters::setup()
         vesLOG("analysis.cluster_volume_extension   " << analysis_cluster_volume_extension )
         vesLOG("analysis.cluster_histogram          " << std::boolalpha << analysis_cluster_histogram )
     }
+}
+
+
+
+std::map<std::string,std::string> ParameterDependentComponent::systemAttributes() const
+{
+    std::map<std::string,std::string> attributes;
+    attributes["system.mobile"] = boost::lexical_cast<std::string>(getParameters().mobile);
+    attributes["system.density"] = boost::lexical_cast<std::string>(getParameters().density);
+    attributes["system.box.x"] = boost::lexical_cast<std::string>(getParameters().x);
+    attributes["system.box.y"] = boost::lexical_cast<std::string>(getParameters().y);
+    attributes["system.box.z"] = boost::lexical_cast<std::string>(getParameters().z);
+    attributes["system.temperature"] = boost::lexical_cast<std::string>(getParameters().temperature);
+    attributes["system.kappa"] = boost::lexical_cast<std::string>(getParameters().kappa);
+    attributes["system.gamma"] = boost::lexical_cast<std::string>(getParameters().gamma);
+
+    if(getParameters().interaction == "lj" || getParameters().interaction == "alj")
+    {
+        attributes["system.ljepsilon"] = boost::lexical_cast<std::string>(getParameters().LJepsilon);
+        attributes["system.ljsigma"] = boost::lexical_cast<std::string>(getParameters().LJsigma);
+    }
+    return attributes;
 }
 
 

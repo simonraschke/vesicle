@@ -22,12 +22,10 @@
 
 int main(int argc, const char *argv[])
 {
-    
-
+    vesLOG("__cplusplus " << __cplusplus)
 
     // register important signals in Controller bas class
     // allowing civilized shutdown
-
     std::signal( SIGHUP,  Controller::signal );
     std::signal( SIGINT,  Controller::signal );
     std::signal( SIGQUIT, Controller::signal );

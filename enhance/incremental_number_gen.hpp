@@ -26,15 +26,22 @@ namespace enhance
         // DERIVED()()  <- will result in an increasing integral number on each call
         T operator()() const
         {
-            static T i = 0;
             return i++;
+        }
+
+        void reset()
+        {
+            i = 0;
         }
 
         virtual ~IncrementalNumberGenerator() = default;
 
     protected:
+        static T i;
         // make it inheritance only
         // IncrementalNumberGenerator() = default;
     };
 
+    template<typename DERIVED, typename T, typename ENABLER>
+    T IncrementalNumberGenerator<DERIVED,T,ENABLER>::i = 0;
 }

@@ -47,6 +47,7 @@ public:
 
     std::size_t numParticles() const;
     std::size_t numClusters() const;
+    std::size_t maxClusterSize() const;
 
     // iteration
     typename ClusterList::iterator begin();
@@ -209,6 +210,14 @@ template<PERIODIC P>
 std::size_t ClusterParser<P>::numClusters() const
 {
     return clusters.size();
+}
+
+
+
+template<PERIODIC P>
+std::size_t ClusterParser<P>::maxClusterSize() const
+{
+    return std::max_element(std::begin(clusters), std::end(clusters), [&](const Cluster_t& cluster1, const Cluster_t& cluster2){ return cluster1.size() < cluster2.size(); })->size();
 }
 
 

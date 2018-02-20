@@ -57,6 +57,8 @@ struct Parameters
     float time_max {};
     float kappa {};
     float gamma {};
+    float LJepsilon {};
+    float LJsigma {};
     float sw_position_min {};
     float sw_position_max {};
     float sw_position_target {};
@@ -118,6 +120,10 @@ struct ParameterDependentComponent
     // will throw if parameters private member is nullptr
     // prevent by calling setParameters before
     const Parameters& getParameters() const;
+
+    // get a string map with relevant system parameters
+    // to be used as attributes for hdf5 datasets
+    std::map<std::string,std::string> systemAttributes() const;
 
     // destroy if derived is destroyed
     virtual ~ParameterDependentComponent() = default;

@@ -1,6 +1,5 @@
 message(${CMAKE_CURRENT_SOURCE_DIR})
 
-# find_package(Eigen3 REQUIRED NO_MODULE)
 
 file(GLOB translator_source_files
     *.cpp

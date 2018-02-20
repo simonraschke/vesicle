@@ -45,6 +45,11 @@ void DataCollector::setup()
         );
         FILE->createGroup("/cluster_histograms");
     }
+    for(const auto& [key,val] : systemAttributes())
+    {
+        HighFive::Attribute attribute = FILE->getGroup("/cluster_histograms").createAttribute<std::string>(key, HighFive::DataSpace::From(val));
+        attribute.write(val);
+    }
 
     if(enhance::splitAtDelimiter(getParameters().analysis_input.string(),".").back() == "gro")
         reader = std::make_unique<TrajectoryReaderGro>();
@@ -58,34 +63,9 @@ void DataCollector::setup()
 
 void DataCollector::collect()
 {
-    // // we create a new hdf5 file
-    // const unsigned long x = 100000000;
-    // const unsigned long y = 2;
-
-    // boost::multi_array<float, 2> my_array(boost::extents[x][y]);
-    // for (size_t i = 0; i < x; ++i) {
-    //     for (size_t j = 0; j < y; ++j) {
-    //         my_array[i][j] = 1.337 + i + j;
-    //     }
-    // }
-
-    // HighFive::File file(boost::filesystem::system_complete("data.h5").string(), HighFive::File::ReadWrite | HighFive::File::Create | HighFive::File::Truncate);
-    // HighFive::DataSet dataset = file.createDataSet<float>("/boost_multi_array", HighFive::DataSpace::From(my_array));
-
-    // // lets write our vector of int to the HDF5 dataset
-    // dataset.write(my_array);
-
-    // read back
-    // boost::multi_array<int, 2> result;
-    // dataset.read(result);
-
-    // for(auto i : result)
-    // for(auto j : i)
-    // vesLOG(j)
-
     while(!reader->isEOF() && Controller::SIGNAL == 0)
     {
-        reader->readNextFrame(std::regex("^[0-9]*$"));
+        reader->readNextFrame(getParameters().analysis_frames);
         try
         {
             auto snapshot = reader->getFrame(-1);
@@ -112,47 +92,68 @@ void DataCollector::collect()
 
 void DataCollector::write()
 {
-    // potential energy
-    {
-        assert(timepoints.size() == potential_energies.size());
-        boost::multi_array<float,2> potential_energies_array(boost::extents[potential_energies.size()][2]);
-        for(std::size_t i = 0; i < potential_energies.size(); ++i)
+    tbb::parallel_invoke
+    (
+        // potential energy
+        [&]
         {
-            potential_energies_array[i][0] = timepoints[i];
-            potential_energies_array[i][1] = potential_energies[i];
-        }
+            assert(timepoints.size() == potential_energies.size());
+            boost::multi_array<float,2> potential_energies_array(boost::extents[potential_energies.size()][2]);
+            for(std::size_t i = 0; i < potential_energies.size(); ++i)
+            {
+                potential_energies_array[i][0] = timepoints[i];
+                potential_energies_array[i][1] = potential_energies[i];
+            }
 
-        HighFive::DataSet dataset = FILE->createDataSet<float>("/potential_energies", HighFive::DataSpace::From(potential_energies_array));
-        dataset.write(potential_energies_array);
-    }
+            HighFive::DataSet dataset = FILE->createDataSet<float>("/potential_energies", HighFive::DataSpace::From(potential_energies_array));
+            for(const auto& [key,val] : systemAttributes())
+            {
+                HighFive::Attribute attribute = dataset.createAttribute<std::string>(key, HighFive::DataSpace::From(val));
+                attribute.write(val);
+            }
+            dataset.write(potential_energies_array);
+        },
 
-    // clusters volumes
-    {
-        assert(timepoints.size() == cluster_volumes.size());
-        boost::multi_array<float,2> cluster_volumes_array(boost::extents[cluster_volumes.size()][2]);
-        for(std::size_t i = 0; i < cluster_volumes.size(); ++i)
+        // clusters volumes
+        [&]
         {
-            cluster_volumes_array[i][0] = timepoints[i];
-            cluster_volumes_array[i][1] = cluster_volumes[i];
-        }
+            assert(timepoints.size() == cluster_volumes.size());
+            boost::multi_array<float,2> cluster_volumes_array(boost::extents[cluster_volumes.size()][2]);
+            for(std::size_t i = 0; i < cluster_volumes.size(); ++i)
+            {
+                cluster_volumes_array[i][0] = timepoints[i];
+                cluster_volumes_array[i][1] = cluster_volumes[i];
+            }
 
-        HighFive::DataSet dataset = FILE->createDataSet<float>("/cluster_volumes", HighFive::DataSpace::From(cluster_volumes_array));
-        dataset.write(cluster_volumes_array);
-    }
+            HighFive::DataSet dataset = FILE->createDataSet<float>("/cluster_volumes", HighFive::DataSpace::From(cluster_volumes_array));
+            for(const auto& [key,val] : systemAttributes())
+            {
+                HighFive::Attribute attribute = dataset.createAttribute<std::string>(key, HighFive::DataSpace::From(val));
+                attribute.write(val);
+            }
+            dataset.write(cluster_volumes_array);
+        },
 
-    // clusters surface areas
-    {
-        assert(timepoints.size() == cluster_surface_areas.size());
-        boost::multi_array<float,2> cluster_surface_areas_array(boost::extents[cluster_surface_areas.size()][2]);
-        for(std::size_t i = 0; i < cluster_surface_areas.size(); ++i)
+        // clusters surface areas
+        [&]
         {
-            cluster_surface_areas_array[i][0] = timepoints[i];
-            cluster_surface_areas_array[i][1] = cluster_surface_areas[i];
-        }
+            assert(timepoints.size() == cluster_surface_areas.size());
+            boost::multi_array<float,2> cluster_surface_areas_array(boost::extents[cluster_surface_areas.size()][2]);
+            for(std::size_t i = 0; i < cluster_surface_areas.size(); ++i)
+            {
+                cluster_surface_areas_array[i][0] = timepoints[i];
+                cluster_surface_areas_array[i][1] = cluster_surface_areas[i];
+            }
 
-        HighFive::DataSet dataset = FILE->createDataSet<float>("/cluster_surface_areas", HighFive::DataSpace::From(cluster_surface_areas_array));
-        dataset.write(cluster_surface_areas_array);
-    }
+            HighFive::DataSet dataset = FILE->createDataSet<float>("/cluster_surface_areas", HighFive::DataSpace::From(cluster_surface_areas_array));
+            for(const auto& [key,val] : systemAttributes())
+            {
+                HighFive::Attribute attribute = dataset.createAttribute<std::string>(key, HighFive::DataSpace::From(val));
+                attribute.write(val);
+            }
+            dataset.write(cluster_surface_areas_array);
+        }
+    );
 }
 
 
@@ -186,42 +187,63 @@ void DataCollector::try_cluster()
     }
 
     {
-        boost::multi_array<std::size_t,1> cluster_histogram(boost::extents[clusters.numClusters()]);
+        boost::multi_array<long int,2> cluster_histogram(boost::extents[clusters.numClusters()][clusters.maxClusterSize()+1]);
+
+        for(std::size_t i = 0; i != clusters.numClusters(); ++i) 
+        for(std::size_t j = 0; j != clusters.maxClusterSize()+1; ++j)
+            cluster_histogram[i][j] = -1;
+
         for(std::size_t i = 0; i < clusters.numClusters(); ++i)
         {
-            cluster_histogram[i] = (clusters.begin()+i)->size();
+            cluster_histogram[i][0] = (clusters.begin()+i)->size();
+            for(std::size_t j = 0; j < (clusters.begin()+i)->size(); ++j)
+            {
+                cluster_histogram[i][j+1] = (*((clusters.begin()+i)->begin()+j))->ID;
+            }
         }
 
-        HighFive::DataSet dataset = FILE->createDataSet<std::size_t>("/cluster_histograms/time"+boost::lexical_cast<std::string>(timepoints.back()), HighFive::DataSpace::From(cluster_histogram));
+        HighFive::DataSet dataset = FILE->createDataSet<long int>("/cluster_histograms/time"+boost::lexical_cast<std::string>(timepoints.back()), HighFive::DataSpace::From(cluster_histogram));
         dataset.write(cluster_histogram);
     }
 
     {
-        tbb::concurrent_vector<ClusterStructureParser> volumeParsers;
+        tbb::concurrent_vector<ClusterStructureParser> structureParsers;
         tbb::parallel_for_each(clusters.begin(), clusters.end(), [&](const auto& cluster)
         {
             if(cluster.size() >= getParameters().analysis_cluster_significant_size)
             {
-                auto it = volumeParsers.emplace_back(cluster);
+                auto it = structureParsers.emplace_back(cluster);
                 it->setParameters(getParameters());
                 it->parse();
             }
         });
 
-        cluster_volumes.emplace_back(PARALLEL_REDUCE(float, volumeParsers, [&](float i, const auto& parser)
-        {
-            return i + parser.getVolume();
-        }));
+        tbb::parallel_invoke
+        (
+            [&]
+            { 
+                cluster_volumes.emplace_back(PARALLEL_REDUCE(float, structureParsers, [&](float i, const auto& parser)
+                {
+                    return i + parser.getVolume();
+                }));
+            },
 
-        cluster_surface_areas.emplace_back(PARALLEL_REDUCE(float, volumeParsers, [&](float i, const auto& parser)
-        {
-            return i + parser.getSurfaceArea();
-        }));
-        
-        if(!volumeParsers.empty())
-        std::max_element(std::begin(volumeParsers), std::end(volumeParsers), [](auto& a, auto& b)
-        {
-            return a.result < b.result;
-        })->printXML("largest.vtu");
+            [&]
+            { 
+                cluster_surface_areas.emplace_back(PARALLEL_REDUCE(float, structureParsers, [&](float i, const auto& parser)
+                {
+                    return i + parser.getSurfaceArea();
+                }));
+            },
+            
+            [&]
+            { 
+                if(!structureParsers.empty())
+                std::max_element(std::begin(structureParsers), std::end(structureParsers), [](auto& a, auto& b)
+                {
+                    return a.result < b.result;
+                })->printXML("largest.vtu");
+            }
+        );
     }
 }

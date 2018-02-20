@@ -1,7 +1,3 @@
-# set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
-# set(CMAKE_DISABLE_SOURCE_CHANGES  ON)
-
-
 cmake_minimum_required(VERSION 3.1)
 project(vesicle)
 
@@ -42,9 +38,5 @@ target_link_libraries(vesicle systems IO interactions)
 
 install( TARGETS vesicle RUNTIME DESTINATION bin )
 
-# include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
-# ExternalProject_Add(HighFive SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/HighFive PREFIX HighFive)
-
 enable_testing()
 add_subdirectory(tests)
-# add_subdirectory(HighFive)

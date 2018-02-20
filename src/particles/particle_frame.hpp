@@ -15,3 +15,27 @@
 */
 
 #pragma once
+
+#include "particle.hpp"
+
+
+
+class ParticleFrame
+    : public Particle
+{
+public:
+    virtual void setCoords(const cartesian&) override;
+    virtual void setVelocity(const cartesian&) override;
+    virtual void setForce(const cartesian&) override;
+    virtual void setOrientation(const cartesian&) override;
+
+    void setOriginCoords(const cartesian&);
+    void setOriginOrientation(const cartesian&);
+
+    virtual std::string name() const override;
+    virtual PARTICLETYPE getType() const override;
+
+protected:
+    std::unique_ptr<cartesian> originCoords {nullptr};
+    std::unique_ptr<cartesian> originOrientation {nullptr};
+};

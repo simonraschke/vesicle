@@ -22,8 +22,8 @@ float AngularLennardJones::potential(const Particle& p1, const Particle& p2) con
 {
     cartesian distance_vec = distanceVector(p1, p2);
 
-    const float r2 = 1.f/distance_vec.squaredNorm();
-    if(r2 < 1.f/9.f) return 0.f;
+    const float r2 = sigma/distance_vec.squaredNorm();
+    if(r2 < cutoff_rez_sq) return 0.f;
 
     const float r6 = r2*r2*r2;
 
@@ -37,7 +37,7 @@ float AngularLennardJones::potential(const Particle& p1, const Particle& p2) con
          + std::pow(cartesian( -p1_orien_kappa + distance_vec - p2_orien_kappa ).norm() - c,2)
          + std::pow(cartesian(  p1_orien_kappa + distance_vec + p2_orien_kappa ).norm() - c,2);
 
-    return 4.f*(r6*r6-(1.f-chi)*r6);
+    return 4.f*epsilon*(r6*r6-(1.f-chi)*r6);
 }
 
 
@@ -46,7 +46,7 @@ AngularLennardJones::cartesian AngularLennardJones::force(const Particle& p1, co
 {
     const cartesian distance_vec = distanceVector(p1, p2);
 
-    const float r2 = 1.f/distance_vec.squaredNorm();
+    const float r2 = sigma/distance_vec.squaredNorm();
     const float r6 = r2*r2*r2;
 
     const auto normed_dist_vec = distance_vec.normalized();
@@ -59,7 +59,7 @@ AngularLennardJones::cartesian AngularLennardJones::force(const Particle& p1, co
          + std::pow(cartesian( -p1_orien_kappa + normed_dist_vec - p2_orien_kappa ).norm() - c,2)
          + std::pow(cartesian(  p1_orien_kappa + normed_dist_vec + p2_orien_kappa ).norm() - c,2);
 
-    return distance_vec*((-24.f)*r2*r6*(r6*2 + chi - 1.f));
+    return distance_vec*epsilon*((-24.f)*r2*r6*(r6*2 + chi - 1.f));
 }
 
 
@@ -71,6 +71,10 @@ void AngularLennardJones::setup()
     a = 1.f + kappa*std::sin(getParameters().gamma);
     b = 1.f - kappa*std::sin(getParameters().gamma);
     c = (cartesian(b,0,0) + cartesian(a-1.f, kappa*std::cos(getParameters().gamma), 0)).norm();
+    epsilon = getParameters().LJepsilon;
+    sigma = getParameters().LJsigma;
+    cutoff_rez_sq = 1.f/getParameters().cell_min_edge;
+    cutoff_rez_sq *= cutoff_rez_sq;
 }
 
 

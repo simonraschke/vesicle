@@ -38,4 +38,7 @@ protected:
     float a {0};
     float b {0};
     float c {0};
+    float sigma {0};
+    float epsilon {0};
+    float cutoff_rez_sq {0};
 };
