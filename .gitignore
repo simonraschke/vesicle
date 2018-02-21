@@ -4,3 +4,4 @@ build/
 *.h5
 .cmserver.*
 Testing/
+*pycache*

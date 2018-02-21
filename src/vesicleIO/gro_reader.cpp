@@ -111,10 +111,10 @@ void TrajectoryReaderGro::readNextFrame(std::regex reg)
         bool found = false;
 
         // iterating the whole file
-        for( std::string line; std::getline(FILE, line); FILE_pos = FILE.tellg() )
+        for( std::string line; std::getline(FILE, line) || FILE.eof(); FILE_pos = FILE.tellg() )
         {
             // if FRAMEBEGIN is in line
-            if(boost::algorithm::contains(line, "FRAMEBEGIN"))
+            if(boost::algorithm::contains(line, "FRAMEBEGIN") || FILE.eof())
             {
                 // and its not the first line
                 if( !first_frame_header )

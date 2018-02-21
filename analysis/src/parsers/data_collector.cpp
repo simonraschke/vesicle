@@ -34,7 +34,8 @@ void DataCollector::setup()
             boost::filesystem::system_complete(working_dir/getParameters().analysis_path).string(), 
             HighFive::File::ReadWrite
         );
-        FILE->createGroup("/cluster_histograms");
+        FILE->createGroup("/cluster_frame_guided");
+        FILE->createGroup("/cluster_self_assembled");
     }
     else
     {
@@ -43,12 +44,19 @@ void DataCollector::setup()
             boost::filesystem::system_complete(working_dir/getParameters().analysis_path).string(), 
             HighFive::File::ReadWrite | HighFive::File::Create | HighFive::File::Truncate
         );
-        FILE->createGroup("/cluster_histograms");
+        FILE->createGroup("/cluster_frame_guided");
+        FILE->createGroup("/cluster_self_assembled");
     }
     for(const auto& [key,val] : systemAttributes())
     {
-        HighFive::Attribute attribute = FILE->getGroup("/cluster_histograms").createAttribute<std::string>(key, HighFive::DataSpace::From(val));
-        attribute.write(val);
+        {
+            HighFive::Attribute attribute = FILE->getGroup("/cluster_frame_guided").createAttribute<std::string>(key, HighFive::DataSpace::From(val));
+            attribute.write(val);
+        }
+        {
+            HighFive::Attribute attribute = FILE->getGroup("/cluster_self_assembled").createAttribute<std::string>(key, HighFive::DataSpace::From(val));
+            attribute.write(val);
+        }
     }
 
     if(enhance::splitAtDelimiter(getParameters().analysis_input.string(),".").back() == "gro")
@@ -178,6 +186,7 @@ void DataCollector::try_potential_energy()
 
 void DataCollector::try_cluster()
 {
+    // perform cluster algorithm
     {
         clusters.setTarget(translator.particles.begin(),translator.particles.end());
         if(getParameters().analysis_cluster_algorithm == "DBSCAN")
@@ -186,26 +195,7 @@ void DataCollector::try_cluster()
             vesCRITICAL("cluster algorithm " << getParameters().analysis_cluster_algorithm << " unknown")
     }
 
-    {
-        boost::multi_array<long int,2> cluster_histogram(boost::extents[clusters.numClusters()][clusters.maxClusterSize()+1]);
-
-        for(std::size_t i = 0; i != clusters.numClusters(); ++i) 
-        for(std::size_t j = 0; j != clusters.maxClusterSize()+1; ++j)
-            cluster_histogram[i][j] = -1;
-
-        for(std::size_t i = 0; i < clusters.numClusters(); ++i)
-        {
-            cluster_histogram[i][0] = (clusters.begin()+i)->size();
-            for(std::size_t j = 0; j < (clusters.begin()+i)->size(); ++j)
-            {
-                cluster_histogram[i][j+1] = (*((clusters.begin()+i)->begin()+j))->ID;
-            }
-        }
-
-        HighFive::DataSet dataset = FILE->createDataSet<long int>("/cluster_histograms/time"+boost::lexical_cast<std::string>(timepoints.back()), HighFive::DataSpace::From(cluster_histogram));
-        dataset.write(cluster_histogram);
-    }
-
+    // 
     {
         tbb::concurrent_vector<ClusterStructureParser> structureParsers;
         tbb::parallel_for_each(clusters.begin(), clusters.end(), [&](const auto& cluster)
@@ -220,6 +210,16 @@ void DataCollector::try_cluster()
 
         tbb::parallel_invoke
         (
+            [&]
+            { 
+                write_fg_histogram(); 
+            },
+
+            [&]
+            { 
+                write_sa_histogram(); 
+            },
+
             [&]
             { 
                 cluster_volumes.emplace_back(PARALLEL_REDUCE(float, structureParsers, [&](float i, const auto& parser)
@@ -246,4 +246,94 @@ void DataCollector::try_cluster()
             }
         );
     }
+}
+
+
+void DataCollector::write_fg_histogram()
+{
+    const auto numFrameGuidedClusters = clusters.numClustersWithMemberType<PARTICLETYPE::FRAME>();
+    const auto maxClusterFrameGuided = clusters.maxClusterSizeWithMemberType<PARTICLETYPE::FRAME>();
+    
+    if(numFrameGuidedClusters == 0)
+        return;
+    else if(maxClusterFrameGuided == 0)
+        throw std::logic_error("the max frame-guided cluster is of size 0");
+
+    boost::multi_array<long int,2> cluster_histogram(boost::extents[numFrameGuidedClusters][maxClusterFrameGuided+1]);
+
+    // initialize array with -1
+    for(std::size_t i = 0; i != numFrameGuidedClusters; ++i) 
+        for(std::size_t j = 0; j != maxClusterFrameGuided+1; ++j)
+            cluster_histogram[i][j] = -1;
+
+    // matrix with 
+    // column 0 size of cluster
+    // further columns with particle IDs in this cluster
+    for(std::size_t i = 0; i < numFrameGuidedClusters; ++i)
+    {   
+        const auto& cluster = *(clusters.begin()+i);
+
+        if( clusters.numMembersOfType<PARTICLETYPE::FRAME>(cluster) < 1 )
+            continue;
+
+        // size
+        cluster_histogram[i][0] = cluster.size();
+
+        // all particles of cluster
+        for(std::size_t j = 0; j < cluster.size(); ++j)
+        {
+            const auto& particle = (*(*(cluster.begin()+j)));
+
+            // ID of particle in cluster
+            cluster_histogram[i][j+1] = particle.ID;
+        }
+    }
+
+    HighFive::DataSet dataset = FILE->createDataSet<long int>("/cluster_frame_guided/time"+boost::lexical_cast<std::string>(timepoints.back()), HighFive::DataSpace::From(cluster_histogram));
+    dataset.write(cluster_histogram);
+}
+
+
+
+void DataCollector::write_sa_histogram()
+{
+    const auto numSelfAssembledClusters = clusters.numClustersWithoutMemberType<PARTICLETYPE::FRAME>();
+    const auto maxClusterSelfAssembled = clusters.maxClusterSizeWithoutMemberType<PARTICLETYPE::FRAME>();
+    
+    boost::multi_array<long int,2> cluster_histogram(boost::extents[numSelfAssembledClusters][maxClusterSelfAssembled+1]);
+
+    if(numSelfAssembledClusters == 0)
+        return;
+    else if(maxClusterSelfAssembled == 0)
+        throw std::logic_error("the max self-assembled cluster is of size 0");
+
+    // initialize array with -1
+    for(std::size_t i = 0; i != numSelfAssembledClusters; ++i) 
+        for(std::size_t j = 0; j != maxClusterSelfAssembled+1; ++j)
+            cluster_histogram[i][j] = -1;
+
+    // matrix with 
+    // column 0 size of cluster
+    // further columns with particle IDs in this cluster
+    for(std::size_t i = 0; i < numSelfAssembledClusters; ++i)
+    {   
+        const auto& cluster = *(clusters.begin()+i);
+        if( clusters.numMembersOfType<PARTICLETYPE::FRAME>(cluster) > 1 )
+            continue;
+
+        // size
+        cluster_histogram[i][0] = cluster.size();
+
+        // all particles of cluster
+        for(std::size_t j = 0; j < cluster.size(); ++j)
+        {
+            const auto& particle = (*(*(cluster.begin()+j)));
+
+            // ID of particle in cluster
+            cluster_histogram[i][j+1] = particle.ID;
+        }
+    }
+
+    HighFive::DataSet dataset = FILE->createDataSet<long int>("/cluster_self_assembled/time"+boost::lexical_cast<std::string>(timepoints.back()), HighFive::DataSpace::From(cluster_histogram));
+    dataset.write(cluster_histogram);
 }

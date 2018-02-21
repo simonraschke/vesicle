@@ -45,6 +45,8 @@ public:
 private:
     void try_potential_energy();
     void try_cluster();
+    void write_fg_histogram();
+    void write_sa_histogram();
 
     boost::filesystem::path working_dir;
     std::unique_ptr<HighFive::File> FILE {nullptr};

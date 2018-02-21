@@ -45,8 +45,23 @@ public:
 
     void DBSCANrecursive(std::size_t = 1, float = 1.4);
 
+    // get information
+    template<PARTICLETYPE T>
+    std::size_t numMembersOfType(const Cluster_t&) const;
+    template<PARTICLETYPE T>
+    std::size_t numMembersNotOfType(const Cluster_t&) const;
     std::size_t numParticles() const;
+
+    template<PARTICLETYPE T>
+    std::size_t numClustersWithMemberType() const;
+    template<PARTICLETYPE T>
+    std::size_t numClustersWithoutMemberType() const;
     std::size_t numClusters() const;
+
+    template<PARTICLETYPE T>
+    std::size_t maxClusterSizeWithMemberType() const;
+    template<PARTICLETYPE T>
+    std::size_t maxClusterSizeWithoutMemberType() const;
     std::size_t maxClusterSize() const;
 
     // iteration
@@ -215,9 +230,85 @@ std::size_t ClusterParser<P>::numClusters() const
 
 
 template<PERIODIC P>
+template<PARTICLETYPE T>
+std::size_t ClusterParser<P>::maxClusterSizeWithMemberType() const
+{
+    std::size_t max = 0;
+    for(const auto& cluster : clusters)
+    {
+        const auto num_members_of_type = numMembersOfType<T>(cluster);
+        if(num_members_of_type > max)
+        {
+            max = num_members_of_type;
+        }
+    }
+    return max;
+}
+
+
+
+template<PERIODIC P>
+template<PARTICLETYPE T>
+std::size_t ClusterParser<P>::maxClusterSizeWithoutMemberType() const
+{
+    std::size_t max = 0;
+    for(const auto& cluster : clusters)
+    {
+        if(std::none_of(std::begin(cluster), std::end(cluster), [](const auto& particle){ return particle->type == T; }))
+        if(cluster.size() > max)
+        {
+            max = cluster.size();
+        }
+    }
+    return max;
+}
+
+
+
+template<PERIODIC P>
 std::size_t ClusterParser<P>::maxClusterSize() const
 {
     return std::max_element(std::begin(clusters), std::end(clusters), [&](const Cluster_t& cluster1, const Cluster_t& cluster2){ return cluster1.size() < cluster2.size(); })->size();
+}
+
+
+
+template<PERIODIC P>
+template<PARTICLETYPE T>
+std::size_t ClusterParser<P>::numMembersOfType(const Cluster_t& cluster) const
+{
+    // return std::accumulate(std::begin(cluster), std::end(cluster), std::size_t(0), [&](std::size_t i, const auto& particle){ return particle->type == T ? i+1 : i; });
+    return std::count_if(std::begin(cluster), std::end(cluster), [&](const auto& particle){ return particle->type == T; });
+}
+
+
+
+template<PERIODIC P>
+template<PARTICLETYPE T>
+std::size_t ClusterParser<P>::numMembersNotOfType(const Cluster_t& cluster) const
+{
+    // return std::accumulate(std::begin(cluster), std::end(cluster), std::size_t(0), [&](std::size_t i, const auto& particle){ return particle->type == T ? i+1 : i; });
+    return std::count_if(std::begin(cluster), std::end(cluster), [&](const auto& particle){ return particle->type != T; });
+}
+
+
+
+template<PERIODIC P>
+template<PARTICLETYPE T>
+std::size_t ClusterParser<P>::numClustersWithMemberType() const
+{
+    // return std::accumulate(std::begin(clusters), std::end(clusters), std::size_t(0), [&](std::size_t i, const Cluster_t& cluster){ return numTypeInCluster<T>(cluster) > 0 ? i+1 : i; });
+    return std::count_if(std::begin(clusters), std::end(clusters), [&](const Cluster_t& cluster){ return numMembersOfType<T>(cluster) > 0; });
+}
+
+
+
+template<PERIODIC P>
+template<PARTICLETYPE T>
+std::size_t ClusterParser<P>::numClustersWithoutMemberType() const
+{
+    // return std::accumulate(std::begin(clusters), std::end(clusters), std::size_t(0), [&](std::size_t i, const Cluster_t& cluster){ return numTypeInCluster<T>(cluster) > 0 ? i+1 : i; });
+    return std::count_if(std::begin(clusters), std::end(clusters), [&](const Cluster_t& cluster){ return numMembersOfType<T>(cluster) < 1; });
 }
 
 
