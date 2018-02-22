@@ -30,12 +30,14 @@ pp = pprint.PrettyPrinter(indent=4, compact=True)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--forcenew", action='store_true', help="force makeing directories new instead of increasing it")
+parser.add_argument("--repeat", type=int, default=0, help="restart args.prog x times")
 parser.add_argument("--origin", type=str, default=os.getcwd(), help="this directory")
 parser.add_argument("--dir", type=str, help="the working directory")
 parser.add_argument("--config", type=str, default='bin/vesicle_config.ini', help="program config file path from ~")
 parser.add_argument("--prog", type=str, default='bin/vesicle', help="program path from ~")
 parser.add_argument("--analysis", type=str, default='bin/vesicle_analysis', help="analysis program path from ~")
-parser.add_argument('--mobile', nargs=1, type=int, default=1000, help="mobile particles")
+parser.add_argument('--mobile', type=int, default=1000, help="mobile particles")
+parser.add_argument('--maxtime', type=float, default=1e8, help="maximum overall simulation time")
 parser.add_argument('-t', nargs='*', type=float, help="temperature value list")
 parser.add_argument('-k', nargs='*', type=float, help="kappa value list")
 parser.add_argument('-g', nargs='*', type=float, help="gamma value list")
@@ -60,6 +62,7 @@ args.d = sorted(list(set(args.d)))
 
 
 if __name__ == "__main__":
+    # print all args once
     for arg in vars(args):
         print("{0:10}".format(arg), getattr(args, arg))
     print()

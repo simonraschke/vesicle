@@ -24,6 +24,12 @@ import string
 import math
 import shutil
 import subprocess
+import time
+
+
+
+WORKING_DIRECTORIES = []
+
 
 
 # calculate number of threads needed when everything will be submitted
@@ -36,6 +42,7 @@ def askPermission(args):
     assert(args.d)
     assert(args.it)
     jobs = len(args.t)*len(args.k)*len(args.g)*len(args.d)*args.it
+    time.sleep(.1)
     cont = input("About to submit "+str(jobs) + " Jobs (" +str(jobs*args.threads) + " threads), continue? [Y/n]  ")
     if cont == 'y' or cont == 'Y': 
         print("continue submitting")
@@ -45,10 +52,6 @@ def askPermission(args):
         print("not submitting")
         print()
         sys.exit()
-
-
-
-WORKING_DIRECTORIES = []
 
 
 
@@ -128,7 +131,7 @@ def fileReplaceLineWithKeyword(filepath, keyword, replacement):
         else:
             print(line, end='')
     if replacement_counter == 0:
-        sys.stdout("unable to find keyword", keyword, "in file", filepath)
+        raise Exception("unable to find keyword "+keyword+" in file "+filepath+"\n")
 
 
 
@@ -177,6 +180,8 @@ def updateConfigFiles(args):
         new_config_file = os.path.join(dir,"config.ini")
         print("change  [T, kappa, gamma, dens]  to ", [t,k,g,d], " in file ", new_config_file)
         fileReplaceLineWithKeyword(new_config_file, "mobile", "mobile="+str(args.mobile))
+        fileReplaceLineWithKeyword(new_config_file, "threads", "threads="+str(args.threads))
+        fileReplaceLineWithKeyword(new_config_file, "time_max", "time_max="+str(args.maxtime))
         fileReplaceLineWithKeyword(new_config_file, "temperature", "temperature="+str(t))
         fileReplaceLineWithKeyword(new_config_file, "kappa", "kappa="+str(k))
         fileReplaceLineWithKeyword(new_config_file, "gamma", "gamma="+str(g))
@@ -212,20 +217,65 @@ def createSubmitScripts(args):
 
 
 
+# reque with dependency
+def sbatchAnalysis(args,dir,jobname,jobnum,dependency="afterany"):
+    old_config_file = os.path.join(dir,"config.ini")
+    assert(os.path.exists(old_config_file))
+    new_config_file = os.path.join(dir,"config_analysis.ini")
+    shutil.copy2(old_config_file, new_config_file)
+    assert(os.path.exists(new_config_file))
+    program = args.analysis.rsplit("/",maxsplit=1)[1]
+    command = "sbatch --dependency="+dependency+":"+jobnum+" -J \""+jobname+"\" submit.sh "+program+" --config config_analysis.ini"
+    if shutil.which("sbatch") != None:
+        status, jobnum = subprocess.getstatusoutput(command)
+    else:
+        status, jobnum = "DRYRUN", "DRYRUN"
+    print(command)
+
+
+
+# reque with dependency
+def sbatchRepeat(args,dir,jobname,jobnum,dependency="afterany"):
+    old_config_file = os.path.join(dir,"config.ini")
+    assert(os.path.exists(old_config_file))
+    new_config_file = os.path.join(dir,"config_repeat.ini")
+    shutil.copy2(old_config_file, new_config_file)
+    assert(os.path.exists(new_config_file))
+    try:
+        fileReplaceLineWithKeyword(new_config_file, "traj=none", "traj="+str("gro"))
+    except Exception as e:
+        pass
+    program = args.prog.rsplit("/",maxsplit=1)[1]
+    for i in range(args.repeat):
+        command = "sbatch --dependency="+dependency+":"+jobnum+" -J \""+jobname+"\" submit.sh "+program+" --config config_repeat.ini"
+        if shutil.which("sbatch") != None:
+            status, jobnum = subprocess.getstatusoutput(command)
+        else:
+            status, jobnum = "DRYRUN", "DRYRUN"
+        print(command)
+
+
+
+# run sbatch on every simulation iteration
 def sbatchAll(args):
     print(sbatchAll.__name__)
+    os.chdir(args.origin)
     if shutil.which("sbatch") == None:
         print("WARNING: sbatch not available. making a dry run")
     for dir in WORKING_DIRECTORIES:
-        os.chdir(args.origin)
-        os.chdir(os.path.join(args.origin, dir))
-        program = "vesicle"
-        submit_script = "submit.sh"
+        dir = os.path.join(args.origin, dir)
+        os.chdir(dir)
+        program = args.prog.rsplit("/",maxsplit=1)[1]
         T,k,g,d,it = stripParametersFromPath(dir)
         name = "T"+str(T)+"kappa"+str(k)+"gamma"+str(g)+"dens"+str(d)+"it"+str(it)
-        command = "sbatch -J "+name+" "+submit_script+" "+program+" --config config.ini"
+        command = "sbatch -J \""+name+"\" submit.sh "+program+" --config config.ini"
         print(command)
+        status, jobnum = None, None
         if shutil.which("sbatch") != None:
             status, jobnum = subprocess.getstatusoutput(command)
-    os.chdir(args.origin)
+        else:
+            status, jobnum = "DRYRUN", "DRYRUN"
+        sbatchRepeat(args,dir,name,jobnum)
+        sbatchAnalysis(args,dir,name,jobnum)
+        os.chdir(args.origin)
     print()

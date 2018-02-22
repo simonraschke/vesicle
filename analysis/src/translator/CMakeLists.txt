@@ -1,6 +1,5 @@
 message(${CMAKE_CURRENT_SOURCE_DIR})
 
-
 file(GLOB translator_source_files
     *.cpp
     *.hpp
