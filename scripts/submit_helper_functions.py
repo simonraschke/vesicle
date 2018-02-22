@@ -32,6 +32,11 @@ WORKING_DIRECTORIES = []
 
 
 
+def numbersListFromString(string):
+    return re.findall('\d+', string)
+
+
+
 # calculate number of threads needed when everything will be submitted
 # if not agreed on, exit, else return true
 def askPermission(args):
@@ -180,7 +185,7 @@ def updateConfigFiles(args):
         new_config_file = os.path.join(dir,"config.ini")
         print("change  [T, kappa, gamma, dens]  to ", [t,k,g,d], " in file ", new_config_file)
         fileReplaceLineWithKeyword(new_config_file, "mobile", "mobile="+str(args.mobile))
-        fileReplaceLineWithKeyword(new_config_file, "threads", "threads="+str(args.threads))
+        fileReplaceLineWithKeyword(new_config_file, "cpu_threads", "cpu_threads="+str(args.threads))
         fileReplaceLineWithKeyword(new_config_file, "time_max", "time_max="+str(args.maxtime))
         fileReplaceLineWithKeyword(new_config_file, "temperature", "temperature="+str(t))
         fileReplaceLineWithKeyword(new_config_file, "kappa", "kappa="+str(k))
@@ -228,9 +233,11 @@ def sbatchAnalysis(args,dir,jobname,jobnum,dependency="afterany"):
     command = "sbatch --dependency="+dependency+":"+jobnum+" -J \""+jobname+"\" submit.sh "+program+" --config config_analysis.ini"
     if shutil.which("sbatch") != None:
         status, jobnum = subprocess.getstatusoutput(command)
+        jobnum = numbersListFromString(jobnum)[-1]
     else:
-        status, jobnum = "DRYRUN", "DRYRUN"
+        status, jobnum = "DRYRUN", numbersListFromString("DRYRUN 1337")[-1]
     print(command)
+    return jobnum
 
 
 
@@ -250,9 +257,11 @@ def sbatchRepeat(args,dir,jobname,jobnum,dependency="afterany"):
         command = "sbatch --dependency="+dependency+":"+jobnum+" -J \""+jobname+"\" submit.sh "+program+" --config config_repeat.ini"
         if shutil.which("sbatch") != None:
             status, jobnum = subprocess.getstatusoutput(command)
+            jobnum = numbersListFromString(jobnum)[-1]
         else:
-            status, jobnum = "DRYRUN", "DRYRUN"
+            status, jobnum = "DRYRUN", numbersListFromString("DRYRUN 137")[-1]
         print(command)
+    return jobnum
 
 
 
@@ -271,11 +280,16 @@ def sbatchAll(args):
         command = "sbatch -J \""+name+"\" submit.sh "+program+" --config config.ini"
         print(command)
         status, jobnum = None, None
+        
         if shutil.which("sbatch") != None:
             status, jobnum = subprocess.getstatusoutput(command)
+            jobnum = numbersListFromString(jobnum)[-1]
         else:
-            status, jobnum = "DRYRUN", "DRYRUN"
-        sbatchRepeat(args,dir,name,jobnum)
-        sbatchAnalysis(args,dir,name,jobnum)
+            status, jobnum = "DRYRUN", numbersListFromString("DRYRUN 17")[-1]
+
+        if args.repeat > 0:
+            jobnum = sbatchRepeat(args,dir,name,jobnum)
+        if args.analysis != None:
+            jobnum = sbatchAnalysis(args,dir,name,jobnum)
         os.chdir(args.origin)
     print()
