@@ -130,6 +130,14 @@ void System::addTime(float t)
 
 
 
+void System::setTime(float t)
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    time_elapsed = t;
+}
+
+
+
 float System::getTime() const
 {
     vesDEBUG(__PRETTY_FUNCTION__)

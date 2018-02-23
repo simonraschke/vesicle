@@ -39,6 +39,7 @@ public:
     virtual void readAllFrames(bool = true) override;
     virtual void readNextFrame(std::regex) override;
 
+    virtual float getTime() const override;
 
     std::size_t numParticles() const;
     bool isAnisotropic() const;

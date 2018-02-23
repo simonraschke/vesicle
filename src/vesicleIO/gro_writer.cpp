@@ -34,8 +34,15 @@ void TrajectoryWriterGro::setPath(PATH path)
         // splitting the filepath
         auto string_parts = enhance::splitAtDelimiter(file_path->string(), ".");
 
+        std::string first_part = std::accumulate(string_parts.begin(), std::next(string_parts.rbegin()).base(), std::string(""), [](auto i, auto j){return i+j+".";});
+        {
+            std::string name_appendix = "_old";
+            first_part.insert(std::next(first_part.rbegin()).base(), std::begin(name_appendix), std::end(name_appendix));
+        }
+        std::string filetype = *string_parts.rbegin();
+
         // making "trajectory_old.gro" from "trajectory.gro"
-        PATH destination = boost::filesystem::system_complete((*std::next(string_parts.rbegin())+std::string("_old"))+"."+*string_parts.rbegin());
+        PATH destination = boost::filesystem::system_complete(first_part+filetype);
         vesLOG("trajectory file " << file_path->string() << " already exists. will backup to " << destination.string())
 
         // and backup the old trajectory

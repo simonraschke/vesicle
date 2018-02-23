@@ -116,7 +116,8 @@ public:
 
     virtual void readAllFrames(bool) = 0;
     virtual void readNextFrame(std::regex) = 0;
-
+    
+    virtual float getTime() const = 0;
 
     // return last frame
     // readAllFrames must called beforehand

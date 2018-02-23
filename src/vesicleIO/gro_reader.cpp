@@ -160,8 +160,23 @@ void TrajectoryReaderGro::readNextFrame(std::regex reg)
 
 
 
-
-
+float TrajectoryReaderGro::getTime() const
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    auto lines = getFrame(-1).second;
+    float time_elapsed = .1337;
+    try
+    {
+        time_elapsed = boost::lexical_cast<float>(enhance::splitAtDelimiter(lines[0],"=").at(1));
+        vesLOG("snapshot of time " << time_elapsed)
+    }
+    catch (const boost::bad_lexical_cast& e)
+    {
+        vesWARNING("lexical cast of " + enhance::splitAtDelimiter(lines[0],"=").at(1) + " resulted in")
+        vesCRITICAL("" << e.what())
+    }
+    return time_elapsed;
+}
 
 
 

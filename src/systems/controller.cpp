@@ -113,6 +113,15 @@ void SimulationControl::setup()
             system.distributeParticles<RandomDistributor>();
         else if(getParameters().in_traj == std::string("gro"))
             system.distributeParticles<TrajectoryDistributorGro>();
+        if(getParameters().in_traj != std::string("none"))
+        {
+            TrajectoryReaderGro reader;
+            reader.setParameters(getParameters());
+            reader.setPath(getParameters().in_traj_path);
+            reader.readAllFrames();
+            system.setTime(reader.getTime());
+            vesLOG("set start time to " << system.getTime())
+        }
     }
 
     //MUST
@@ -192,6 +201,11 @@ void SimulationControl::start()
 {
     vesDEBUG(__PRETTY_FUNCTION__)
 
+    if(std::abs(system.getTime() - getParameters().time_max) < 1e-3 ) 
+    {
+        vesLOG("SYSTEM ALREADY REACHED MAX TIME")
+        return;
+    }
 
     // step and time to track speed
     std::size_t i = 1;
@@ -202,7 +216,7 @@ void SimulationControl::start()
     auto start = std::chrono::high_resolution_clock::now();
 
     // print initial trajectory for start time
-    if(system.getTrajectoryWriter())
+    if(system.getTrajectoryWriter() && getParameters().in_traj == std::string("none"))
         system.getTrajectoryWriter()->write(system.getTime(),true);
 
     const auto time_max = getParameters().time_max;

@@ -107,6 +107,7 @@ public:
 
     // add time to time_elapsed
     void addTime(float);
+    void setTime(float);
     float getTime() const;
 
     using ParameterDependentComponent::getParameters;
