@@ -164,13 +164,17 @@ def copyConfigFile(args):
 
 
 # copy the given config file to directory tree
-def copyProgram(args):
-    print(copyProgram.__name__)
+def copyPrograms(args):
+    print(copyPrograms.__name__)
     assert(os.path.exists(args.prog))
+    assert(os.path.exists(args.analysis))
     for dir in WORKING_DIRECTORIES:
         assert(os.path.exists(dir))
         print("copy ", args.prog, " to ", dir)
         shutil.copy2(args.prog, dir)
+        if len(args.analysis) > 0:
+            print("copy ", args.analysis, " to ", dir)
+            shutil.copy2(args.analysis, dir)
     print()
 
 

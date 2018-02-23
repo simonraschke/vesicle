@@ -114,5 +114,4 @@ void StepwidhtAlignmentUnit::do_aligment()
             }
         }
     }
-    std::cout <<"ratio " << getRatio() << "  sw " << stepwidth << std::endl; 
 }

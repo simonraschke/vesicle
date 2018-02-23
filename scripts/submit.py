@@ -70,7 +70,7 @@ if __name__ == "__main__":
     sb.askPermission(args)
     sb.createDirectoryTree(args)
     sb.copyConfigFile(args)
-    sb.copyProgram(args)
+    sb.copyPrograms(args)
     sb.updateConfigFiles(args)
     sb.createSubmitScripts(args)
     sb.sbatchAll(args)
