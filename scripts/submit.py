@@ -48,6 +48,7 @@ parser.add_argument('--memory', type=int, default=4, help="[SLURM] amount of RAM
 parser.add_argument('--hours', type=int, default=48, help="[SLURM] number of hours for submit script")
 parser.add_argument('--mail', type=str, help="[SLURM] the mail to send fail news to")
 parser.add_argument('--group', type=str, help="[SLURM] group membership")
+parser.add_argument('--avx', action='store_true', default=True, help="[SLURM] set avx flag")
 args = parser.parse_args()
 args.origin = os.getcwd() # save this directory
 args.config = os.path.join(os.path.expanduser("~"), args.config)

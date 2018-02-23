@@ -208,13 +208,16 @@ def createSubmitScripts(args):
         with open(filepath, "w") as slurmfile:
             print("#!/bin/bash", file=slurmfile)
             if args.group:
-                print("#SBATCH -A {}".format(), file=slurmfile)
+                print("#SBATCH -A {}".format(args.group), file=slurmfile)
             if args.mail:
                 print("#SBATCH --mail-type=FAIL", file=slurmfile)
                 print("#SBATCH --mail-user={}".format(args.mail), file=slurmfile)
+            if args.avx:
+                print("#SBATCH --constraint=\"avx\"", file=slurmfile)
             print("#SBATCH --ntasks=1", file=slurmfile)
             print("#SBATCH --nodes=1", file=slurmfile)
             print("#SBATCH --cpus-per-task={}".format(args.threads), file=slurmfile)
+            print("#SBATCH --mem={}G".format(args.memory), file=slurmfile)
             print("#SBATCH --mem={}G".format(args.memory), file=slurmfile)
             hours = args.hours
             print("#SBATCH -p {}".format("long" if hours>48 else "short"), file=slurmfile)
@@ -234,7 +237,7 @@ def sbatchAnalysis(args,dir,jobname,jobnum,dependency="afterany"):
     shutil.copy2(old_config_file, new_config_file)
     assert(os.path.exists(new_config_file))
     program = args.analysis.rsplit("/",maxsplit=1)[1]
-    command = "sbatch --dependency="+dependency+":"+jobnum+" -J \""+jobname+"\" submit.sh "+program+" --config config_analysis.ini"
+    command = "sbatch --dependency="+dependency+":"+jobnum+" -J \"ana_"+jobname+"\" submit.sh "+program+" --config config_analysis.ini"
     if shutil.which("sbatch") != None:
         status, jobnum = subprocess.getstatusoutput(command)
         jobnum = numbersListFromString(jobnum)[-1]
@@ -258,7 +261,7 @@ def sbatchRepeat(args,dir,jobname,jobnum,dependency="afterany"):
         pass
     program = args.prog.rsplit("/",maxsplit=1)[1]
     for i in range(args.repeat):
-        command = "sbatch --dependency="+dependency+":"+jobnum+" -J \""+jobname+"\" submit.sh "+program+" --config config_repeat.ini"
+        command = "sbatch --dependency="+dependency+":"+jobnum+" -J \"re"+str(i)+"_"+jobname+"\" submit.sh "+program+" --config config_repeat.ini"
         if shutil.which("sbatch") != None:
             status, jobnum = subprocess.getstatusoutput(command)
             jobnum = numbersListFromString(jobnum)[-1]
