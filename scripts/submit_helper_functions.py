@@ -218,7 +218,6 @@ def createSubmitScripts(args):
             print("#SBATCH --nodes=1", file=slurmfile)
             print("#SBATCH --cpus-per-task={}".format(args.threads), file=slurmfile)
             print("#SBATCH --mem={}G".format(args.memory), file=slurmfile)
-            print("#SBATCH --mem={}G".format(args.memory), file=slurmfile)
             hours = args.hours
             print("#SBATCH -p {}".format("long" if hours>48 else "short"), file=slurmfile)
             days, hours = divmod(hours, 24)
