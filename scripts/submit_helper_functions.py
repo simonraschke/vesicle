@@ -60,6 +60,22 @@ def askPermission(args):
 
 
 
+def askPermissionAnalysis(args):
+    print(askPermissionAnalysis.__name__)
+    jobs = len(WORKING_DIRECTORIES)
+    time.sleep(.1)
+    cont = input("About to submit "+str(jobs) + " Jobs (" +str(jobs*args.threads) + " threads), continue? [Y/n]  ")
+    if cont == 'y' or cont == 'Y': 
+        print("continue submitting")
+        print()
+        return True
+    else:
+        print("not submitting")
+        print()
+        sys.exit()
+
+
+
 # hirarchy of directory structure
 # -temperature
 # |-kappa
@@ -157,6 +173,18 @@ def copyConfigFile(args):
     for dir in WORKING_DIRECTORIES:
         assert(os.path.exists(dir))
         new_config_file = os.path.join(dir,"config.ini")
+        print("copy ", args.config, " to ", new_config_file)
+        shutil.copy2(args.config, new_config_file)
+    print()
+
+
+
+def copyConfigFile(args):
+    print(copyConfigFile.__name__)
+    assert(os.path.exists(args.config))
+    for dir in WORKING_DIRECTORIES:
+        assert(os.path.exists(dir))
+        new_config_file = os.path.join(dir,"config_analysis.ini")
         print("copy ", args.config, " to ", new_config_file)
         shutil.copy2(args.config, new_config_file)
     print()
@@ -299,3 +327,8 @@ def sbatchAll(args):
             jobnum = sbatchAnalysis(args,dir,name,jobnum)
         os.chdir(args.origin)
     print()
+
+
+
+def makeDirectoryList(depth):
+    WORKING_DIRECTORIES = []
