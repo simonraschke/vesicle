@@ -263,7 +263,7 @@ def sbatchAnalysis(args,dir,jobname,jobnum,dependency="afterany"):
     new_config_file = os.path.join(dir,"config_analysis.ini")
     shutil.copy2(old_config_file, new_config_file)
     assert(os.path.exists(new_config_file))
-    program = args.analysis.rsplit("/",maxsplit=1)[1]
+    program = "./"+args.analysis.rsplit("/",maxsplit=1)[1]
     command = "sbatch --dependency="+dependency+":"+jobnum+" -J \"ana_"+jobname+"\" submit.sh "+program+" --config config_analysis.ini"
     if shutil.which("sbatch") != None:
         status, jobnum = subprocess.getstatusoutput(command)
@@ -286,7 +286,7 @@ def sbatchRepeat(args,dir,jobname,jobnum,dependency="afterany"):
         fileReplaceLineWithKeyword(new_config_file, "traj=none", "traj="+str("gro"))
     except Exception as e:
         pass
-    program = args.prog.rsplit("/",maxsplit=1)[1]
+    program = "./"+args.prog.rsplit("/",maxsplit=1)[1]
     for i in range(args.repeat):
         command = "sbatch --dependency="+dependency+":"+jobnum+" -J \"re"+str(i)+"_"+jobname+"\" submit.sh "+program+" --config config_repeat.ini"
         if shutil.which("sbatch") != None:
@@ -308,7 +308,7 @@ def sbatchAll(args):
     for dir in WORKING_DIRECTORIES:
         dir = os.path.join(args.origin, dir)
         os.chdir(dir)
-        program = args.prog.rsplit("/",maxsplit=1)[1]
+        program = "./"+args.prog.rsplit("/",maxsplit=1)[1]
         T,k,g,d,it = stripParametersFromPath(dir)
         name = "T"+str(T)+"kappa"+str(k)+"gamma"+str(g)+"dens"+str(d)+"it"+str(it)
         command = "sbatch -J \""+name+"\" submit.sh "+program+" --config config.ini"

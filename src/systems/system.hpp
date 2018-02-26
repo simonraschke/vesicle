@@ -106,9 +106,9 @@ public:
     float potentialEnergy() const;
 
     // add time to time_elapsed
-    void addTime(float);
-    void setTime(float);
-    float getTime() const;
+    void addTime(double);
+    void setTime(double);
+    double getTime() const;
 
     using ParameterDependentComponent::getParameters;
     
@@ -122,7 +122,8 @@ private:
     std::unique_ptr<Thermostat> thermostat {nullptr};
     std::unique_ptr<TrajectoryWriter> trajectory_writer {nullptr};
     
-    float time_elapsed {0.0};
+    // IMPORTATNT mus be double https://stackoverflow.com/a/12598343
+    double time_elapsed {0.0};
 };
 
 
