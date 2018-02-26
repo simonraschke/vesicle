@@ -49,7 +49,7 @@ void TrajectoryWriterGro::setPath(PATH path)
         boost::filesystem::copy_file(*file_path, destination, boost::filesystem::copy_option::overwrite_if_exists);
     }
 
-    if(getParameters().in_traj == std::string("none"))
+    if(GLOBAL::getInstance().mode == GLOBAL::NEWRUN)
     {
         vesLOG("trunc open " << file_path->string())
         FILE.open(*file_path, std::ios_base::out);
@@ -84,7 +84,7 @@ void TrajectoryWriterGro::write(const float& time_elapsed, bool FORCE)
     assert(file_path);
     assert(target_range);
 
-    FILE << "FRAMEBEGIN t=" << time_elapsed << '\n';
+    FILE << "FRAMEBEGIN t=" << std::fixed << time_elapsed << '\n';
 
     if(anisotropic)
         FILE << target_range->size()*2 << '\n';

@@ -122,15 +122,16 @@ float System::kineticEnergy() const
 
 
 
-void System::addTime(float t)
+void System::addTime(double t)
 {
     vesDEBUG(__PRETTY_FUNCTION__)
+    // vesLOG("time before " << time_elapsed << " now adding " << t << "  time after " << time_elapsed+t)
     time_elapsed += t;
 }
 
 
 
-void System::setTime(float t)
+void System::setTime(double t)
 {
     vesDEBUG(__PRETTY_FUNCTION__)
     time_elapsed = t;
@@ -138,7 +139,7 @@ void System::setTime(float t)
 
 
 
-float System::getTime() const
+double System::getTime() const
 {
     vesDEBUG(__PRETTY_FUNCTION__)
     return time_elapsed;
