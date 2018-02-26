@@ -109,11 +109,11 @@ void SimulationControl::setup()
         system.addParticles(ParticleFactory<ParticleMobile>(getParameters().mobile));
         
         // and chose distribution
-        if(getParameters().in_traj == std::string("none"))
+        if(GLOBAL::getInstance().mode == GLOBAL::NEWRUN)
             system.distributeParticles<RandomDistributor>();
-        else if(getParameters().in_traj == std::string("gro"))
+        else if(GLOBAL::getInstance().mode == GLOBAL::RESTART && getParameters().in_traj == std::string("gro"))
             system.distributeParticles<TrajectoryDistributorGro>();
-        if(getParameters().in_traj != std::string("none"))
+        if(GLOBAL::getInstance().mode == GLOBAL::RESTART)
         {
             TrajectoryReaderGro reader;
             reader.setParameters(getParameters());
@@ -167,6 +167,7 @@ void SimulationControl::setup()
             assert(system.getThermostat());
         }
     }
+
     //OPTIONAL
     {   
         // add a trajectory writer if wished 
@@ -216,7 +217,7 @@ void SimulationControl::start()
     auto start = std::chrono::high_resolution_clock::now();
 
     // print initial trajectory for start time
-    if(system.getTrajectoryWriter() && getParameters().in_traj == std::string("none"))
+    if(system.getTrajectoryWriter() && GLOBAL::getInstance().mode == GLOBAL::NEWRUN)
         system.getTrajectoryWriter()->write(system.getTime(),true);
 
     const auto time_max = getParameters().time_max;
@@ -235,13 +236,13 @@ void SimulationControl::start()
             now = std::chrono::high_resolution_clock::now();
             dura = std::chrono::duration<double>(std::chrono::duration_cast<std::chrono::milliseconds>(now - start)).count();
             since_beginning = std::chrono::duration<double>(std::chrono::duration_cast<std::chrono::seconds>(now - the_very_beginning)).count();
-            vesLOG( "simulation time elapsed " << std::setw(10) << std::right << system.getTime() << " | step " 
+            vesLOG( "simulation time elapsed " <<  std::setw(14) << std::right << std::setprecision(3) << std::fixed << system.getTime() << " | step " 
                 << std::setw(10) << std::right << i << " | time:  " 
                 << std::setw(10) << std::right << dura << " s | time/step  " 
                 << std::setw(6) << std::right << dura/system.getParameters().out_traj_skip*1000 << " ms | time/step/particle  " 
                 << std::setw(6) << std::right << dura/system.getParameters().out_traj_skip/system.getParticles().size()*1e6 << " ns | "
-                << "time per day " << std::setw(12) << std::right << (24.0*60*60)/since_beginning*system.getTime()
-                << " | time to target " << std::setw(12) << std::right << getParameters().time_max/((24.0*60*60)/since_beginning*system.getTime()) << " d"
+                << "time per day " << std::setw(12) << std::scientific << std::right << (24.0*60*60)/(since_beginning?since_beginning:1)*(getParameters().dt*i)
+                << " | time to target " << std::setw(12) << std::fixed << std::right << getParameters().time_max/((24.0*60*60)/since_beginning*(getParameters().dt*i)) << " d"
             )
             start = now;
         }

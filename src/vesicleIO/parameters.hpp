@@ -138,3 +138,16 @@ protected:
 private:
     std::unique_ptr<Parameters> parameters {nullptr};
 };
+
+
+
+
+#include "enhance/singleton.hpp"
+
+class GLOBAL
+    : public enhance::Singleton<GLOBAL>
+{
+public:
+    enum MODE { UNDEFINED, NEWRUN, RESTART };
+    std::atomic<MODE> mode {UNDEFINED};
+};

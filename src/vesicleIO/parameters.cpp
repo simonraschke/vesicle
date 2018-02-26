@@ -266,9 +266,14 @@ void Parameters::setup()
             in_traj != "none"
         )
         {
-            vesWARNING("input.in_traj not defined, no trajectory input")   
+            vesWARNING("input.in_traj not defined, no trajectory input")
             in_traj = "none";
         }
+
+        if( in_traj == "none" )
+            GLOBAL::getInstance().mode.store(GLOBAL::NEWRUN);
+        else
+            GLOBAL::getInstance().mode.store(GLOBAL::RESTART);
 
         // if trajectory type set to none (expecting to be valid trajectory)
         // and path not existing
