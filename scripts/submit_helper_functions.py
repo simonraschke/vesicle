@@ -25,6 +25,10 @@ import math
 import shutil
 import subprocess
 import time
+import pprint
+
+
+pp = pprint.PrettyPrinter(indent=4, compact=True)
 
 
 
@@ -138,6 +142,8 @@ def createDirectoryTree(args):
 
 
 
+
+
 # iterate a file linewise
 # check line for keyword
 # if keyword is found replace WHOLE line
@@ -178,15 +184,27 @@ def copyConfigFile(args):
     print()
 
 
-
-def copyConfigFile(args):
-    print(copyConfigFile.__name__)
-    assert(os.path.exists(args.config))
-    for dir in WORKING_DIRECTORIES:
-        assert(os.path.exists(dir))
-        new_config_file = os.path.join(dir,"config_analysis.ini")
-        print("copy ", args.config, " to ", new_config_file)
-        shutil.copy2(args.config, new_config_file)
+#
+def copyConfigFileAnalysis(args):
+    print(copyConfigFileAnalysis.__name__)
+    if args.config == None:
+        for dir in WORKING_DIRECTORIES:
+            assert(os.path.exists(dir))
+            if os.path.exists(os.path.join(dir,"config_analysis.ini")):
+                print(os.path.join(dir,"config_analysis.ini"), "already exists. do nothing")
+            elif os.path.exists(os.path.join(dir,"config.ini")):
+                new_config_file = os.path.join(dir,"config_analysis.ini")
+                print("no exisiting", os.path.join(dir,"config_analysis.ini"), "copy config.ini to ", new_config_file)
+                shutil.copy2(os.path.join(dir,"config.ini"), new_config_file)
+            else:
+                raise Exception("no config file declared and "+dir+" doesn't contain config.ini or config_analysis.ini")
+    else:
+        assert(os.path.exists(args.config))
+        for dir in WORKING_DIRECTORIES:
+            assert(os.path.exists(dir))
+            new_config_file = os.path.join(dir,"config.ini")
+            print("copy ", args.config, " to ", new_config_file)
+            shutil.copy2(args.config, new_config_file)
     print()
 
 
@@ -227,6 +245,20 @@ def updateConfigFiles(args):
 
 
 
+# change the relevant parameters in the config files
+def updateConfigFilesAnalysis(args):
+    print(updateConfigFilesAnalysis.__name__)
+    for dir in WORKING_DIRECTORIES:
+        assert(os.path.exists(dir))
+        if args.config != None:
+            assert(os.path.exists(args.config))
+        new_config_file = os.path.join(dir,"config_analysis.ini")
+        print("change cpu_threads to ", args.threads, " in file ", new_config_file)
+        fileReplaceLineWithKeyword(new_config_file, "cpu_threads", "cpu_threads="+str(args.threads))
+    print()
+
+
+
 # create submit script in directory
 def createSubmitScripts(args):
     print(createSubmitScripts.__name__)
@@ -250,6 +282,7 @@ def createSubmitScripts(args):
             print("#SBATCH -p {}".format("long" if hours>48 else "short"), file=slurmfile)
             days, hours = divmod(hours, 24)
             print("#SBATCH --time={0:0>1}-{1:0>2}:00:00".format(days,hours), file=slurmfile)
+            print("#SBATCH --signal=2@300", file=slurmfile)
             print("", file=slurmfile)
             print("srun $@", file=slurmfile)
     print()
@@ -330,5 +363,55 @@ def sbatchAll(args):
 
 
 
-def makeDirectoryList(depth):
-    WORKING_DIRECTORIES = []
+# run sbatch on every simulation iteration
+def sbatchAllAnalysis(args):
+    print(sbatchAllAnalysis.__name__)
+    os.chdir(args.origin)
+    if shutil.which("sbatch") == None:
+        print("WARNING: sbatch not available. making a dry run")
+    for dir in WORKING_DIRECTORIES:
+        dir = os.path.join(args.origin, dir)
+        os.chdir(dir)
+        program = "./"+args.prog.rsplit("/",maxsplit=1)[1]
+        T,k,g,d,it = stripParametersFromPath(dir)
+        name = "ana_T"+str(T)+"kappa"+str(k)+"gamma"+str(g)+"dens"+str(d)+"it"+str(it)
+        command = "sbatch -J \""+name+"\" submit.sh "+program+" --config config.ini"
+        print(command)
+        status, jobnum = None, None
+        
+        if shutil.which("sbatch") != None:
+            status, jobnum = subprocess.getstatusoutput(command)
+            jobnum = numbersListFromString(jobnum)[-1]
+        else:
+            status, jobnum = "DRYRUN", numbersListFromString("DRYRUN 17")[-1]
+    print()
+
+
+
+# use like 
+# for root,dirs,files in walklevel(baseDir,level):
+def walklevel(some_dir, level=0):
+    some_dir = some_dir.rstrip(os.path.sep)
+    assert os.path.isdir(some_dir)
+    num_sep = some_dir.count(os.path.sep)
+    # print(some_dir)
+    for root, dirs, files in os.walk(some_dir):
+        yield root, dirs, files
+        num_sep_this = root.count(os.path.sep)
+        if num_sep + level <= num_sep_this:
+            del dirs[:]
+
+
+
+# find all dirs with trajectory file in it
+def makeDirectoryListAnalysis(args):
+    print(makeDirectoryListAnalysis.__name__)
+    for root,dirs,files in walklevel(args.dir,args.depth):
+        for dir in dirs:
+            if os.path.exists(os.path.join(root,dir,args.filename)):
+                print("appending WORKING_DIRECTORIES with", os.path.join(root,dir))
+                WORKING_DIRECTORIES.append(os.path.join(root,dir))
+    if "." in WORKING_DIRECTORIES:
+        WORKING_DIRECTORIES.remove(".")
+    print()
+
