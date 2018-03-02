@@ -28,7 +28,7 @@ mpl.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import plot_helper_functions as plthelp
 
-pp = pprint.PrettyPrinter(indent=4, compact=True)
+pp = pprint.PrettyPrinter(indent=4, compact=False)
 
 
 parser = argparse.ArgumentParser()
@@ -36,14 +36,18 @@ parser.add_argument("--origin", type=str, default=os.getcwd(), help="this direct
 parser.add_argument("--file", type=str, help="path to config_files.json file")
 args = parser.parse_args()
 
+constraints = {"temperature": "0.26", "mobile": "1000"}
+rho = [float(x) for x in plthelp.getMatchedValues(args.file,"density", constraints)]
+rho_free = []
 
-r = plthelp.getMatchedValues(args.file,"density", {"temperature": "0.27"})
-pp.pprint(r)
+for density in rho:
+    rho_free.append(plthelp.getFreeParticleDensity(args.file, {**constraints,**{"density":str(density)}}, [1000000,20000000]))
 
+print(rho)
+print(rho_free)
 
 plt.style.use('seaborn-paper')
 fig = plt.figure()
-plt.plot([0,1,2],[0,1,1])
-plt.plot([0,1,2],[1,2,0])
+plt.plot(rho,rho_free)
 fig.tight_layout()
-# plt.show()
+plt.show()

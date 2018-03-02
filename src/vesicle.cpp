@@ -36,6 +36,7 @@ int main(int argc, const char *argv[]) try
     std::signal( SIGBUS,  Controller::signal );
     std::signal( SIGFPE,  Controller::signal );
     std::signal( SIGKILL, Controller::signal );
+    std::signal( SIGTERM, Controller::signal );
 
     Parameters prms;
     prms.read(argc,argv);
