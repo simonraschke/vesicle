@@ -151,3 +151,28 @@ void ClusterStructureParser::printXML(PATH system_complete_path) const
     writer->SetFileName(system_complete_path.c_str());
     writer->Write();
 }
+
+
+
+ClusterStructureParser::cartesian ClusterStructureParser::getCenter() const
+{
+    return std::accumulate(std::begin(cluster), std::end(cluster), cartesian(cartesian::Zero()), [](const cartesian& c, const auto& p){ return c + p->position; }) / cluster.size();
+}
+
+
+
+std::size_t ClusterStructureParser::getNumMembers() const
+{
+    return cluster.size();
+}
+
+
+
+float ClusterStructureParser::getOrder() const
+{
+    const auto center_ = getCenter();
+    return std::accumulate(std::begin(cluster), std::end(cluster), float(0), [&](float order, const auto& p)
+    { 
+        return order + distanceVector(center_,p->position).normalized().dot(p->orientation.normalized());
+    }) / cluster.size();
+}

@@ -29,6 +29,7 @@ import json
 import pprint
 import numpy as np
 import h5py
+import multiprocessing
 
 pp = pprint.PrettyPrinter(indent=4, compact=True)
 
@@ -129,11 +130,25 @@ def fileOverviewHDF5(filepath):
 
 def getHDF5Dataset(filepath, datasetname):
     if os.path.exists(filepath):
-        dataset = h5py.File(filepath, 'r').get(datasetname).value.transpose()
-        if dataset.ndim > 1:
-            return dataset
-        else:
-            pass
+        print("HDF5 file exists:", filepath)
+        try:
+            FILE = h5py.File(filepath, 'r')
+        except:
+            print("cannot open file", filepath)
+            return []
+        # if datasetname in h5py.File(filepath, 'r'):
+        try:
+            dataset = FILE.get(datasetname).value.transpose()
+        except:
+            print("cannot open dataset", datasetname)
+            return []
+        try:
+            if dataset.ndim > 1:
+                return dataset
+            else:
+                pass
+        except:
+            return []
     else:
         pass
 
@@ -188,47 +203,98 @@ def extractXValueRange(x,y,value_range):
 
 
 
-def getVolume(filepath):
-    x = float(getHDF5DatasetAttributes(filepath,"potential_energies","system.box.x"))
-    y = float(getHDF5DatasetAttributes(filepath,"potential_energies","system.box.y"))
-    z = float(getHDF5DatasetAttributes(filepath,"potential_energies","system.box.z"))
+def getVolume(datafilepath):
+    # print(getVolume.__name__)
+    # impossible this way, because of not reprinting config file
+    # box.[] will most likely be commented out and has value of 10
+    # x = getValues(overviewfilepath,"box.x")
+    # y = getValues(overviewfilepath,"box.y")
+    # z = getValues(overviewfilepath,"box.z")
+    if not os.path.exists(datafilepath):
+        raise AssertionError("{} does not exist".format(datafilepath))
+    else:
+        try:
+            x = float(getHDF5DatasetAttributes(datafilepath,"potential_energies","system.box.x"))
+            y = float(getHDF5DatasetAttributes(datafilepath,"potential_energies","system.box.y"))
+            z = float(getHDF5DatasetAttributes(datafilepath,"potential_energies","system.box.z"))
+        except:
+            return np.NaN
     return x*y*z
 
 
 
 def getVolumes(filepath, constraints):
-    print(filepath)
+    print(getVolumes.__name__, "  with constraints", constraints)
     dirs = getMatchedDirs(filepath,constraints)
     paths = [os.path.join(dir,"data.h5") for dir in dirs]
     return [getVolume(path) for path in paths]
 
 
 
-def getClustersOfSize(datafilepath, size, time_range):
-    file = h5py.File(datafilepath, 'r')
+def getClustersOfSize(datafile, datasetname, size):
+    dataset = datafile.get(datasetname).value.transpose()
+    unique, counts = np.unique(dataset[0], return_counts=True)
+    return dict(zip(unique, counts))[size]
+
+
+
+def getClustersOfSizeTimeAverage(datafilepath, size, time_range, clustergroup="/cluster_self_assembled"):
+    # print(getClustersOfSizeTimeAverage.__name__, "in", datafilepath,"in time range", time_range)
+    try:
+        file = h5py.File(datafilepath, 'r')
+    except:
+        return []
     values = []
-    for name, data in file['/cluster_self_assembled'].items():
-        time = float(re.findall('\d+', name)[0])
-        if time >= min(time_range) and time <= max(time_range):
-            # values.append(data.value[0].aslist.count(size))
-            unique, counts = np.unique(data.value.transpose()[0], return_counts=True)
-            values.append(dict(zip(unique, counts))[size])
-        else:
-            pass
+    datasetnames = [clustergroup+"/time"+str(int(x)) for x in np.arange(int(min(time_range)),int(max(time_range))+1, 10000)]
+    if int(min(time_range)) == int(max(time_range)):
+        datasetnames = [clustergroup+"/time"+str(int(time_range[0]))]
+    for datasetname in datasetnames:
+        values.append(getClustersOfSize(file,datasetname,size)) 
     return values
 
 
 def getFreeParticleDensitySingleFile(datafilepath, time_range):
-    # volume = np.average(getVolumes(filepath, constraints))
-    volume = getVolume(datafilepath)
+    # print(getFreeParticleDensitySingleFile.__name__, "in", datafilepath, "in time range", time_range)
+    try:
+        volume = getVolume(datafilepath)
+    except AssertionError:
+        return np.NaN
     data = getHDF5Dataset(datafilepath, "cluster_volumes")
-    inaccessible_volumes = extractXValueRange(list(data[0]),list(data[1]),time_range)[1]
-    inaccessible_volume = np.average(inaccessible_volumes)
-    free_particles = getClustersOfSize(datafilepath, 1, time_range)
-    print(free_particles, inaccessible_volumes)
-    free_particles = np.average(free_particles)
-    print(free_particles, inaccessible_volume)
-    return float(free_particles)/(volume - inaccessible_volume)
+    if len(data) >= 1:
+        # print("dataset has length", len(data))
+        inaccessible_volumes = extractXValueRange(list(data[0]),list(data[1]),time_range)[1]
+        inaccessible_volume = np.average(inaccessible_volumes)
+        free_particles = getClustersOfSizeTimeAverage(datafilepath, 1, time_range)
+        if len(free_particles) >= 1:
+            # print("and has", free_particles, "free_particles")
+            free_particles = np.average(free_particles)
+            return float(free_particles)/(volume - inaccessible_volume)
+
+
+
+def removeBadEntries1D(x):
+    if len(x) == 0:
+        return []
+    for i in reversed(range(len(x))):
+        if np.isfinite(x[i]):
+            pass
+        else:
+            del x[i]
+    return x
+
+
+
+def removeBadEntries2D(x,y):
+    assert(len(x)==len(y))
+    for i in reversed(range(len(x))):
+        if x[i] == None or y[i] == None:
+            pass
+        elif np.isfinite(x[i]) and np.isfinite(y[i]):
+            pass
+        else:
+            del x[i]
+            del y[i]
+    return x,y
 
 
 
@@ -236,4 +302,18 @@ def getFreeParticleDensity(overviewfilepath, constraints, time_range):
     print(getFreeParticleDensity.__name__, "  with constraints", constraints)
     dirs = getMatchedDirs(overviewfilepath,constraints)
     paths = [os.path.join(dir,"data.h5") for dir in dirs]
-    return np.average([getFreeParticleDensitySingleFile(path, time_range) for path in paths])
+    # get theses values in parallel
+    results = []
+    for path in paths:
+        results.append(pool.apply_async(getFreeParticleDensitySingleFile,(path, time_range,)))
+    rho_free_values = removeBadEntries1D([r.get() for r in results if r.get() != None])
+    # print("rho_free_values", rho_free_values)
+    if len(rho_free_values) > 0:
+        # print("and averaged", np.average(rho_free_values))
+        return np.average(rho_free_values)
+    else:
+        return None
+
+
+#MUST be in at the EOF
+pool = multiprocessing.Pool(8)

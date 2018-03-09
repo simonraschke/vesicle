@@ -53,6 +53,15 @@ public:
 
     void printXML(PATH) const;
 
+    cartesian getCenter() const;
+    float getOrder() const;
+    std::size_t getNumMembers() const;
+
+    template<PARTICLETYPE P>
+    bool containsMemberType() const;
+    template<PARTICLETYPE P>
+    bool notContainsMemberType() const;
+
 protected:
     const input_t& cluster;
     float volume = 0;
@@ -62,3 +71,19 @@ protected:
 private:
     // vtkSmartPointer<vtkAppendFilter> appendFilter {nullptr};
 };
+
+
+
+template<PARTICLETYPE P>
+bool ClusterStructureParser::containsMemberType() const
+{
+    return std::any_of(std::begin(cluster), std::end(cluster),[](const auto& p){ return P == p->type; });
+}
+
+
+
+template<PARTICLETYPE P>
+bool ClusterStructureParser::notContainsMemberType() const
+{
+    return std::none_of(std::begin(cluster), std::end(cluster),[](const auto& p){ return P == p->type; });
+}

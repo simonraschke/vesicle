@@ -32,6 +32,7 @@ class ClusterParser
 {
 public:
     typedef ParticleSimple Particle_t;
+    typedef Particle_t::cartesian cartesian;
     typedef enhance::observer_ptr<Particle_t> Particle_ptr_t;
     typedef enhance::ConcurrentDeque<Particle_ptr_t> Cluster_t;
     typedef std::deque<Cluster_t> ClusterList;
@@ -63,6 +64,15 @@ public:
     template<PARTICLETYPE T>
     std::size_t maxClusterSizeWithoutMemberType() const;
     std::size_t maxClusterSize() const;
+
+    cartesian center(const Cluster_t&) const;
+
+    template<PARTICLETYPE T>
+    float orderWithMemberType() const;
+    template<PARTICLETYPE T>
+    float orderWithoutMemberType() const;
+    float order(const Cluster_t&) const;
+    float order() const;
 
     // iteration
     typename ClusterList::iterator begin();
@@ -277,7 +287,6 @@ template<PERIODIC P>
 template<PARTICLETYPE T>
 std::size_t ClusterParser<P>::numMembersOfType(const Cluster_t& cluster) const
 {
-    // return std::accumulate(std::begin(cluster), std::end(cluster), std::size_t(0), [&](std::size_t i, const auto& particle){ return particle->type == T ? i+1 : i; });
     return std::count_if(std::begin(cluster), std::end(cluster), [&](const auto& particle){ return particle->type == T; });
 }
 
@@ -287,7 +296,6 @@ template<PERIODIC P>
 template<PARTICLETYPE T>
 std::size_t ClusterParser<P>::numMembersNotOfType(const Cluster_t& cluster) const
 {
-    // return std::accumulate(std::begin(cluster), std::end(cluster), std::size_t(0), [&](std::size_t i, const auto& particle){ return particle->type == T ? i+1 : i; });
     return std::count_if(std::begin(cluster), std::end(cluster), [&](const auto& particle){ return particle->type != T; });
 }
 
@@ -297,7 +305,6 @@ template<PERIODIC P>
 template<PARTICLETYPE T>
 std::size_t ClusterParser<P>::numClustersWithMemberType() const
 {
-    // return std::accumulate(std::begin(clusters), std::end(clusters), std::size_t(0), [&](std::size_t i, const Cluster_t& cluster){ return numTypeInCluster<T>(cluster) > 0 ? i+1 : i; });
     return std::count_if(std::begin(clusters), std::end(clusters), [&](const Cluster_t& cluster){ return numMembersOfType<T>(cluster) > 0; });
 }
 
@@ -307,8 +314,79 @@ template<PERIODIC P>
 template<PARTICLETYPE T>
 std::size_t ClusterParser<P>::numClustersWithoutMemberType() const
 {
-    // return std::accumulate(std::begin(clusters), std::end(clusters), std::size_t(0), [&](std::size_t i, const Cluster_t& cluster){ return numTypeInCluster<T>(cluster) > 0 ? i+1 : i; });
     return std::count_if(std::begin(clusters), std::end(clusters), [&](const Cluster_t& cluster){ return numMembersOfType<T>(cluster) < 1; });
+}
+
+
+
+template<PERIODIC P>
+typename ClusterParser<P>::cartesian ClusterParser<P>::center(const Cluster_t& cluster) const
+{
+    // return std::accumulate(std::begin(clusters), std::end(clusters), std::size_t(0), [&](std::size_t i, const Cluster_t& cluster){ return numTypeInCluster<T>(cluster) > 0 ? i+1 : i; });
+    return std::accumulate(std::begin(cluster), std::end(cluster), cartesian::Zero(), [](const cartesian& c, const Particle_ptr_t& p){ return c + p->position; }) / cluster.size();
+}
+
+
+
+template<PERIODIC P>
+float ClusterParser<P>::order(const Cluster_t& cluster) const
+{
+    const auto center_normalized = center(cluster).normalized();
+    return std::accumulate(std::begin(cluster), std::end(cluster), float(0), [&center_normalized](float order, const Particle_ptr_t& p)
+    { 
+        return order + center_normalized.dot(p->orientation.normalized());
+    }) / cluster.size();
+}
+
+
+
+template<PERIODIC P>
+float ClusterParser<P>::order() const
+{
+    return std::accumulate(std::begin(clusters), std::end(clusters), float(0), [&](float _order, const Cluster_t& cluster)
+    { 
+        return _order + order(cluster)*cluster.size(); 
+    }) / numParticles();
+}
+
+
+
+template<PERIODIC P>
+template<PARTICLETYPE T>
+float ClusterParser<P>::orderWithMemberType() const
+{  
+    std::size_t covered_particles = 0;
+    float order_ = std::accumulate(std::begin(clusters), std::end(clusters), float(0), [&](float _order, const Cluster_t& cluster)
+    { 
+        if(numMembersOfType<P>(cluster) > 0)
+        {
+            covered_particles += cluster.size();
+            return _order + order(cluster)*cluster.size();
+        }
+        else
+            return _order;
+    });
+    return order_ / covered_particles;
+}
+
+
+
+template<PERIODIC P>
+template<PARTICLETYPE T>
+float ClusterParser<P>::orderWithoutMemberType() const
+{  
+    std::size_t covered_particles = 0;
+    float order_ = std::accumulate(std::begin(clusters), std::end(clusters), float(0), [&](float _order, const Cluster_t& cluster)
+    { 
+        if(numMembersOfType<P>(cluster) > 0)
+            return _order;
+        else
+        {
+            covered_particles += cluster.size();
+            return _order + order(cluster)*cluster.size();
+        }
+    });
+    return order_ / covered_particles;
 }
 
 

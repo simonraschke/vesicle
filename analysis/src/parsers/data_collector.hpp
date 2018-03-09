@@ -59,6 +59,11 @@ private:
     // collecting potential energy
     std::deque<float> potential_energies {};
 
+    // collecting order parameter
+    std::deque<float> order_overall {};
+    std::deque<float> order_self_assembly {};
+    std::deque<float> order_frameguided_assembly {};
+
     // collecting cluster structures
     ClusterParser<PERIODIC::ON> clusters;
     std::deque<float> cluster_volumes {};

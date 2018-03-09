@@ -144,7 +144,7 @@ void DataCollector::write()
             HighFive::Attribute attribute = dataset.createAttribute<std::string>(key, HighFive::DataSpace::From(val));
             attribute.write(val);
         }
-        vesLOG("HDF5: write dataset /potential_energies with size " << cluster_volumes.size() << "x2")
+        vesLOG("HDF5: write dataset /cluster_volumes with size " << cluster_volumes.size() << "x2")
         dataset.write(cluster_volumes_array);
     }
 
@@ -165,8 +165,71 @@ void DataCollector::write()
             HighFive::Attribute attribute = dataset.createAttribute<std::string>(key, HighFive::DataSpace::From(val));
             attribute.write(val);
         }
-        vesLOG("HDF5: write dataset /potential_energies with size " << cluster_surface_areas.size() << "x2")
+        vesLOG("HDF5: write dataset /cluster_surface_areas with size " << cluster_surface_areas.size() << "x2")
         dataset.write(cluster_surface_areas_array);
+    }
+
+    // order parameter overall
+    {
+        assert(timepoints.size() == order_overall.size());
+        boost::multi_array<float,2> order_overall_array(boost::extents[order_overall.size()][2]);
+        for(std::size_t i = 0; i < order_overall.size(); ++i)
+        {
+            order_overall_array[i][0] = timepoints[i];
+            order_overall_array[i][1] = order_overall[i];
+        }
+        
+        vesLOG("HDF5: create dataset /order_overall")
+        HighFive::DataSet dataset = FILE->createDataSet<float>("/order_overall", HighFive::DataSpace::From(order_overall_array));
+        for(const auto& [key,val] : systemAttributes())
+        {
+            HighFive::Attribute attribute = dataset.createAttribute<std::string>(key, HighFive::DataSpace::From(val));
+            attribute.write(val);
+        }
+        vesLOG("HDF5: write dataset /order_overall with size " << order_overall.size() << "x2")
+        dataset.write(order_overall_array);
+    }
+
+    // order self assembly parameter
+    {
+        assert(timepoints.size() == order_self_assembly.size());
+        boost::multi_array<float,2> order_self_assembly_array(boost::extents[order_self_assembly.size()][2]);
+        for(std::size_t i = 0; i < order_self_assembly.size(); ++i)
+        {
+            order_self_assembly_array[i][0] = timepoints[i];
+            order_self_assembly_array[i][1] = order_self_assembly[i];
+        }
+        
+        vesLOG("HDF5: create dataset /order_self_assembly")
+        HighFive::DataSet dataset = FILE->createDataSet<float>("/order_self_assembly", HighFive::DataSpace::From(order_self_assembly_array));
+        for(const auto& [key,val] : systemAttributes())
+        {
+            HighFive::Attribute attribute = dataset.createAttribute<std::string>(key, HighFive::DataSpace::From(val));
+            attribute.write(val);
+        }
+        vesLOG("HDF5: write dataset /order_self_assembly with size " << order_self_assembly.size() << "x2")
+        dataset.write(order_self_assembly_array);
+    }
+
+    // order frame guided assembly parameter
+    {
+        assert(timepoints.size() == order_frameguided_assembly.size());
+        boost::multi_array<float,2> order_frameguided_assembly_array(boost::extents[order_frameguided_assembly.size()][2]);
+        for(std::size_t i = 0; i < order_frameguided_assembly.size(); ++i)
+        {
+            order_frameguided_assembly_array[i][0] = timepoints[i];
+            order_frameguided_assembly_array[i][1] = order_frameguided_assembly[i];
+        }
+        
+        vesLOG("HDF5: create dataset /order_frameguided_assembly")
+        HighFive::DataSet dataset = FILE->createDataSet<float>("/order_frameguided_assembly", HighFive::DataSpace::From(order_frameguided_assembly_array));
+        for(const auto& [key,val] : systemAttributes())
+        {
+            HighFive::Attribute attribute = dataset.createAttribute<std::string>(key, HighFive::DataSpace::From(val));
+            attribute.write(val);
+        }
+        vesLOG("HDF5: write dataset /order_frameguided_assembly with size " << order_frameguided_assembly.size() << "x2")
+        dataset.write(order_frameguided_assembly_array);
     }
 }
 
@@ -201,8 +264,9 @@ void DataCollector::try_cluster()
             vesCRITICAL("cluster algorithm " << getParameters().analysis_cluster_algorithm << " unknown")
     }
 
-    // 
     {
+        // structureParsers contains all cluster of significant size
+        // every parser references its origin cluster
         tbb::concurrent_vector<ClusterStructureParser> structureParsers;
         tbb::parallel_for_each(clusters.begin(), clusters.end(), [&](const auto& cluster)
         {
@@ -214,9 +278,13 @@ void DataCollector::try_cluster()
             }
         });
 
+        // write histograms every step
         write_fg_histogram(); 
         write_sa_histogram(); 
 
+        // track other values to be written when program exits
+        // track volume
+        // TODO: Track on per cluster basis
         { 
             cluster_volumes.emplace_back(PARALLEL_REDUCE(float, structureParsers, [&](float i, const auto& parser)
             {
@@ -224,6 +292,8 @@ void DataCollector::try_cluster()
             }));
         }
 
+        // track surface area
+        // TODO: Track on per cluster basis
         { 
             cluster_surface_areas.emplace_back(PARALLEL_REDUCE(float, structureParsers, [&](float i, const auto& parser)
             {
@@ -231,12 +301,61 @@ void DataCollector::try_cluster()
             }));
         }
 
+        // track order
+        // TODO: Track on per cluster basis
+        { 
+            std::atomic<std::size_t> covered_particles = 0;
+            const float order_ = PARALLEL_REDUCE(float, structureParsers, [&](float i, const auto& parser)
+            {
+                covered_particles += parser.getNumMembers();
+                return i + parser.getOrder()*parser.getNumMembers();
+            });
+            order_overall.emplace_back(order_ / covered_particles);
+        }
+
+        // track order of self assembled clusters
+        // TODO: Track on per cluster basis
+        { 
+            std::atomic<std::size_t> covered_particles = 0;
+            const float order_ = PARALLEL_REDUCE(float, structureParsers, [&](float i, const auto& parser)
+            {
+                if(parser.template notContainsMemberType<PARTICLETYPE::FRAME>())
+                {
+                    covered_particles += parser.getNumMembers();
+                    return i + parser.getOrder()*parser.getNumMembers();
+                }
+                else
+                    return i;
+            });
+            order_self_assembly.emplace_back(order_ / covered_particles);
+        }
+
+        // track order of frame-guided assembled clusters
+        // TODO: Track on per cluster basis
+        { 
+            std::atomic<std::size_t> covered_particles = 0;
+            const float order_ = PARALLEL_REDUCE(float, structureParsers, [&](float i, const auto& parser)
+            {
+                if(parser.template containsMemberType<PARTICLETYPE::FRAME>())
+                {
+                    covered_particles += parser.getNumMembers();
+                    return i + parser.getOrder()*parser.getNumMembers();
+                }
+                else
+                    return i;
+            });
+            order_frameguided_assembly.emplace_back(order_ / covered_particles);
+        }
+
+        // write a structure file of the largest cluster
         { 
             if(!structureParsers.empty())
-            std::max_element(std::begin(structureParsers), std::end(structureParsers), [](auto& a, auto& b)
             {
-                return a.result < b.result;
-            })->printXML("largest.vtu");
+                std::max_element(std::begin(structureParsers), std::end(structureParsers), [](auto& a, auto& b)
+                {
+                    return a.result < b.result;
+                })->printXML("largest.vtu");
+            }
         }
     }
 }

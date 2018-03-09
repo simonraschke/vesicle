@@ -32,40 +32,20 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--origin", type=str, default=os.getcwd(), help="this directory")
 parser.add_argument("--file", type=str, help="path to config_files.json file")
 parser.add_argument("--time", type=float, nargs=2, default=[0,1e10], help="path to config_files.json file")
-parser.add_argument("--con", type=str, nargs='*', help="constrain to parameters as {...}")
 args = parser.parse_args()
 
-fig = plt.figure()
+constraints = {"temperature": "0.26", "mobile": "1000"}
+rho = [float(x) for x in plthelp.getMatchedValues(args.file,"density", constraints)]
+order = []
 
+for density in rho:
+    rho_free.append(plthelp.getFreeParticleDensity(args.file, {**constraints,**{"density":str(density)}}, args.time))
 
-constraints = {}
-for i in range(len(args.con[::2])):
-    constraints.update({args.con[i*2]:args.con[i*2+1]})
-
-for t in plthelp.getMatchedValues(args.file, "temperature", constraints):
-    newconstraints = constraints
-    newconstraints.update({"temperature":str(t)})
-
-    rho = [float(x) for x in plthelp.getMatchedValues(args.file,"density", newconstraints)]
-    rho_free = []
-
-    for density in rho:
-        rho_free.append(plthelp.getFreeParticleDensity(args.file, {**newconstraints,**{"density":str(density)}}, args.time))
-
-    rho,rho_free = plthelp.removeBadEntries2D(rho,rho_free)
-
-    print("results rho/rho_free")
-    pp.pprint([rho, rho_free])
-    print()
-    label = "T="+str(t)
-    plt.plot(rho,rho_free, label=label)
+print(rho)
+print(rho_free)
 
 plt.style.use('seaborn-paper')
-plt.rc('text', usetex=True)
-plt.xlabel(r'$\rho$')
-plt.ylabel(r'$\rho_\mathrm{free}^{}$')
-plt.legend()
-plt.xlim(0.0, float(max(plthelp.getMatchedValues(args.file,"density",constraints))))
-plt.ylim(0.0, 0.025)
+fig = plt.figure()
+plt.plot(rho,rho_free)
 fig.tight_layout()
 plt.show()
