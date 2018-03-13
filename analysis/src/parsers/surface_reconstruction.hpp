@@ -31,6 +31,7 @@
 #include <vtkAppendFilter.h>
 #include <vtkXMLPolyDataWriter.h>
 #include <vtkXMLUnstructuredGridWriter.h>
+#include "vtkPowerCrustSurfaceReconstruction.h"
 
 
 
@@ -69,6 +70,8 @@ protected:
     ClusterParser<PERIODIC::OFF> subclusters;
 
 private:
+    bool USE_POWERCRUST = true;
+    std::size_t powercrust_min = 110;
     // vtkSmartPointer<vtkAppendFilter> appendFilter {nullptr};
 };
 
