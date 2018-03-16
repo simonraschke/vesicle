@@ -36,28 +36,41 @@
 
 
 
+// will construct a triangulated mesh from input
+// if size of input points below threshold, a convex hull will be generated
+//     this holds as a "good enough" estimation
+// WARNING: if size beyond threshold, powercrust will generate the mesh
+//     serious memory leak
+//     extremely good results
+//     submit job with loads of memory
 class ClusterStructureParser
     : public Parser<vtkSmartPointer<vtkAppendFilter>>
 {
 public:
     typedef ClusterParser<PERIODIC::ON>::Cluster_t input_t;
-    typedef input_t::MemberType::element_type member_t;
+    typedef input_t::member_t::element_type member_t;
     typedef member_t::cartesian cartesian;
     typedef boost::filesystem::path PATH;
 
+    // constructor
+    // TODO: use setTarget
     explicit ClusterStructureParser(const input_t&);
 
+    // start the reconstruction
     virtual void parse() override;
 
-    float getVolume() const;
-    float getSurfaceArea() const;
-
+    // output structure to PATH
+    // call parse() beforehand
     void printXML(PATH) const;
 
-    cartesian getCenter() const;
+    // get properties
+    float getVolume() const;
+    float getSurfaceArea() const;
     float getOrder() const;
+    cartesian getCenter() const;
     std::size_t getNumMembers() const;
 
+    // member evaluation
     template<PARTICLETYPE P>
     bool containsMemberType() const;
     template<PARTICLETYPE P>
@@ -70,8 +83,7 @@ protected:
     ClusterParser<PERIODIC::OFF> subclusters;
 
 private:
-    bool USE_POWERCRUST = true;
-    std::size_t powercrust_min = 110;
+    std::size_t powercrust_min = 110; // TODO: make it input parameter
     // vtkSmartPointer<vtkAppendFilter> appendFilter {nullptr};
 };
 

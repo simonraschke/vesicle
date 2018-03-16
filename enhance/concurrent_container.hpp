@@ -26,6 +26,11 @@
 
 namespace enhance
 {
+    // Class template for a thread safe container
+    // tbb library required
+    // locked by reader writer mutex
+    // Notice: container will grow and shrink spin locked
+    //         may result in overhead when accessed by many threads
     template
     <
         typename T, 
@@ -34,11 +39,11 @@ namespace enhance
     class ConcurrentContainer
     {
     public:
-        typedef T MemberType;
-        typedef Container<T> MemberList;
-        typedef tbb::spin_rw_mutex mutex_type;
-        typedef typename MemberList::iterator iterator;
-        typedef typename MemberList::const_iterator const_iterator;
+        typedef T member_t;
+        typedef Container<T> container_t;
+        typedef tbb::spin_rw_mutex mutex_t;
+        typedef typename container_t::iterator iterator;
+        typedef typename container_t::const_iterator const_iterator;
 
         ConcurrentContainer<T,Container>& operator=(ConcurrentContainer<T,Container>&&);
 
@@ -59,17 +64,19 @@ namespace enhance
         std::size_t size() const;
 
         // iteration
-        typename MemberList::iterator begin();
-        typename MemberList::iterator end();
-        typename MemberList::const_iterator begin() const;
-        typename MemberList::const_iterator end() const;
+        typename container_t::iterator begin();
+        typename container_t::iterator end();
+        typename container_t::const_iterator begin() const;
+        typename container_t::const_iterator end() const;
+        typename container_t::const_iterator cbegin() const;
+        typename container_t::const_iterator cend() const;
 
     protected:
-        MemberList members;
+        container_t members;
 
     private:
         // thread safety
-        mutex_type mutex;
+        mutex_t mutex;
     };
 
 
@@ -100,7 +107,7 @@ namespace enhance
     template<typename W>
     void ConcurrentContainer<T,Container>::add(W&& other)
     {
-        mutex_type::scoped_lock lock(mutex, true);
+        mutex_t::scoped_lock lock(mutex, true);
         members.emplace_back(other);
     }
 
@@ -110,7 +117,7 @@ namespace enhance
     template<typename W>
     void ConcurrentContainer<T,Container>::add_if_new(W&& other)
     {
-        mutex_type::scoped_lock lock(mutex, false);
+        mutex_t::scoped_lock lock(mutex, false);
         if( !std::any_of(begin(),end(),[&](const T& member){ return member == other; }) ) 
         {
             lock.upgrade_to_writer();
@@ -124,7 +131,7 @@ namespace enhance
     template<typename W>
     bool ConcurrentContainer<T,Container>::contains(const W& other)
     {
-        mutex_type::scoped_lock lock(mutex, false);
+        mutex_t::scoped_lock lock(mutex, false);
         return std::any_of(begin(),end(),[&](const T& member){ return member == other; });
     }
 
@@ -134,7 +141,7 @@ namespace enhance
     template<typename W>
     void ConcurrentContainer<T,Container>::remove(W& other)
     {
-        mutex_type::scoped_lock lock(mutex, true);
+        mutex_t::scoped_lock lock(mutex, true);
         members.erase(std::remove(begin(), end(), other), end());
     }
 
@@ -149,7 +156,7 @@ namespace enhance
 
 
     template<typename T,template <typename, typename> class Container>
-    inline typename ConcurrentContainer<T,Container>::MemberList::iterator ConcurrentContainer<T,Container>::begin()
+    inline typename ConcurrentContainer<T,Container>::container_t::iterator ConcurrentContainer<T,Container>::begin()
     {
         return std::begin(members);
     }
@@ -157,7 +164,7 @@ namespace enhance
 
 
     template<typename T,template <typename, typename> class Container>
-    inline typename ConcurrentContainer<T,Container>::MemberList::iterator ConcurrentContainer<T,Container>::end()
+    inline typename ConcurrentContainer<T,Container>::container_t::iterator ConcurrentContainer<T,Container>::end()
     {
         return std::end(members);
     }
@@ -165,7 +172,7 @@ namespace enhance
 
 
     template<typename T,template <typename, typename> class Container>
-    inline typename ConcurrentContainer<T,Container>::MemberList::const_iterator ConcurrentContainer<T,Container>::begin() const
+    inline typename ConcurrentContainer<T,Container>::container_t::const_iterator ConcurrentContainer<T,Container>::begin() const
     {
         return std::cbegin(members);
     }
@@ -173,7 +180,23 @@ namespace enhance
 
 
     template<typename T,template <typename, typename> class Container>
-    inline typename ConcurrentContainer<T,Container>::MemberList::const_iterator ConcurrentContainer<T,Container>::end() const
+    inline typename ConcurrentContainer<T,Container>::container_t::const_iterator ConcurrentContainer<T,Container>::end() const
+    {
+        return std::cend(members);
+    }
+
+
+
+    template<typename T,template <typename, typename> class Container>
+    inline typename ConcurrentContainer<T,Container>::container_t::const_iterator ConcurrentContainer<T,Container>::cbegin() const
+    {
+        return std::cbegin(members);
+    }
+
+
+
+    template<typename T,template <typename, typename> class Container>
+    inline typename ConcurrentContainer<T,Container>::container_t::const_iterator ConcurrentContainer<T,Container>::cend() const
     {
         return std::cend(members);
     }

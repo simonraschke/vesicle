@@ -77,8 +77,8 @@ public:
     // iteration
     typename ClusterList::iterator begin();
     typename ClusterList::iterator end();
-    typename ClusterList::const_iterator begin() const;
-    typename ClusterList::const_iterator end() const;
+    // typename ClusterList::const_iterator begin() const;
+    // typename ClusterList::const_iterator end() const;
     typename ClusterList::const_iterator cbegin() const;
     typename ClusterList::const_iterator cend() const;
     
@@ -323,7 +323,7 @@ template<PERIODIC P>
 typename ClusterParser<P>::cartesian ClusterParser<P>::center(const Cluster_t& cluster) const
 {
     // return std::accumulate(std::begin(clusters), std::end(clusters), std::size_t(0), [&](std::size_t i, const Cluster_t& cluster){ return numTypeInCluster<T>(cluster) > 0 ? i+1 : i; });
-    return std::accumulate(std::begin(cluster), std::end(cluster), cartesian::Zero(), [](const cartesian& c, const Particle_ptr_t& p){ return c + p->position; }) / cluster.size();
+    return std::accumulate(std::cbegin(cluster), std::cend(cluster), cartesian::Zero(), [&](const cartesian& c, const Particle_ptr_t& p){ return cartesian(c + this->template scaleDown(p->position)); }) / cluster.size();
 }
 
 
@@ -407,19 +407,19 @@ ClusterParser<P>::ClusterList::iterator ClusterParser<P>::end()
 
 
 
-template<PERIODIC P>
-ClusterParser<P>::ClusterList::const_iterator ClusterParser<P>::begin() const
-{
-    return std::begin(clusters);
-}
+// template<PERIODIC P>
+// ClusterParser<P>::ClusterList::const_iterator ClusterParser<P>::begin() const
+// {
+//     return std::begin(clusters);
+// }
 
 
 
-template<PERIODIC P>
-ClusterParser<P>::ClusterList::const_iterator ClusterParser<P>::end() const
-{
-    return std::end(clusters);
-}
+// template<PERIODIC P>
+// ClusterParser<P>::ClusterList::const_iterator ClusterParser<P>::end() const
+// {
+//     return std::end(clusters);
+// }
 
 
 
