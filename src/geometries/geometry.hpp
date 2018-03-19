@@ -18,6 +18,7 @@
 
 #include "definitions.hpp"
 #include "enhance/math_utility.hpp"
+#include <cmath>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
 

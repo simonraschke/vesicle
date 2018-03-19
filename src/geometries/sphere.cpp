@@ -110,9 +110,42 @@ void SphereGeometry::generate()
         points[6] = rotation_plane * points[5];
         points[7] = rotation_plane * points[6];
     }
-    else if(size > 8)
+    else
     {
-        throw std::logic_error("Sphere of size > 8 not yet implemented");
+        float phi,phiold,theta;
+        for(std::size_t i = 0; i < size; ++i)
+        {
+            // Distributing many points on a sphere
+            if ( i == 0 )                  
+            { 
+                // first particle fix
+                phi = 0.0; 
+                theta = M_PI; 
+            }
+            else if ( i == size - 1)
+            { 
+                // last particle fix
+                phi = 0.0; 
+                theta = 0.0; 
+            }
+            else 
+            { 
+                phiold = phi;
+                
+                // claculate the angles in between
+                float hk = -1.0 + (float)(2*i)/(size-1);
+                theta  = std::acos(hk);
+                phi    = phiold + 3.6/(std::sqrt(size)*std::sqrt(1.0-hk*hk));
+                while ( phi >= 2.0*M_PI ) phi -= 2.0*M_PI;
+                while ( phi <  0.0      ) phi += 2.0*M_PI;
+            }
+            
+            const Eigen::AngleAxisf rotateY ( theta, cartesian::UnitY() );
+            const Eigen::AngleAxisf rotateZ ( phi, cartesian::UnitZ() );
+            
+            points[i] = rotateZ * rotateY * -cartesian::UnitZ();
+            points[i] = points[i].normalized();
+        }
     }
 
     // scale to radius
