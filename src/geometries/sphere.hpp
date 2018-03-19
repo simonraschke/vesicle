@@ -29,8 +29,6 @@ struct SphereGeometry
     virtual void generate() override;
     virtual void scale(const cartesian&) override;
     virtual void shift(const cartesian&) override;
-    cartesian& matrixView(const std::size_t&, const std::size_t&, const std::size_t&);
-    const cartesian& matrixView(const std::size_t&, const std::size_t&, const std::size_t&) const;
 
     cartesian origin {cartesian::Zero()};
     float radius {1.0};

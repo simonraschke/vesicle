@@ -7,13 +7,12 @@ set(CMAKE_CXX_FLAGS_DEBUG "-Og -g3 -ggdb -D_DEBUG -DDEBUG -frounding-math -fsign
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g1 -ggdb -DNDEBUG -DEIGEN_NO_DEBUG -ffast-math")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -g0 -DNDEBUG -DEIGEN_NO_DEBUG -ffast-math")
 
-### vesicle_analysis
 set(vesicle_analysis_source_files src/vesicle_analysis.cpp)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "~/bin/")
 add_executable(vesicle_analysis ${vesicle_analysis_source_files})
 
-target_compile_options(vesicle_analysis PRIVATE -std=c++14 -Wall -Wextra -Wpedantic -fmax-errors=3 -Weffc++ -march=nocona -mtune=generic)
-
+target_compile_options(vesicle_analysis PRIVATE -Wall -Wextra -Wpedantic -fmax-errors=3 -Weffc++ -march=nocona -mtune=generic)
+set_target_properties(vesicle_analysis PROPERTIES CXX_STANDARD 17)
 target_compile_definitions(vesicle_analysis PUBLIC 
     USE_MATH_DEFINES
     EIGEN_FAST_MATH=1 
@@ -21,13 +20,11 @@ target_compile_definitions(vesicle_analysis PUBLIC
     EIGEN_DONT_PARALLELIZE
 )
 
-# set_target_properties(vesicle_analysis PROPERTIES CXX_STANARD 17)
-
 add_subdirectory(HighFive)
 add_subdirectory(src)
 
 # Link
-target_link_libraries(vesicle_analysis parsers tbb pthread tbbmalloc)
+target_link_libraries(vesicle_analysis vesicle_analysis_lib)
 
 install(TARGETS vesicle_analysis RUNTIME DESTINATION bin)
 
