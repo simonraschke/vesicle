@@ -16,24 +16,23 @@
 
 #pragma once
 
-#include "definitions.hpp"
-#include "enhance/math_utility.hpp"
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Geometry>
+#include "geometry.hpp"
 
 
 
-struct Geometry
-{
-    typedef PARTICLERANGE::value_type::element_type::cartesian cartesian;
+struct SphereGeometry
+    :public Geometry
+{    
+    SphereGeometry();
+    SphereGeometry(cartesian, float, std::size_t);
 
-    virtual ~Geometry() = default;
-    virtual void generate() = 0;
-    virtual void scale(const cartesian&) = 0;
-    virtual void shift(const cartesian&) = 0;
+    virtual void generate() override;
+    virtual void scale(const cartesian&) override;
+    virtual void shift(const cartesian&) override;
+    cartesian& matrixView(const std::size_t&, const std::size_t&, const std::size_t&);
+    const cartesian& matrixView(const std::size_t&, const std::size_t&, const std::size_t&) const;
 
-    std::vector<cartesian> points {};
-
-protected:
-    Geometry() = default;
+    cartesian origin {cartesian::Zero()};
+    float radius {1.0};
+    std::size_t size {100};
 };
