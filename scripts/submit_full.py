@@ -51,9 +51,9 @@ parser.add_argument('--group', type=str, help="[SLURM] group membership")
 parser.add_argument('--avx', action='store_true', default=True, help="[SLURM] set avx flag")
 args = parser.parse_args()
 args.origin = os.getcwd() # save this directory
-args.config = os.path.join(os.path.expanduser("~"), args.config)
-args.prog = os.path.join(os.path.expanduser("~"), args.prog)
-args.analysis = os.path.join(os.path.expanduser("~"), args.analysis)
+args.config = os.path.join(args.origin, args.config)
+args.prog = os.path.join(args.origin, args.prog)
+args.analysis = os.path.join(args.origin, args.analysis)
 
 args.t = sorted(list(set(args.t)))
 args.k = sorted(list(set(args.k)))

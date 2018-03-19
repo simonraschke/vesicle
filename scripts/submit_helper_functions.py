@@ -199,10 +199,12 @@ def copyConfigFileAnalysis(args):
             else:
                 raise Exception("no config file declared and "+dir+" doesn't contain config.ini or config_analysis.ini")
     else:
-        assert(os.path.exists(args.config))
+        if not os.path.exists(args.config):
+            print(args.config, "does not exist")
+            sys.exit()
         for dir in WORKING_DIRECTORIES:
             assert(os.path.exists(dir))
-            new_config_file = os.path.join(dir,"config.ini")
+            new_config_file = os.path.join(dir,"config_analysis.ini")
             print("copy ", args.config, " to ", new_config_file)
             shutil.copy2(args.config, new_config_file)
     print()
@@ -255,6 +257,8 @@ def updateConfigFilesAnalysis(args):
         new_config_file = os.path.join(dir,"config_analysis.ini")
         print("change cpu_threads to ", args.threads, " in file ", new_config_file)
         fileReplaceLineWithKeyword(new_config_file, "cpu_threads", "cpu_threads="+str(args.threads))
+        print("change cluster_volume_extension to ", "0.7", " in file ", new_config_file)
+        fileReplaceLineWithKeyword(new_config_file, "cluster_volume_extension", "cluster_volume_extension="+str(0.7))
     print()
 
 
@@ -375,7 +379,7 @@ def sbatchAllAnalysis(args):
         program = "./"+args.prog.rsplit("/",maxsplit=1)[1]
         T,k,g,d,it = stripParametersFromPath(dir)
         name = "ana_T"+str(T)+"kappa"+str(k)+"gamma"+str(g)+"dens"+str(d)+"it"+str(it)
-        command = "sbatch -J \""+name+"\" submit.sh "+program+" --config config.ini"
+        command = "sbatch -J \""+name+"\" submit.sh "+program+" --config config_analysis.ini"
         print(command)
         status, jobnum = None, None
         

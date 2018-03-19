@@ -46,8 +46,8 @@ parser.add_argument('--avx', action='store_true', default=True, help="[SLURM] se
 args = parser.parse_args()
 args.origin = os.getcwd() # save this directory
 if args.config != None:
-    args.config = os.path.join(os.path.expanduser("~"), args.config)
-args.prog = os.path.join(os.path.expanduser("~"), args.prog)
+    args.config = os.path.join(args.origin, args.config)
+args.prog = os.path.join(args.origin, args.prog)
 
 if __name__ == "__main__":
     # print all args once
