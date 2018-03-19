@@ -112,7 +112,7 @@ def getMatchedValues(filepath, param, constraints):
 # in dicts that match all in 'constraints'
 # constraints mus be dict
 def getMatchedDirs(overviewfilepath, constraints):
-    return getMatchedValues(filepath, "dir_path", constraints)
+    return getMatchedValues(overviewfilepath, "dir_path", constraints)
 
 
 

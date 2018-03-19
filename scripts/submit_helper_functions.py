@@ -418,4 +418,3 @@ def makeDirectoryListAnalysis(args):
     if "." in WORKING_DIRECTORIES:
         WORKING_DIRECTORIES.remove(".")
     print()
-
