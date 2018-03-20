@@ -23,6 +23,8 @@ import sys
 import numpy as np
 import argparse
 import pprint
+import subprocess
+import time
 import submit_helper_functions as sb
 
 
@@ -34,8 +36,8 @@ parser.add_argument("--repeat", type=int, default=0, help="restart args.prog x t
 parser.add_argument("--origin", type=str, default=os.getcwd(), help="this directory")
 parser.add_argument("--dir", type=str, help="the working directory")
 parser.add_argument("--config", type=str, default='bin/vesicle_config.ini', help="program config file path from ~")
-parser.add_argument("--prog", type=str, default='bin/vesicle', help="program path from ~")
-parser.add_argument("--analysis", type=str, default='bin/vesicle_analysis', help="analysis program path from ~")
+parser.add_argument("--prog", type=str, default='vesicle', help="program name")
+parser.add_argument("--analysis", type=str, default='vesicle_analysis', help="analysis program name")
 parser.add_argument('--mobile', type=int, default=1000, help="mobile particles")
 parser.add_argument('--maxtime', type=float, default=1e8, help="maximum overall simulation time")
 parser.add_argument('-t', nargs='*', type=float, help="temperature value list")
@@ -52,8 +54,8 @@ parser.add_argument('--avx', action='store_true', default=True, help="[SLURM] se
 args = parser.parse_args()
 args.origin = os.getcwd() # save this directory
 args.config = os.path.join(args.origin, args.config)
-args.prog = os.path.join(args.origin, args.prog)
-args.analysis = os.path.join(args.origin, args.analysis)
+args.prog = subprocess.getstatusoutput("which "+args.prog)[1]
+args.analysis = subprocess.getstatusoutput("which "+args.analysis)[1]
 
 args.t = sorted(list(set(args.t)))
 args.k = sorted(list(set(args.k)))
@@ -67,6 +69,24 @@ if __name__ == "__main__":
     for arg in vars(args):
         print("{0:10}".format(arg), getattr(args, arg))
     print()
+
+    time.sleep(.1)
+    prog_right = input("Is this the right program path? "+str(args.prog)+"  [Y/n]  ")
+    if prog_right == 'y' or prog_right == 'Y':
+        print("continue")
+        print()
+    else:
+        print("aborting")
+        print()
+
+    time.sleep(.1)
+    prog_right = input("Is this the right analysis program path? "+str(args.analysis)+"  [Y/n]  ")
+    if prog_right == 'y' or prog_right == 'Y':
+        print("continue")
+        print()
+    else:
+        print("aborting")
+        print()
 
     sb.askPermission(args)
     sb.createDirectoryTree(args)

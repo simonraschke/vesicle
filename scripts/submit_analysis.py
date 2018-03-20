@@ -23,6 +23,8 @@ import sys
 import numpy as np
 import argparse
 import pprint
+import subprocess
+import time
 import submit_helper_functions as sb
 
 
@@ -36,7 +38,7 @@ parser.add_argument("--dir", type=str, help="the working directory")
 parser.add_argument("--filename", type=str, help="file name of trajectory file")
 parser.add_argument("--depth", type=int, default=5, help="depth to walk [dir] recursively")
 parser.add_argument("--config", type=str, default=None, help="program config file path from ~")
-parser.add_argument("--prog", type=str, default='bin/vesicle_analysis', help="program path from ~")
+parser.add_argument("--prog", type=str, default='vesicle_analysis', help="name of program")
 parser.add_argument("--cl_ext", type=float, default=0.7, help="[CONFIG] cluster volume extension")
 parser.add_argument('--threads', type=int, default=8, help="[SLURM] number of threads per job")
 parser.add_argument('--memory', type=int, default=20, help="[SLURM] amount of RAM per job in GB")
@@ -48,7 +50,7 @@ args = parser.parse_args()
 args.origin = os.getcwd() # save this directory
 if args.config != None:
     args.config = os.path.join(args.origin, args.config)
-args.prog = os.path.join(args.origin, args.prog)
+args.prog = subprocess.getstatusoutput("which "+args.prog)[1]
 
 if __name__ == "__main__":
     # print all args once
@@ -56,9 +58,19 @@ if __name__ == "__main__":
         print("{0:10}".format(arg), getattr(args, arg))
     print()
 
+    time.sleep(.1)
+    prog_right = input("Is this the right program path? "+str(args.prog)+"  [Y/n]  ")
+    if prog_right == 'y' or prog_right == 'Y':
+        print("continue")
+        print()
+    else:
+        print("aborting")
+        print()
+
     sb.makeDirectoryListAnalysis(args)
     sb.askPermissionAnalysis(args)
     sb.copyConfigFileAnalysis(args)
+    sb.copyProgramsAnalysis(args)
     sb.updateConfigFilesAnalysis(args)
     sb.createSubmitScripts(args)
     sb.sbatchAllAnalysis(args)

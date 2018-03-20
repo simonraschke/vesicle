@@ -304,7 +304,11 @@ def __detail_getFreeParticleDensity_single_simulation_datafile(datafilepath, tim
     data = getHDF5Dataset(datafilepath, "cluster_volumes")
     # if len(data) >= 1:
         # print("dataset has length", len(data))
-    inaccessible_volumes = extractXValueRange(list(data[0]),list(data[1]),time_range)[1]
+    inaccessible_volumes = []
+    try:
+        inaccessible_volumes = extractXValueRange(list(data[0]),list(data[1]),time_range)[1]
+    except:
+        return np.NaN
     inaccessible_volume = np.average(inaccessible_volumes)
     free_particles = getClustersOfSizeTimeAverage(datafilepath, 1, time_range)
         # if len(free_particles) >= 1:

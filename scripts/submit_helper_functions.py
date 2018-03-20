@@ -211,7 +211,7 @@ def copyConfigFileAnalysis(args):
 
 
 
-# copy the given config file to directory tree
+# copy the needed programs to directory tree
 def copyPrograms(args):
     print(copyPrograms.__name__)
     assert(os.path.exists(args.prog))
@@ -223,6 +223,18 @@ def copyPrograms(args):
         if len(args.analysis) > 0:
             print("copy ", args.analysis, " to ", dir)
             shutil.copy2(args.analysis, dir)
+    print()
+
+
+
+# copy the needed programs to directory tree
+def copyProgramsAnalysis(args):
+    print(copyProgramsAnalysis.__name__)
+    assert(os.path.exists(args.prog))
+    for dir in WORKING_DIRECTORIES:
+        assert(os.path.exists(dir))
+        print("copy ", args.prog, " to ", dir)
+        shutil.copy2(args.prog, dir)
     print()
 
 
