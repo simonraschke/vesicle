@@ -20,6 +20,7 @@ target_compile_definitions(vesicle_lib PRIVATE
     EIGEN_MAX_CPP_VER=17
     EIGEN_DONT_PARALLELIZE
 )
+target_compile_options(vesicle_lib PRIVATE -Wall -Wextra -Wpedantic -fmax-errors=3 -Weffc++ -march=nocona  -std=c++17)
 
 target_link_libraries(vesicle_lib enhance tbb pthread tbbmalloc boost_system boost_filesystem boost_program_options)
 target_include_directories(vesicle_lib PUBLIC ${PROJECT_SOURCE_DIR})

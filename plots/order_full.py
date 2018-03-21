@@ -32,20 +32,44 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--origin", type=str, default=os.getcwd(), help="this directory")
 parser.add_argument("--file", type=str, help="path to config_files.json file")
 parser.add_argument("--time", type=float, nargs=2, default=[0,1e10], help="path to config_files.json file")
+parser.add_argument("--con", type=str, nargs='*', help="constrain to parameters as {...}")
 args = parser.parse_args()
 
-constraints = {"temperature": "0.26", "mobile": "1000"}
-rho = [float(x) for x in plthelp.getMatchedValues(args.file,"density", constraints)]
-order = []
+fig = plt.figure()
 
-for density in rho:
-    rho_free.append(plthelp.getFreeParticleDensity(args.file, {**constraints,**{"density":str(density)}}, args.time))
 
-print(rho)
-print(rho_free)
+constraints = {}
+for i in range(len(args.con[::2])):
+    constraints.update({args.con[i*2]:args.con[i*2+1]})
+
+for t in plthelp.getMatchedValues(args.file, "temperature", constraints):
+    newconstraints = constraints
+    newconstraints.update({"temperature":str(t)})
+
+    rho = [float(x) for x in plthelp.getMatchedValues(args.file,"density", newconstraints)]
+    order = []
+
+    for density in rho:
+        order.append(plthelp.getOrder(args.file, {**newconstraints,**{"density":str(density)}}, args.time))
+
+    rho,order = plthelp.removeBadEntries2D(rho,order)
+
+    print("rho    order")
+    for r, rf in zip(rho,order):
+        try:
+            print("  {:.3f}".format(r), "  {:.5f}".format(rf))
+        except TypeError:
+            print("  {:.3f}".format(r), "  None")
+    print()
+    label = "T="+str(t)
+    plt.plot(rho,order, label=label)
 
 plt.style.use('seaborn-paper')
-fig = plt.figure()
-plt.plot(rho,rho_free)
+plt.rc('text', usetex=True)
+plt.xlabel(r'$\rho$')
+plt.ylabel(r'$\Theta_{s}^{}$')
+plt.legend(loc='0')
+plt.xlim(0.0, float(max(plthelp.getMatchedValues(args.file,"density",constraints))))
+plt.ylim(0.0, 0.025)
 fig.tight_layout()
 plt.show()

@@ -75,7 +75,7 @@ protected:
     const input_t& cluster;
     float volume = 0;
     float surface_area = 0;
-    ClusterParser<PERIODIC::OFF> subclusters;
+    ClusterParser<PERIODIC::OFF> subclusters {};
 
 private:
 };

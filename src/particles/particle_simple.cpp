@@ -19,7 +19,13 @@
 
 
 ParticleSimple::ParticleSimple(PARTICLETYPE t)
-    : type(t)
+    : position(cartesian::Zero())
+    , orientation(cartesian::Zero())
+    , velocity(cartesian::Zero())
+    , force(cartesian::Zero())
+    , mass(0)
+    , type(t)
+    , ID(0)
     , parent(nullptr)
 {
 

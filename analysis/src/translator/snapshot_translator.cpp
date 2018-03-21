@@ -10,7 +10,7 @@ void AnisotropicSnapshotTranslatorGro::operator()(TrajectoryReader::Frame snapsh
     time_elapsed = 0;
     x = y = z = 0;
 
-    const auto number_of_snapshot = snapshot.first;
+    // const auto number_of_snapshot = snapshot.first;
     const auto lines = snapshot.second;
 
     assert(boost::algorithm::contains(lines.front(), "FRAMEBEGIN"));

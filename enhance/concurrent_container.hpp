@@ -72,11 +72,11 @@ namespace enhance
         typename container_t::const_iterator cend() const;
 
     protected:
-        container_t members;
+        container_t members {};
 
     private:
         // thread safety
-        mutex_t mutex;
+        mutex_t mutex {};
     };
 
 

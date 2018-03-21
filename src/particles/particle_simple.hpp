@@ -53,7 +53,7 @@ public:
     float mass;
     PARTICLETYPE type;
     unsigned int ID;
-    enhance::ConcurrentDeque<enhance::observer_ptr<ParticleSimple>> regionQuery;
+    enhance::ConcurrentDeque<enhance::observer_ptr<ParticleSimple>> regionQuery {};
     enhance::observer_ptr<Particle> parent;
     tbb::atomic<bool> visited {false};
 };

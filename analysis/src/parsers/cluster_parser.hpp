@@ -90,7 +90,7 @@ protected:
 
 private:
     enhance::observer_ptr<PARTICLERANGE> target_range {nullptr};
-    ClusterList clusters;
+    ClusterList clusters {};
     tbb::concurrent_vector<Particle_t> particles {};
 };
 

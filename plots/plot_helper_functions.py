@@ -272,28 +272,80 @@ def getClustersOfSize(datafile, datasetname, size):
 def getClustersGreaterThan(datafile, datasetname, size):
     dataset = datafile.get(datasetname).value.transpose()
     unique, counts = np.unique(dataset[0], return_counts=True)
-    return dict(zip(unique, counts))[size]
+    return sum([c for u,c in zip(unique,counts) if u >= size])
+
+
+
+# input hdf5 file object, datasetname and the searched size
+# return the number of occurencies smaller than certain value (here: cluster size)
+def getClustersGreaterThan(datafile, datasetname, size):
+    dataset = datafile.get(datasetname).value.transpose()
+    unique, counts = np.unique(dataset[0], return_counts=True)
+    return sum([c for u,c in zip(unique,counts) if u <= size])
+
+
+
+def getNumParticlesInClustersGreaterThan(datafile, datasetname, size):
+    dataset = datafile.get(datasetname).value.transpose()
+    unique, counts = np.unique(dataset[0], return_counts=True)
+    return sum([c*u for u,c in zip(unique,counts) if u >= size])
+
+
+
+def getNumParticlesInClustersSmallerThan(datafile, datasetname, size):
+    dataset = datafile.get(datasetname).value.transpose()
+    unique, counts = np.unique(dataset[0], return_counts=True)
+    return sum([c*u for u,c in zip(unique,counts) if u <= size])
+
+
+
+# DEPRECATED:
+# # read hdf5 file @datafilepath
+# # count occurencies of cluster @size
+# # average for @time_range
+# # return averaged value
+# def getClustersOfSizeTimeAverage(datafilepath, size, time_range, clustergroup="/cluster_self_assembled"):
+#     # print(getClustersOfSizeTimeAverage.__name__, "in", datafilepath,"in time range", time_range)
+#     try:
+#         file = h5py.File(datafilepath, 'r')
+#     except:
+#         return []
+#     values = []
+#     # predict dataset names
+#     # TODO: this is curcial for performance, time_range input is critical or no data will be found
+#     datasetnames = [clustergroup+"/time"+str(int(x)) for x in np.arange(int(min(time_range)),int(max(time_range))+1, 10000)]
+#     if int(min(time_range)) == int(max(time_range)):
+#         datasetnames = [clustergroup+"/time"+str(int(time_range[0]))]
+#     for datasetname in datasetnames:
+#         values.append(getClustersOfSize(file,datasetname,size)) 
+#         # values.append(getNumParticlesInClustersSmallerThan(file,datasetname,5))
+#     # return average if possible, else return zero
+#     if len(values) > 0:
+#         return np.average(values)
+#     else:
+#         return 0
 
 
 
 # read hdf5 file @datafilepath
-# count occurencies of cluster @size
+# count occurencies of FUNCTOR @size
 # average for @time_range
 # return averaged value
-def getClustersOfSizeTimeAverage(datafilepath, size, time_range, clustergroup="/cluster_self_assembled"):
+def getTimeAverageNum_FUNCTOR(datafilepath, size, time_range, functor, time_increment=10000, clustergroup="/cluster_self_assembled"):
     # print(getClustersOfSizeTimeAverage.__name__, "in", datafilepath,"in time range", time_range)
     try:
         file = h5py.File(datafilepath, 'r')
     except:
         return []
-    values = []
+    values = [].get()
     # predict dataset names
     # TODO: this is curcial for performance, time_range input is critical or no data will be found
-    datasetnames = [clustergroup+"/time"+str(int(x)) for x in np.arange(int(min(time_range)),int(max(time_range))+1, 10000)]
+    datasetnames = [clustergroup+"/time"+str(int(x)) for x in np.arange(int(min(time_range)),int(max(time_range))+1, time_increment)]
     if int(min(time_range)) == int(max(time_range)):
         datasetnames = [clustergroup+"/time"+str(int(time_range[0]))]
     for datasetname in datasetnames:
-        values.append(getClustersOfSize(file,datasetname,size)) 
+        result = functor(file, datasetname, size)
+        values.append(result)
     # return average if possible, else return zero
     if len(values) > 0:
         return np.average(values)
@@ -318,10 +370,7 @@ def __detail_getFreeParticleDensity_single_simulation_datafile(datafilepath, tim
     except:
         return np.NaN
     inaccessible_volume = np.average(inaccessible_volumes)
-    free_particles = getClustersOfSizeTimeAverage(datafilepath, 1, time_range)
-        # if len(free_particles) >= 1:
-            # print("and has", free_particles, "free_particles")
-            # free_particles = np.average(free_particles)
+    free_particles = getTimeAverageNum_FUNCTOR(datafilepath, 4, time_range, getNumParticlesInClustersSmallerThan)
     print("free particles:", int(free_particles), "  vol:", round(volume), "  vol_in:", round(inaccessible_volume), "  == rho_free:", round(float(free_particles)/(volume - inaccessible_volume),5))
     return float(free_particles)/(volume - inaccessible_volume)
 
@@ -365,12 +414,45 @@ def getFreeParticleDensity(overviewfilepath, constraints, time_range):
     for path in paths:
         results.append(pool.apply_async(__detail_getFreeParticleDensity_single_simulation_datafile,(path, time_range,)))
     rho_free_values = removeBadEntries1D([r.get() for r in results if r.get() != None])
-    # print("rho_free_values", rho_free_values)
     if len(rho_free_values) > 0:
-        # print("and averaged", np.average(rho_free_values))
+        print(getFreeParticleDensity.__name__, "  result", "{:.5f}".format(np.average(rho_free_values)))
         return np.average(rho_free_values)
     else:
+        print(getFreeParticleDensity.__name__, "  result", "None")
         return None
+
+
+
+# get the order averaged over @time_range from @datafilepath
+def __detail_getOrder_single_simulation_datafile(datafilepath, time_range):
+    # print(getFreeParticleDensitySingleFile.__name__, "in", datafilepath, "in time range", time_range)
+    data = getHDF5Dataset(datafilepath, "order_overall")
+    order_values = []
+    try:
+        order_values = extractXValueRange(list(data[0]),list(data[1]),time_range)[1]
+    except:
+        return np.NaN
+    return np.average(order_values)
+
+
+
+# get order from all files with given @constraints in @time_range
+def getOrder(overviewfilepath, constraints, time_range, part="full"):
+    print(getOrder.__name__, "  with constraints", constraints)
+    dirs = getMatchedDirs(overviewfilepath,constraints)
+    paths = [os.path.join(dir,"data.h5") for dir in dirs]
+    # get theses values in parallel
+    results = []
+    for path in paths:
+        results.append(pool.apply_async(__detail_getOrder_single_simulation_datafile,(path, time_range,)))
+    order_values = removeBadEntries1D([r.get() for r in results if r.get() != None])
+    if len(order_values) > 0:
+        print(getOrder.__name__, "  result", "{:.5f}".format(np.average(order_values)))
+        return np.average(order_values)
+    else:
+        print(getOrder.__name__, "  result", "None")
+        return None
+
 
 
 #MUST be in at the EOF
