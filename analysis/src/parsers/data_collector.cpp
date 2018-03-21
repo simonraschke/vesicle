@@ -305,7 +305,7 @@ void DataCollector::try_cluster()
         // track order
         // TODO: Track on per cluster basis
         { 
-            std::atomic<std::size_t> covered_particles = 0;
+            std::atomic<std::size_t> covered_particles {0};
             const float order_ = PARALLEL_REDUCE(float, structureParsers, [&](float i, const auto& parser)
             {
                 covered_particles += parser.getNumMembers();
@@ -317,7 +317,7 @@ void DataCollector::try_cluster()
         // track order of self assembled clusters
         // TODO: Track on per cluster basis
         { 
-            std::atomic<std::size_t> covered_particles = 0;
+            std::atomic<std::size_t> covered_particles {0};
             const float order_ = PARALLEL_REDUCE(float, structureParsers, [&](float i, const auto& parser)
             {
                 if(parser.template notContainsMemberType<PARTICLETYPE::FRAME>())
@@ -334,7 +334,7 @@ void DataCollector::try_cluster()
         // track order of frame-guided assembled clusters
         // TODO: Track on per cluster basis
         { 
-            std::atomic<std::size_t> covered_particles = 0;
+            std::atomic<std::size_t> covered_particles {0};
             const float order_ = PARALLEL_REDUCE(float, structureParsers, [&](float i, const auto& parser)
             {
                 if(parser.template containsMemberType<PARTICLETYPE::FRAME>())

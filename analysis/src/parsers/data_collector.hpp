@@ -24,6 +24,8 @@
 #include "surface_reconstruction.hpp"
 #include "systems/controller.hpp"
 #include "definitions.hpp"
+#include <tbb/atomic.h>
+#include <atomic>
 
 
 #undef H5_USE_BOOST
