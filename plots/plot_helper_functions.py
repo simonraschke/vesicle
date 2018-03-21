@@ -143,7 +143,6 @@ def getHDF5Dataset(filepath, datasetname):
         except:
             print("cannot open file", filepath)
             return []
-        # if datasetname in h5py.File(filepath, 'r'):
 
         # try getting dataset
         try:
@@ -236,14 +235,14 @@ def extractXValueRange(x,y,value_range):
 # read HDF5 file @datafilepath
 # try and read system.box parameters from potential_energies dataset
 # if possible return volume else NaN
-def getVolume(datafilepath):
+def getVolume(datafilepath,elementname="cluster_self_assembled"):
     if not os.path.exists(datafilepath):
         raise AssertionError("{} does not exist".format(datafilepath))
     else:
         try:
-            x = float(getHDF5DatasetAttributes(datafilepath,"potential_energies","system.box.x"))
-            y = float(getHDF5DatasetAttributes(datafilepath,"potential_energies","system.box.y"))
-            z = float(getHDF5DatasetAttributes(datafilepath,"potential_energies","system.box.z"))
+            x = float(getHDF5DatasetAttributes(datafilepath,elementname,"system.box.x"))
+            y = float(getHDF5DatasetAttributes(datafilepath,elementname,"system.box.y"))
+            z = float(getHDF5DatasetAttributes(datafilepath,elementname,"system.box.z"))
         except:
             return np.NaN
     return x*y*z
@@ -262,6 +261,15 @@ def getVolumes(filepath, constraints):
 # input hdf5 file object, datasetname and the searched size
 # return the number of occurencies of certain value (here: cluster size)
 def getClustersOfSize(datafile, datasetname, size):
+    dataset = datafile.get(datasetname).value.transpose()
+    unique, counts = np.unique(dataset[0], return_counts=True)
+    return dict(zip(unique, counts))[size]
+
+
+
+# input hdf5 file object, datasetname and the searched size
+# return the number of occurencies greater than certain value (here: cluster size)
+def getClustersGreaterThan(datafile, datasetname, size):
     dataset = datafile.get(datasetname).value.transpose()
     unique, counts = np.unique(dataset[0], return_counts=True)
     return dict(zip(unique, counts))[size]
@@ -314,6 +322,7 @@ def __detail_getFreeParticleDensity_single_simulation_datafile(datafilepath, tim
         # if len(free_particles) >= 1:
             # print("and has", free_particles, "free_particles")
             # free_particles = np.average(free_particles)
+    print("free particles:", int(free_particles), "  vol:", round(volume), "  vol_in:", round(inaccessible_volume), "  == rho_free:", round(float(free_particles)/(volume - inaccessible_volume),5))
     return float(free_particles)/(volume - inaccessible_volume)
 
 
@@ -365,4 +374,4 @@ def getFreeParticleDensity(overviewfilepath, constraints, time_range):
 
 
 #MUST be in at the EOF
-pool = multiprocessing.Pool(8)
+pool = multiprocessing.Pool(10)

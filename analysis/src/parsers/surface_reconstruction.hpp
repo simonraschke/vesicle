@@ -31,7 +31,6 @@
 #include <vtkAppendFilter.h>
 #include <vtkXMLPolyDataWriter.h>
 #include <vtkXMLUnstructuredGridWriter.h>
-#include "vtkPowerCrustSurfaceReconstruction.h"
 
 
 
@@ -39,10 +38,6 @@
 // will construct a triangulated mesh from input
 // if size of input points below threshold, a convex hull will be generated
 //     this holds as a "good enough" estimation
-// WARNING: if size beyond threshold, powercrust will generate the mesh
-//     serious memory leak
-//     extremely good results
-//     submit job with loads of memory
 class ClusterStructureParser
     : public Parser<vtkSmartPointer<vtkAppendFilter>>
 {
@@ -83,8 +78,6 @@ protected:
     ClusterParser<PERIODIC::OFF> subclusters;
 
 private:
-    std::size_t powercrust_min = 110; // TODO: make it input parameter
-    // vtkSmartPointer<vtkAppendFilter> appendFilter {nullptr};
 };
 
 

@@ -269,7 +269,7 @@ void DataCollector::try_cluster()
         // every parser references its origin cluster
         tbb::concurrent_vector<ClusterStructureParser> structureParsers;
         // for powercrust ONLY single threaded!
-        std::for_each(clusters.begin(), clusters.end(), [&](const auto& cluster)
+        tbb::parallel_for_each(clusters.begin(), clusters.end(), [&](const auto& cluster)
         {
             if(cluster.size() >= getParameters().analysis_cluster_significant_size)
             {

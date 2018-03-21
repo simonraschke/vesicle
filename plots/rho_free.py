@@ -54,8 +54,12 @@ for t in plthelp.getMatchedValues(args.file, "temperature", constraints):
 
     rho,rho_free = plthelp.removeBadEntries2D(rho,rho_free)
 
-    print("results rho/rho_free")
-    pp.pprint([rho, rho_free])
+    print("rho    rho_free")
+    for r, rf in zip(rho,rho_free):
+        try:
+            print("  {:.3f}".format(r), "  {:.5f}".format(rf))
+        except TypeError:
+            print("  {:.3f}".format(r), "  None")
     print()
     label = "T="+str(t)
     plt.plot(rho,rho_free, label=label)

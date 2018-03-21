@@ -55,53 +55,30 @@ void ClusterStructureParser::parse()
             cartesian point;
             point = member_ptr->position;
 
-            if( cluster.size() >= powercrust_min && subcluster.size() >= 30 )
+            // generate a sphere and place it around point
+            vtkSmartPointer<vtkSphereSource> sphereSource = vtkSmartPointer<vtkSphereSource>::New();
+            sphereSource->SetRadius(1.f+extension);
+            sphereSource->SetCenter( point(0), point(1), point(2) );
+            sphereSource->SetThetaResolution(10);
+            sphereSource->SetPhiResolution(6);
+            sphereSource->Update();
+
+            // save the new positioned sphere in vtkPolyData
+            vtkSmartPointer<vtkPolyData> spherePolyData = sphereSource->GetOutput();
+
+            // store all points in vtkPoints
+            for(vtkIdType i = 0; i < spherePolyData->GetNumberOfPoints(); i++)
             {
-                const cartesian extended_orientation = member_ptr->orientation * extension;
-                const cartesian first_vector = point + extended_orientation;
-                points->InsertNextPoint( first_vector(0), first_vector(1), first_vector(2) );
-                
-                // const auto perpendicular_vector = cartesian(-extended_orientation(1), extended_orientation(0), extended_orientation(2));
-                // const Eigen::AngleAxisf deg45(M_PI_4, perpendicular_vector.normalized());
-                // cartesian tilted_orientation = deg45*extended_orientation;
-                // cartesian temp_vector = point + tilted_orientation;
-                // points->InsertNextPoint( temp_vector(0), temp_vector(1), temp_vector(2) );
+                std::array<double,3> p{};
 
-                // Eigen::AngleAxisf rotation(M_PI_4, extended_orientation.normalized());
-                // for( int i = 0; i < 8; ++i)
-                // {
-                //     tilted_orientation = rotation*tilted_orientation;
-                //     temp_vector = point + tilted_orientation;
-                //     points->InsertNextPoint( temp_vector(0), temp_vector(1), temp_vector(2) );                    
-                // }
-            }
-            else
-            {
-                // generate a sphere and place it around point
-                vtkSmartPointer<vtkSphereSource> sphereSource = vtkSmartPointer<vtkSphereSource>::New();
-                sphereSource->SetRadius(1.f+extension);
-                sphereSource->SetCenter( point(0), point(1), point(2) );
-                sphereSource->SetThetaResolution(10);
-                sphereSource->SetPhiResolution(6);
-                sphereSource->Update();
+                // store point values in array
+                spherePolyData->GetPoint(i,p.data());
 
-                // save the new positioned sphere in vtkPolyData
-                vtkSmartPointer<vtkPolyData> spherePolyData = sphereSource->GetOutput();
-
-                // store all points in vtkPoints
-                for(vtkIdType i = 0; i < spherePolyData->GetNumberOfPoints(); i++)
-                {
-                    std::array<double,3> p{};
-
-                    // store point values in array
-                    spherePolyData->GetPoint(i,p.data());
-
-                    // insert into points container if inside of box
-                    // const Eigen::Vector3d point_to_check(p.data());
-                    const cartesian point_to_check(Eigen::Vector3d(p.data()).cast<float>());
-                    if(contains(point_to_check.cast<float>()))
-                        points->InsertNextPoint(p.data());
-                }
+                // insert into points container if inside of box
+                // const Eigen::Vector3d point_to_check(p.data());
+                const cartesian point_to_check(Eigen::Vector3d(p.data()).cast<float>());
+                if(contains(point_to_check.cast<float>()))
+                    points->InsertNextPoint(p.data());
             }
         }
         
@@ -109,64 +86,31 @@ void ClusterStructureParser::parse()
         vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
         polydata->SetPoints(points);
 
-        // convex hull
-        vesDEBUG("vtkDelaunay3D")
-        if(cluster.size() >= powercrust_min && subcluster.size() >= 30 )
-        {
-            vtkSmartPointer<vtkPowerCrustSurfaceReconstruction> delaunay = vtkSmartPointer<vtkPowerCrustSurfaceReconstruction>::New();
-            delaunay->SetInputData(polydata);
-            delaunay->Update();
+        vtkSmartPointer<vtkDelaunay3D> delaunay = vtkSmartPointer<vtkDelaunay3D>::New();
+        delaunay->SetInputData(polydata);
+        delaunay->Update();
 
-            // extract outer (polygonal) surface
-            vesDEBUG("vtkDataSetSurfaceFilter")
-            vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
-            surfaceFilter->SetInputConnection(delaunay->GetOutputPort());
+        // extract outer (polygonal) surface
+        vesDEBUG("vtkDataSetSurfaceFilter")
+        vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
+        surfaceFilter->SetInputConnection(delaunay->GetOutputPort());
 
-            // extract outer (polygonal) surface
-            vesDEBUG("vtkTriangleFilter")
-            vtkSmartPointer<vtkTriangleFilter> triangleFilter = vtkSmartPointer<vtkTriangleFilter>::New();
-            triangleFilter->SetInputConnection(surfaceFilter->GetOutputPort());
-                
-            // append to overall mesh
-            result->AddInputConnection(triangleFilter->GetOutputPort());
+        // extract outer (polygonal) surface
+        vesDEBUG("vtkTriangleFilter")
+        vtkSmartPointer<vtkTriangleFilter> triangleFilter = vtkSmartPointer<vtkTriangleFilter>::New();
+        triangleFilter->SetInputConnection(surfaceFilter->GetOutputPort());
             
-            // estimate volume, area, shape index of triangle mesh
-            vesDEBUG("vtkMassProperties")
-            vtkSmartPointer<vtkMassProperties> massProperties = vtkSmartPointer<vtkMassProperties>::New();
-            massProperties->SetInputConnection(surfaceFilter->GetOutputPort());
-            massProperties->Update();
+        // append to overall mesh
+        result->AddInputConnection(triangleFilter->GetOutputPort());
+        
+        // estimate volume, area, shape index of triangle mesh
+        vesDEBUG("vtkMassProperties")
+        vtkSmartPointer<vtkMassProperties> massProperties = vtkSmartPointer<vtkMassProperties>::New();
+        massProperties->SetInputConnection(surfaceFilter->GetOutputPort());
+        massProperties->Update();
 
-            volume += massProperties->GetVolume();
-            surface_area += massProperties->GetSurfaceArea();
-        }
-        else
-        {
-            vtkSmartPointer<vtkDelaunay3D> delaunay = vtkSmartPointer<vtkDelaunay3D>::New();
-            delaunay->SetInputData(polydata);
-            delaunay->Update();
-
-            // extract outer (polygonal) surface
-            vesDEBUG("vtkDataSetSurfaceFilter")
-            vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
-            surfaceFilter->SetInputConnection(delaunay->GetOutputPort());
-
-            // extract outer (polygonal) surface
-            vesDEBUG("vtkTriangleFilter")
-            vtkSmartPointer<vtkTriangleFilter> triangleFilter = vtkSmartPointer<vtkTriangleFilter>::New();
-            triangleFilter->SetInputConnection(surfaceFilter->GetOutputPort());
-                
-            // append to overall mesh
-            result->AddInputConnection(triangleFilter->GetOutputPort());
-            
-            // estimate volume, area, shape index of triangle mesh
-            vesDEBUG("vtkMassProperties")
-            vtkSmartPointer<vtkMassProperties> massProperties = vtkSmartPointer<vtkMassProperties>::New();
-            massProperties->SetInputConnection(surfaceFilter->GetOutputPort());
-            massProperties->Update();
-
-            volume += massProperties->GetVolume();
-            surface_area += massProperties->GetSurfaceArea();
-        }
+        volume += massProperties->GetVolume();
+        surface_area += massProperties->GetSurfaceArea();
     }
     result->Update();
 }
