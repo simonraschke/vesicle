@@ -269,8 +269,8 @@ def updateConfigFilesAnalysis(args):
         new_config_file = os.path.join(dir,"config_analysis.ini")
         print("change cpu_threads to ", args.threads, " in file ", new_config_file)
         fileReplaceLineWithKeyword(new_config_file, "cpu_threads", "cpu_threads="+str(args.threads))
-        print("change cluster_volume_extension to ", "0.7", " in file ", new_config_file)
-        fileReplaceLineWithKeyword(new_config_file, "cluster_volume_extension", "cluster_volume_extension="+str(0.7))
+        print("change cluster_volume_extension to ", args.cl_ext, " in file ", new_config_file)
+        fileReplaceLineWithKeyword(new_config_file, "cluster_volume_extension", "cluster_volume_extension="+str(args.cl_ext)))
     print()
 
 

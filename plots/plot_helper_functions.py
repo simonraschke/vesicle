@@ -337,7 +337,7 @@ def getTimeAverageNum_FUNCTOR(datafilepath, size, time_range, functor, time_incr
         file = h5py.File(datafilepath, 'r')
     except:
         return []
-    values = [].get()
+    values = []
     # predict dataset names
     # TODO: this is curcial for performance, time_range input is critical or no data will be found
     datasetnames = [clustergroup+"/time"+str(int(x)) for x in np.arange(int(min(time_range)),int(max(time_range))+1, time_increment)]
@@ -370,7 +370,7 @@ def __detail_getFreeParticleDensity_single_simulation_datafile(datafilepath, tim
     except:
         return np.NaN
     inaccessible_volume = np.average(inaccessible_volumes)
-    free_particles = getTimeAverageNum_FUNCTOR(datafilepath, 4, time_range, getNumParticlesInClustersSmallerThan)
+    free_particles = getTimeAverageNum_FUNCTOR(datafilepath, 10, time_range, getNumParticlesInClustersSmallerThan)
     print("free particles:", int(free_particles), "  vol:", round(volume), "  vol_in:", round(inaccessible_volume), "  == rho_free:", round(float(free_particles)/(volume - inaccessible_volume),5))
     return float(free_particles)/(volume - inaccessible_volume)
 
