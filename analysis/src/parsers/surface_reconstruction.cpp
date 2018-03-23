@@ -17,43 +17,47 @@
 #include "surface_reconstruction.hpp"
 
 
-
-ClusterStructureParser::ClusterStructureParser(const input_t& _cluster)
-    : cluster(_cluster)
-    // , appendFilter(vtkSmartPointer<vtkAppendFilter>::New())
+// template<PERIODIC P>
+ClusterStructureParser::ClusterStructureParser()
 {
     vtkObject::GlobalWarningDisplayOff();
     result = vtkSmartPointer<vtkAppendFilter>::New();
-    // result = 0;
-    subclusters.setTarget(cluster.begin(), cluster.end());
 }
 
 
 
+// template<typename iterator_t>
+void ClusterStructureParser::setTarget(enhance::ConcurrentDeque<ParticleSimple>& target)
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    target_range = enhance::make_observer<enhance::ConcurrentDeque<ParticleSimple>>(&target);
+}
+
+
+
+// template<PERIODIC P>
 void ClusterStructureParser::parse()
 {
-    if(getParameters().analysis_cluster_algorithm == "DBSCAN")
-        subclusters.DBSCANrecursive(getParameters().analysis_cluster_minimum_size, getParameters().analysis_cluster_distance_threshold);
-    else
-        vesCRITICAL("cluster algorithm " << getParameters().analysis_cluster_algorithm << " unknown")
-    
     static const float extension = getParameters().analysis_cluster_volume_extension;
     check_for_aligned_box_setup();
 
-    // go over all subclusters
-    for(const auto& subcluster : subclusters)
+    if(target_range->size() == 1)
     {
-        if(subcluster.size() < 1)
-            continue;
+        volume = enhance::sphere_volume(1.f+extension);
+        surface_area = enhance::sphere_surface(1.f+extension);
+        return;
+    }
+    {
         // represent and manipulate 3D points
         vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 
+        assert(target_range);
         // go over all subcluster members
-        for( const auto& member_ptr : subcluster )
+        for( const auto& member : *target_range )
         {
             // generate a points
             cartesian point;
-            point = member_ptr->position;
+            point = member.position;
 
             // generate a sphere and place it around point
             vtkSmartPointer<vtkSphereSource> sphereSource = vtkSmartPointer<vtkSphereSource>::New();
@@ -77,7 +81,7 @@ void ClusterStructureParser::parse()
                 // insert into points container if inside of box
                 // const Eigen::Vector3d point_to_check(p.data());
                 const cartesian point_to_check(Eigen::Vector3d(p.data()).cast<float>());
-                if(contains(point_to_check.cast<float>()))
+                if(contains(point_to_check.template cast<float>()))
                     points->InsertNextPoint(p.data());
             }
         }
@@ -86,6 +90,7 @@ void ClusterStructureParser::parse()
         vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
         polydata->SetPoints(points);
 
+        vesDEBUG("vtkDelaunay3D")
         vtkSmartPointer<vtkDelaunay3D> delaunay = vtkSmartPointer<vtkDelaunay3D>::New();
         delaunay->SetInputData(polydata);
         delaunay->Update();
@@ -148,29 +153,4 @@ void ClusterStructureParser::printXML(PATH system_complete_path) const
     writer->SetInputConnection(result->GetOutputPort());
     writer->SetFileName(system_complete_path.c_str());
     writer->Write();
-}
-
-
-
-ClusterStructureParser::cartesian ClusterStructureParser::getCenter() const
-{
-    return std::accumulate(std::begin(cluster), std::end(cluster), cartesian(cartesian::Zero()), [](const cartesian& c, const auto& p){ return c + p->position; }) / cluster.size();
-}
-
-
-
-std::size_t ClusterStructureParser::getNumMembers() const
-{
-    return cluster.size();
-}
-
-
-
-float ClusterStructureParser::getOrder() const
-{
-    const auto center_ = getCenter();
-    return std::accumulate(std::begin(cluster), std::end(cluster), float(0), [&](float order, const auto& p)
-    { 
-        return order + distanceVector(center_,p->position).normalized().dot(p->orientation.normalized());
-    }) / cluster.size();
 }

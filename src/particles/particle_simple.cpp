@@ -63,6 +63,36 @@ ParticleSimple::ParticleSimple(ParticleSimple* other)
 
 
 
+ParticleSimple::ParticleSimple(ParticleSimple& other)
+    : position(other.position)
+    , orientation(other.orientation)
+    , velocity(other.velocity)
+    , force(other.force)
+    , mass(other.mass)
+    , type(other.type)
+    , ID(other.ID)
+    , parent(nullptr)
+{
+
+}
+
+
+
+ParticleSimple::ParticleSimple(const ParticleSimple& other)
+    : position(other.position)
+    , orientation(other.orientation)
+    , velocity(other.velocity)
+    , force(other.force)
+    , mass(other.mass)
+    , type(other.type)
+    , ID(other.ID)
+    , parent(nullptr)
+{
+
+}
+
+
+
 bool ParticleSimple::operator==(Particle* other) const
 {
     assert(other);
@@ -83,5 +113,5 @@ bool ParticleSimple::operator==(const Particle* other) const
 
 bool ParticleSimple::operator==(const ParticleSimple& other) const
 {
-    return this == std::addressof(other);
+    return std::addressof(*this) == std::addressof(other);
 }

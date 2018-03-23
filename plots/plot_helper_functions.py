@@ -370,7 +370,7 @@ def __detail_getFreeParticleDensity_single_simulation_datafile(datafilepath, tim
     except:
         return np.NaN
     inaccessible_volume = np.average(inaccessible_volumes)
-    free_particles = getTimeAverageNum_FUNCTOR(datafilepath, 10, time_range, getNumParticlesInClustersSmallerThan)
+    free_particles = getTimeAverageNum_FUNCTOR(datafilepath, 5, time_range, getNumParticlesInClustersSmallerThan)
     print("free particles:", int(free_particles), "  vol:", round(volume), "  vol_in:", round(inaccessible_volume), "  == rho_free:", round(float(free_particles)/(volume - inaccessible_volume),5))
     return float(free_particles)/(volume - inaccessible_volume)
 

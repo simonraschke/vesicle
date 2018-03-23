@@ -22,10 +22,8 @@ void PotentialEnergyParser::parse()
         float pre_sum = 0;
         for(std::size_t j = 0; j<i; ++j)
         {
-            assert();
             assert(interaction);
-            assert(particles[i]);
-            assert(particles[j]);
+            assert(target_range);
             pre_sum += interaction->potential(target_range->at(i),target_range->at(j));
         }
 

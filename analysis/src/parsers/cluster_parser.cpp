@@ -19,7 +19,7 @@
 
 
 // template<PERIODIC P>
-// void ClusterParser<P>::setTarget(PARTICLERANGE* range)
+// void ClusterParserOLD<P>::setTarget(PARTICLERANGE* range)
 // {
 //     vesDEBUG(__PRETTY_FUNCTION__)
 //     target_range = enhance::make_observer<PARTICLERANGE>(range);

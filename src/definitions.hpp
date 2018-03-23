@@ -48,7 +48,7 @@
 #include <numeric>
 #include <tbb/parallel_reduce.h>
 #define PARALLEL_REDUCE(type, cont, functor)  tbb::parallel_reduce \
-    (tbb::blocked_range<typename decltype(cont)::const_iterator>( std::cbegin(cont), std::cend(cont) ), \
+    (tbb::blocked_range<typename decltype(cont)::const_iterator>( std::begin(cont), std::end(cont) ), \
     (type)0 , [&](auto& r, type i) \
     { \
         return i + std::accumulate(std::begin(r), std::end(r), (type)0, functor); \

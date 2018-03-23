@@ -26,7 +26,7 @@
 
 
 template<PERIODIC P = PERIODIC::ON>
-class ClusterParser
+class ClusterParserOLD
     : public Box<P>
     , public virtual ParameterDependentComponent
 {
@@ -98,7 +98,7 @@ private:
 
 template<PERIODIC P>
 template<typename iterator_t>
-void ClusterParser<P>::setTarget(iterator_t _begin, iterator_t _end)
+void ClusterParserOLD<P>::setTarget(iterator_t _begin, iterator_t _end)
 {
     vesDEBUG(__PRETTY_FUNCTION__)
     particles.clear();
@@ -115,9 +115,9 @@ void ClusterParser<P>::setTarget(iterator_t _begin, iterator_t _end)
 
 template<PERIODIC P>
 template<typename FUNCTOR>
-void ClusterParser<P>::setupRegionQueries(FUNCTOR&& condition)
+void ClusterParserOLD<P>::setupRegionQueries(FUNCTOR&& condition)
 {
-    assert(range);
+    // assert(range);
     // distance_threshold *= distance_threshold;
 
     tbb::parallel_for_each(std::begin(particles), std::end(particles),[&](Particle_t& particle1)
@@ -134,10 +134,10 @@ void ClusterParser<P>::setupRegionQueries(FUNCTOR&& condition)
 
 
 template<PERIODIC P>
-void ClusterParser<P>::DBSCANrecursive(std::size_t min_points, float distance_threshold)
+void ClusterParserOLD<P>::DBSCANrecursive(std::size_t min_points, float distance_threshold)
 {
     vesDEBUG(__PRETTY_FUNCTION__)
-    assert(range);
+    // assert(range);
 
     // construct the regionQueries
     // this is done beforehand for performance reasons
@@ -187,7 +187,7 @@ void ClusterParser<P>::DBSCANrecursive(std::size_t min_points, float distance_th
 
 
 template<PERIODIC P>
-void ClusterParser<P>::expandCluster(Cluster_t& cluster, const Particle_ptr_t& particle, std::size_t min_points)
+void ClusterParserOLD<P>::expandCluster(Cluster_t& cluster, const Particle_ptr_t& particle, std::size_t min_points)
 {
     // if(particle->visited.load() == false)
     // {
@@ -206,10 +206,10 @@ void ClusterParser<P>::expandCluster(Cluster_t& cluster, const Particle_ptr_t& p
             other->visited.store(true);
 
             // expand cluster if regionQuery is big enough
-            if( particle->regionQuery.size() >= min_points )
+            if( other->regionQuery.size() >= min_points )
             {
                 // expand cluster with regionQueries
-                std::for_each(std::begin(particle->regionQuery), std::end(particle->regionQuery),[&](const Particle_ptr_t& region_particle)
+                std::for_each(std::begin(other->regionQuery), std::end(other->regionQuery),[&](const Particle_ptr_t& region_particle)
                 {
                     expandCluster(cluster, region_particle, min_points);
                 });
@@ -221,7 +221,7 @@ void ClusterParser<P>::expandCluster(Cluster_t& cluster, const Particle_ptr_t& p
 
 
 template<PERIODIC P>
-std::size_t ClusterParser<P>::numParticles() const
+std::size_t ClusterParserOLD<P>::numParticles() const
 {
     return PARALLEL_REDUCE(std::size_t, clusters, [&](std::size_t i, const Cluster_t& cluster)
     {
@@ -232,7 +232,7 @@ std::size_t ClusterParser<P>::numParticles() const
 
 
 template<PERIODIC P>
-std::size_t ClusterParser<P>::numClusters() const
+std::size_t ClusterParserOLD<P>::numClusters() const
 {
     return clusters.size();
 }
@@ -241,7 +241,7 @@ std::size_t ClusterParser<P>::numClusters() const
 
 template<PERIODIC P>
 template<PARTICLETYPE T>
-std::size_t ClusterParser<P>::maxClusterSizeWithMemberType() const
+std::size_t ClusterParserOLD<P>::maxClusterSizeWithMemberType() const
 {
     std::size_t max = 0;
     for(const auto& cluster : clusters)
@@ -259,7 +259,7 @@ std::size_t ClusterParser<P>::maxClusterSizeWithMemberType() const
 
 template<PERIODIC P>
 template<PARTICLETYPE T>
-std::size_t ClusterParser<P>::maxClusterSizeWithoutMemberType() const
+std::size_t ClusterParserOLD<P>::maxClusterSizeWithoutMemberType() const
 {
     std::size_t max = 0;
     for(const auto& cluster : clusters)
@@ -276,7 +276,7 @@ std::size_t ClusterParser<P>::maxClusterSizeWithoutMemberType() const
 
 
 template<PERIODIC P>
-std::size_t ClusterParser<P>::maxClusterSize() const
+std::size_t ClusterParserOLD<P>::maxClusterSize() const
 {
     return std::max_element(std::begin(clusters), std::end(clusters), [&](const Cluster_t& cluster1, const Cluster_t& cluster2){ return cluster1.size() < cluster2.size(); })->size();
 }
@@ -285,7 +285,7 @@ std::size_t ClusterParser<P>::maxClusterSize() const
 
 template<PERIODIC P>
 template<PARTICLETYPE T>
-std::size_t ClusterParser<P>::numMembersOfType(const Cluster_t& cluster) const
+std::size_t ClusterParserOLD<P>::numMembersOfType(const Cluster_t& cluster) const
 {
     return std::count_if(std::begin(cluster), std::end(cluster), [&](const auto& particle){ return particle->type == T; });
 }
@@ -294,7 +294,7 @@ std::size_t ClusterParser<P>::numMembersOfType(const Cluster_t& cluster) const
 
 template<PERIODIC P>
 template<PARTICLETYPE T>
-std::size_t ClusterParser<P>::numMembersNotOfType(const Cluster_t& cluster) const
+std::size_t ClusterParserOLD<P>::numMembersNotOfType(const Cluster_t& cluster) const
 {
     return std::count_if(std::begin(cluster), std::end(cluster), [&](const auto& particle){ return particle->type != T; });
 }
@@ -303,7 +303,7 @@ std::size_t ClusterParser<P>::numMembersNotOfType(const Cluster_t& cluster) cons
 
 template<PERIODIC P>
 template<PARTICLETYPE T>
-std::size_t ClusterParser<P>::numClustersWithMemberType() const
+std::size_t ClusterParserOLD<P>::numClustersWithMemberType() const
 {
     return std::count_if(std::begin(clusters), std::end(clusters), [&](const Cluster_t& cluster){ return numMembersOfType<T>(cluster) > 0; });
 }
@@ -312,7 +312,7 @@ std::size_t ClusterParser<P>::numClustersWithMemberType() const
 
 template<PERIODIC P>
 template<PARTICLETYPE T>
-std::size_t ClusterParser<P>::numClustersWithoutMemberType() const
+std::size_t ClusterParserOLD<P>::numClustersWithoutMemberType() const
 {
     return std::count_if(std::begin(clusters), std::end(clusters), [&](const Cluster_t& cluster){ return numMembersOfType<T>(cluster) < 1; });
 }
@@ -320,7 +320,7 @@ std::size_t ClusterParser<P>::numClustersWithoutMemberType() const
 
 
 template<PERIODIC P>
-typename ClusterParser<P>::cartesian ClusterParser<P>::center(const Cluster_t& cluster) const
+typename ClusterParserOLD<P>::cartesian ClusterParserOLD<P>::center(const Cluster_t& cluster) const
 {
     // return std::accumulate(std::begin(clusters), std::end(clusters), std::size_t(0), [&](std::size_t i, const Cluster_t& cluster){ return numTypeInCluster<T>(cluster) > 0 ? i+1 : i; });
     return std::accumulate(std::cbegin(cluster), std::cend(cluster), cartesian::Zero(), [&](const cartesian& c, const Particle_ptr_t& p){ return cartesian(c + this->template scaleDown(p->position)); }) / cluster.size();
@@ -329,7 +329,7 @@ typename ClusterParser<P>::cartesian ClusterParser<P>::center(const Cluster_t& c
 
 
 template<PERIODIC P>
-float ClusterParser<P>::order(const Cluster_t& cluster) const
+float ClusterParserOLD<P>::order(const Cluster_t& cluster) const
 {
     const auto center_normalized = center(cluster).normalized();
     return std::accumulate(std::begin(cluster), std::end(cluster), float(0), [&center_normalized](float order, const Particle_ptr_t& p)
@@ -341,7 +341,7 @@ float ClusterParser<P>::order(const Cluster_t& cluster) const
 
 
 template<PERIODIC P>
-float ClusterParser<P>::order() const
+float ClusterParserOLD<P>::order() const
 {
     return std::accumulate(std::begin(clusters), std::end(clusters), float(0), [&](float _order, const Cluster_t& cluster)
     { 
@@ -353,7 +353,7 @@ float ClusterParser<P>::order() const
 
 template<PERIODIC P>
 template<PARTICLETYPE T>
-float ClusterParser<P>::orderWithMemberType() const
+float ClusterParserOLD<P>::orderWithMemberType() const
 {  
     std::size_t covered_particles = 0;
     float order_ = std::accumulate(std::begin(clusters), std::end(clusters), float(0), [&](float _order, const Cluster_t& cluster)
@@ -373,7 +373,7 @@ float ClusterParser<P>::orderWithMemberType() const
 
 template<PERIODIC P>
 template<PARTICLETYPE T>
-float ClusterParser<P>::orderWithoutMemberType() const
+float ClusterParserOLD<P>::orderWithoutMemberType() const
 {  
     std::size_t covered_particles = 0;
     float order_ = std::accumulate(std::begin(clusters), std::end(clusters), float(0), [&](float _order, const Cluster_t& cluster)
@@ -392,7 +392,7 @@ float ClusterParser<P>::orderWithoutMemberType() const
 
 
 template<PERIODIC P>
-ClusterParser<P>::ClusterList::iterator ClusterParser<P>::begin()
+ClusterParserOLD<P>::ClusterList::iterator ClusterParserOLD<P>::begin()
 {
     return std::begin(clusters);
 }
@@ -400,7 +400,7 @@ ClusterParser<P>::ClusterList::iterator ClusterParser<P>::begin()
 
 
 template<PERIODIC P>
-ClusterParser<P>::ClusterList::iterator ClusterParser<P>::end()
+ClusterParserOLD<P>::ClusterList::iterator ClusterParserOLD<P>::end()
 {
     return std::end(clusters);
 }
@@ -408,7 +408,7 @@ ClusterParser<P>::ClusterList::iterator ClusterParser<P>::end()
 
 
 // template<PERIODIC P>
-// ClusterParser<P>::ClusterList::const_iterator ClusterParser<P>::begin() const
+// ClusterParserOLD<P>::ClusterList::const_iterator ClusterParserOLD<P>::begin() const
 // {
 //     return std::begin(clusters);
 // }
@@ -416,7 +416,7 @@ ClusterParser<P>::ClusterList::iterator ClusterParser<P>::end()
 
 
 // template<PERIODIC P>
-// ClusterParser<P>::ClusterList::const_iterator ClusterParser<P>::end() const
+// ClusterParserOLD<P>::ClusterList::const_iterator ClusterParserOLD<P>::end() const
 // {
 //     return std::end(clusters);
 // }
@@ -424,7 +424,7 @@ ClusterParser<P>::ClusterList::iterator ClusterParser<P>::end()
 
 
 template<PERIODIC P>
-ClusterParser<P>::ClusterList::const_iterator ClusterParser<P>::cbegin() const
+ClusterParserOLD<P>::ClusterList::const_iterator ClusterParserOLD<P>::cbegin() const
 {
     return std::begin(clusters);
 }
@@ -432,7 +432,7 @@ ClusterParser<P>::ClusterList::const_iterator ClusterParser<P>::cbegin() const
 
 
 template<PERIODIC P>
-ClusterParser<P>::ClusterList::const_iterator ClusterParser<P>::cend() const
+ClusterParserOLD<P>::ClusterList::const_iterator ClusterParserOLD<P>::cend() const
 {
     return std::end(clusters);
 }

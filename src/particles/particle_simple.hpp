@@ -35,8 +35,8 @@ public:
     ParticleSimple(Particle*);
     ParticleSimple(ParticleSimple*);
     // ParticleSimple(const Particle*);
-    // ParticleSimple(const ParticleSimple&);
-    // ParticleSimple(const ParticleSimple&);
+    ParticleSimple(ParticleSimple&);
+    ParticleSimple(const ParticleSimple&);
 
     // copy assignment
     // ParticleSimple& operator=(const ParticleSimple&&);
@@ -53,7 +53,7 @@ public:
     float mass;
     PARTICLETYPE type;
     unsigned int ID;
-    enhance::ConcurrentDeque<enhance::observer_ptr<ParticleSimple>> regionQuery {};
+    enhance::ConcurrentDeque<std::reference_wrapper<ParticleSimple>> regionQuery {};
     enhance::observer_ptr<Particle> parent;
     tbb::atomic<bool> visited {false};
 };

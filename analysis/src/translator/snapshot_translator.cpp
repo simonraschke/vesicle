@@ -41,6 +41,7 @@ void AnisotropicSnapshotTranslatorGro::operator()(TrajectoryReader::Frame snapsh
         vesCRITICAL("" << e.what())
     }
     
+    enhance::IncrementalNumberGenerator<AnisotropicSnapshotTranslatorGro> ID_maker;
     for(std::size_t i = 0; i < num_particles; ++i)
     {
         const std::string line1 = lines[i*2+2];

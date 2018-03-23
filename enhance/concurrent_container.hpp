@@ -49,19 +49,32 @@ namespace enhance
 
         // member management
         template<typename W>
-        void add(W&&);
+        member_t& add(W&&);
+        member_t& add();
 
         template<typename W>
         void add_if_new(W&&);
+        template<typename W>
+        void add_if_new(std::reference_wrapper<W>&&);
 
         template<typename W>
         bool contains(const W&);
         
         template<typename W>
         void remove(W&);
+        void clear();
 
+        // member access
+        member_t& operator[](std::size_t);
+        const member_t& operator[](std::size_t) const;
+        member_t& back();
+        const member_t& back() const;
+        member_t& front();
+        const member_t& front() const;
+        
         // information
         std::size_t size() const;
+        bool empty() const;
 
         // iteration
         typename container_t::iterator begin();
@@ -70,6 +83,8 @@ namespace enhance
         typename container_t::const_iterator end() const;
         typename container_t::const_iterator cbegin() const;
         typename container_t::const_iterator cend() const;
+
+        virtual ~ConcurrentContainer() = default;
 
     protected:
         container_t members {};
@@ -104,11 +119,20 @@ namespace enhance
 
 
     template<typename T,template <typename, typename> class Container>
-    template<typename W>
-    void ConcurrentContainer<T,Container>::add(W&& other)
+    typename ConcurrentContainer<T,Container>::member_t& ConcurrentContainer<T,Container>::add()
     {
         mutex_t::scoped_lock lock(mutex, true);
-        members.emplace_back(other);
+        return members.emplace_back();
+    }
+
+
+
+    template<typename T,template <typename, typename> class Container>
+    template<typename W>
+    typename ConcurrentContainer<T,Container>::member_t& ConcurrentContainer<T,Container>::add(W&& other)
+    {
+        mutex_t::scoped_lock lock(mutex, true);
+        return members.emplace_back(other);
     }
 
 
@@ -118,10 +142,34 @@ namespace enhance
     void ConcurrentContainer<T,Container>::add_if_new(W&& other)
     {
         mutex_t::scoped_lock lock(mutex, false);
-        if( !std::any_of(begin(),end(),[&](const T& member){ return member == other; }) ) 
-        {
+        if( !std::any_of(begin(),end(),[&](const T& member){ return member == other; }) )
+        {   
+            // vesDEBUG(__func__ << " other is new, so add")
             lock.upgrade_to_writer();
             members.emplace_back(other);
+        }
+        else
+        {
+            // vesDEBUG(__func__ << " other is not new, return");
+        }
+    }
+
+
+
+    template<typename T,template <typename, typename> class Container>
+    template<typename W>
+    void ConcurrentContainer<T,Container>::add_if_new(std::reference_wrapper<W>&& other)
+    {
+        mutex_t::scoped_lock lock(mutex, false);
+        if( !std::any_of(begin(),end(),[&](const T& member){ return member.get() == other.get(); }) )
+        {   
+            // vesDEBUG(__func__ << " other is new, so add")
+            lock.upgrade_to_writer();
+            members.emplace_back(other);
+        }
+        else
+        {
+            // vesDEBUG(__func__ << " other is not new, return");
         }
     }
 
@@ -151,6 +199,70 @@ namespace enhance
     inline std::size_t ConcurrentContainer<T,Container>::size() const
     {
         return members.size();
+    }
+
+
+
+    template<typename T,template <typename, typename> class Container>
+    inline bool ConcurrentContainer<T,Container>::empty() const
+    {
+        return members.empty();
+    }
+
+
+
+    template<typename T,template <typename, typename> class Container>
+    inline void ConcurrentContainer<T,Container>::clear()
+    {
+        return members.clear();
+    }
+
+
+
+    template<typename T,template <typename, typename> class Container>
+    inline typename ConcurrentContainer<T,Container>::member_t& ConcurrentContainer<T,Container>::operator[](std::size_t pos)
+    {
+        return members[pos];
+    }
+
+
+
+    template<typename T,template <typename, typename> class Container>
+    inline const typename ConcurrentContainer<T,Container>::member_t& ConcurrentContainer<T,Container>::operator[](std::size_t pos) const
+    {
+        return members[pos];
+    }
+
+
+
+    template<typename T,template <typename, typename> class Container>
+    inline typename ConcurrentContainer<T,Container>::member_t& ConcurrentContainer<T,Container>::back()
+    {
+        return members.back();
+    }
+
+
+
+    template<typename T,template <typename, typename> class Container>
+    inline const typename ConcurrentContainer<T,Container>::member_t& ConcurrentContainer<T,Container>::back() const
+    {
+        return members.back();
+    }
+
+
+
+    template<typename T,template <typename, typename> class Container>
+    inline typename ConcurrentContainer<T,Container>::member_t& ConcurrentContainer<T,Container>::front()
+    {
+        return members.front();
+    }
+
+
+
+    template<typename T,template <typename, typename> class Container>
+    inline const typename ConcurrentContainer<T,Container>::member_t& ConcurrentContainer<T,Container>::front() const
+    {
+        return members.front();
     }
 
 

@@ -20,7 +20,7 @@
 #include "vesicleIO/gro_reader.hpp"
 #include "translator/snapshot_translator.hpp"
 #include "potential_energy.hpp"
-#include "cluster_parser.hpp"
+#include "cluster_container.hpp"
 #include "surface_reconstruction.hpp"
 #include "systems/controller.hpp"
 #include "definitions.hpp"
@@ -67,7 +67,7 @@ private:
     std::deque<float> order_frameguided_assembly {};
 
     // collecting cluster structures
-    ClusterParser<PERIODIC::ON> clusters;
+    ClusterParser clusters;
     std::deque<float> cluster_volumes {};
     std::deque<float> cluster_surface_areas {};
 };

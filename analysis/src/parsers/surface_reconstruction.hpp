@@ -1,4 +1,4 @@
-/*  
+/*
 *   Copyright 2017-2018 Simon Raschke
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,8 @@
 #pragma once
 
 #include "parser.hpp"
-#include "cluster_parser.hpp"
+#include "enhance/concurrent_container.hpp"
+#include "particles/particle_simple.hpp"
 #include <boost/filesystem.hpp>
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
@@ -33,23 +34,27 @@
 #include <vtkXMLUnstructuredGridWriter.h>
 
 
+// template<PERIODIC P>
+// class ClusterBase;
 
 
 // will construct a triangulated mesh from input
 // if size of input points below threshold, a convex hull will be generated
 //     this holds as a "good enough" estimation
+// template<PERIODIC P>
 class ClusterStructureParser
     : public Parser<vtkSmartPointer<vtkAppendFilter>>
 {
 public:
-    typedef ClusterParser<PERIODIC::ON>::Cluster_t input_t;
-    typedef input_t::member_t::element_type member_t;
+    typedef ParticleSimple member_t;
     typedef member_t::cartesian cartesian;
     typedef boost::filesystem::path PATH;
 
     // constructor
     // TODO: use setTarget
-    explicit ClusterStructureParser(const input_t&);
+    ClusterStructureParser();
+    
+    void setTarget(enhance::ConcurrentDeque<ParticleSimple>&);
 
     // start the reconstruction
     virtual void parse() override;
@@ -61,37 +66,37 @@ public:
     // get properties
     float getVolume() const;
     float getSurfaceArea() const;
-    float getOrder() const;
-    cartesian getCenter() const;
-    std::size_t getNumMembers() const;
+    // float getOrder() const;
+    // cartesian getCenter() const;
+    // std::size_t getNumMembers() const;
 
     // member evaluation
-    template<PARTICLETYPE P>
-    bool containsMemberType() const;
-    template<PARTICLETYPE P>
-    bool notContainsMemberType() const;
+    // template<PARTICLETYPE P>
+    // bool containsMemberType() const;
+    // template<PARTICLETYPE P>
+    // bool notContainsMemberType() const;
 
 protected:
-    const input_t& cluster;
+    // const input_t& cluster;
     float volume = 0;
     float surface_area = 0;
-    ClusterParser<PERIODIC::OFF> subclusters {};
-
 private:
+    enhance::observer_ptr<enhance::ConcurrentDeque<ParticleSimple>> target_range {nullptr};
 };
 
 
 
-template<PARTICLETYPE P>
-bool ClusterStructureParser::containsMemberType() const
-{
-    return std::any_of(std::begin(cluster), std::end(cluster),[](const auto& p){ return P == p->type; });
-}
+
+// template<PARTICLETYPE P>
+// bool ClusterStructureParser::containsMemberType() const
+// {
+//     return std::any_of(std::begin(cluster), std::end(cluster),[](const auto& p){ return P == p->type; });
+// }
 
 
 
-template<PARTICLETYPE P>
-bool ClusterStructureParser::notContainsMemberType() const
-{
-    return std::none_of(std::begin(cluster), std::end(cluster),[](const auto& p){ return P == p->type; });
-}
+// template<PARTICLETYPE P>
+// bool ClusterStructureParser::notContainsMemberType() const
+// {
+//     return std::none_of(std::begin(cluster), std::end(cluster),[](const auto& p){ return P == p->type; });
+// }
