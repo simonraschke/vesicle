@@ -55,16 +55,7 @@ void Cluster::DBSCAN_recursive(std::size_t min_points, float distance_threshold)
     });
 
     assert( size() == (std::size_t) std::count_if(begin(), end(), [](const auto& particle){ return particle.visited.load(); }) );
-    // vesLOG( size() << " and " << std::accumulate(subclusters.begin(), subclusters.end(), std::size_t(0), [](auto i, const auto& sub){ return i + sub.size();} ) );
     assert( size() == std::accumulate(subclusters.begin(), subclusters.end(), std::size_t(0), [](auto i, const auto& sub){ return i + sub.size();} ) );
-    // assert( size() == std::accumulate(subclusters.begin(), subclusters.end(), std::size_t(0), [](auto i, const auto& sub){ return i + sub.size();} ));
-    // vesLOG("DBSCAN found " << clusters.size() << " clusters with " << numParticles() << " particles")
-
-    // rearrangeSubclusters();
-    // std::for_each(std::begin(subclusters), std::end(subclusters), [](Subcluster& subcluster)
-    // {
-    //     subcluster.getStructure();
-    // });
 }
 
 
@@ -94,8 +85,6 @@ void Cluster::expandCluster(Subcluster& subcluster, type& particle, std::size_t 
 
 void Cluster::rearrangeSubclusters()
 {
-    // if(std::max_element(subclusters.begin(), subclusters.end())->size() == size())
-    //     return;
     if(subclusters.size() == 1)
     {
         vesDEBUG("no " << __func__ << " needed, subclusters.size() " << subclusters.size());
@@ -103,12 +92,8 @@ void Cluster::rearrangeSubclusters()
     }
 
     rearrangeSystemCopy();
-
-    // while(subclusters.size() > 1)
-    // {
-    //     rearrangeEdjucated();
-    // }
     getStructure();
+
     if(subclusters.size() != 1)
         throw std::runtime_error("subclusters.size() == "+std::to_string(subclusters.size()));
 }
@@ -164,21 +149,20 @@ void Cluster::rearrangeSystemCopy()
 
     scan();
 
-    const auto largest = std::max_element(subclusters.begin(), subclusters.end());
-
-    // vesLOG("DBSCAN after copy of original_size " << original_size << ", now size "<< size())
-    // for(auto& subcluster : subclusters)
-    //     vesLOG("subcluster: size " << subcluster.size()  << "   " << subcluster)
-
-    if(original_size == largest->size())
+    const auto fitting_cluster = std::find_if(subclusters.begin(), subclusters.end(), [&](const auto& sub)
     {
-        members = { std::begin(*largest), std::end(*largest) };
-        vesDEBUG("members == largest subcluster of size " << size());
+        return sub.size() == original_size;
+    });
+
+    if(subclusters.end() != fitting_cluster)
+    {
+        members = { std::begin(*fitting_cluster), std::end(*fitting_cluster) };
+        vesDEBUG("members == fitting_cluster subcluster of size " << size());
         scan();
     }
     else
     {
-        vesWARNING("original size was "<< original_size << "  largest cluster has size " << largest->size())
+        vesWARNING("original size was "<< original_size << "  fitting_cluster cluster has size " << fitting_cluster->size())
         members.clear();
         members = { std::begin(origin_copy), std::end(origin_copy) };
         vesDEBUG("members == original_copy of size " << size());
@@ -191,6 +175,7 @@ void Cluster::rearrangeSystemCopy()
 
 void Cluster::rearrangeEdjucated()
 {
+    vesCRITICAL(__func__ << " implementation missing")
 }
 
 

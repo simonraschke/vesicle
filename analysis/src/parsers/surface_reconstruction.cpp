@@ -17,7 +17,6 @@
 #include "surface_reconstruction.hpp"
 
 
-// template<PERIODIC P>
 ClusterStructureParser::ClusterStructureParser()
 {
     vtkObject::GlobalWarningDisplayOff();
@@ -26,7 +25,6 @@ ClusterStructureParser::ClusterStructureParser()
 
 
 
-// template<typename iterator_t>
 void ClusterStructureParser::setTarget(enhance::ConcurrentDeque<ParticleSimple>& target)
 {
     vesDEBUG(__PRETTY_FUNCTION__)
@@ -35,7 +33,6 @@ void ClusterStructureParser::setTarget(enhance::ConcurrentDeque<ParticleSimple>&
 
 
 
-// template<PERIODIC P>
 void ClusterStructureParser::parse()
 {
     static const float extension = getParameters().analysis_cluster_volume_extension;
@@ -80,8 +77,8 @@ void ClusterStructureParser::parse()
 
                 // insert into points container if inside of box
                 // const Eigen::Vector3d point_to_check(p.data());
-                const cartesian point_to_check(Eigen::Vector3d(p.data()).cast<float>());
-                if(contains(point_to_check.template cast<float>()))
+                // const cartesian point_to_check(Eigen::Vector3d(p.data()).cast<float>());
+                // if(contains(point_to_check.template cast<float>()))
                     points->InsertNextPoint(p.data());
             }
         }

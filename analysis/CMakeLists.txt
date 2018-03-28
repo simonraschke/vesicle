@@ -8,9 +8,9 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g1 -ggdb -DNDEBUG -DEIGEN_NO_DEBUG -ffa
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -g0 -DNDEBUG -DEIGEN_NO_DEBUG -ffast-math")
 
 set(vesicle_analysis_source_files src/vesicle_analysis.cpp)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "~/bin/")
 add_executable(vesicle_analysis ${vesicle_analysis_source_files})
 
+set_target_properties(vesicle_analysis PROPERTIES RUNTIME_OUTPUT_DIRECTORY "~/bin/")
 set_target_properties(vesicle_analysis PROPERTIES CXX_STANDARD 17)
 target_compile_options(vesicle_analysis PRIVATE -Wall -Wextra -Wpedantic -fmax-errors=3 -Weffc++ -march=nocona  -std=c++17)
 target_compile_definitions(vesicle_analysis PUBLIC 

@@ -66,37 +66,10 @@ public:
     // get properties
     float getVolume() const;
     float getSurfaceArea() const;
-    // float getOrder() const;
-    // cartesian getCenter() const;
-    // std::size_t getNumMembers() const;
-
-    // member evaluation
-    // template<PARTICLETYPE P>
-    // bool containsMemberType() const;
-    // template<PARTICLETYPE P>
-    // bool notContainsMemberType() const;
 
 protected:
-    // const input_t& cluster;
     float volume = 0;
     float surface_area = 0;
 private:
     enhance::observer_ptr<enhance::ConcurrentDeque<ParticleSimple>> target_range {nullptr};
 };
-
-
-
-
-// template<PARTICLETYPE P>
-// bool ClusterStructureParser::containsMemberType() const
-// {
-//     return std::any_of(std::begin(cluster), std::end(cluster),[](const auto& p){ return P == p->type; });
-// }
-
-
-
-// template<PARTICLETYPE P>
-// bool ClusterStructureParser::notContainsMemberType() const
-// {
-//     return std::none_of(std::begin(cluster), std::end(cluster),[](const auto& p){ return P == p->type; });
-// }
