@@ -32,7 +32,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--origin", type=str, default=os.getcwd(), help="this directory")
 parser.add_argument("--file", type=str, help="path to config_files.json file")
 parser.add_argument("--time", type=float, nargs=2, default=[0,1e10], help="path to config_files.json file")
-parser.add_argument("--con", type=str, nargs='*', help="constrain to parameters as {...}")
+parser.add_argument("--con", type=str, nargs='*', default=[], help="constrain to parameters as {...}")
 args = parser.parse_args()
 
 fig = plt.figure()

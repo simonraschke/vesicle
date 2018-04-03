@@ -278,7 +278,7 @@ def getClustersGreaterThan(datafile, datasetname, size):
 
 # input hdf5 file object, datasetname and the searched size
 # return the number of occurencies smaller than certain value (here: cluster size)
-def getClustersGreaterThan(datafile, datasetname, size):
+def getClustersSmallerThan(datafile, datasetname, size):
     dataset = datafile.get(datasetname).value.transpose()
     unique, counts = np.unique(dataset[0], return_counts=True)
     return sum([c for u,c in zip(unique,counts) if u <= size])
@@ -296,6 +296,18 @@ def getNumParticlesInClustersSmallerThan(datafile, datasetname, size):
     dataset = datafile.get(datasetname).value.transpose()
     unique, counts = np.unique(dataset[0], return_counts=True)
     return sum([c*u for u,c in zip(unique,counts) if u <= size])
+
+
+
+def getVolumeOfClustersGreaterThan(datafile, datasetname, size):
+    dataset = datafile.get(datasetname).value.transpose()
+    return sum([ dataset[2,i] for i in range(len(dataset[0])) if dataset[0,i] >= size ])
+
+
+
+def getVolumeOfClustersSmallerThan(datafile, datasetname, size):
+    dataset = datafile.get(datasetname).value.transpose()
+    return sum([ dataset[2,i] for i in range(len(dataset[0])) if dataset[0,i] <= size ])
 
 
 
@@ -339,7 +351,7 @@ def getTimeAverageNum_FUNCTOR(datafilepath, size, time_range, functor, time_incr
         return []
     values = []
     # predict dataset names
-    # TODO: this is curcial for performance, time_range input is critical or no data will be found
+    # WARNING: this is curcial for performance, time_range input is critical or no data will be found
     datasetnames = [clustergroup+"/time"+str(int(x)) for x in np.arange(int(min(time_range)),int(max(time_range))+1, time_increment)]
     if int(min(time_range)) == int(max(time_range)):
         datasetnames = [clustergroup+"/time"+str(int(time_range[0]))]
@@ -361,12 +373,13 @@ def __detail_getFreeParticleDensity_single_simulation_datafile(datafilepath, tim
         volume = getVolume(datafilepath)
     except AssertionError:
         return np.NaN
-    data = getHDF5Dataset(datafilepath, "cluster_volumes")
+    # data = getHDF5Dataset(datafilepath, "cluster_volumes")
     # if len(data) >= 1:
         # print("dataset has length", len(data))
     inaccessible_volumes = []
     try:
-        inaccessible_volumes = extractXValueRange(list(data[0]),list(data[1]),time_range)[1]
+        # inaccessible_volumes = extractXValueRange(list(data[0]),list(data[1]),time_range)[1]
+        inaccessible_volumes = getTimeAverageNum_FUNCTOR(datafilepath, 5, time_range, getVolumeOfClustersGreaterThan)
     except:
         return np.NaN
     inaccessible_volume = np.average(inaccessible_volumes)
