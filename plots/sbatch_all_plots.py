@@ -28,8 +28,8 @@ parser.add_argument("--file", type=str, help="path to config_files.json file")
 parser.add_argument("--time", type=float, nargs=2, default=[0,1e10], help="path to config_files.json file")
 args = parser.parse_args()
 
-threads_ = 8
-memory_ = 8
+threads_ = 10
+memory_ = 10
 hours_ = 12
 dir_of_this_script = os.path.dirname(os.path.abspath(__file__))
 
@@ -58,8 +58,26 @@ if shutil.which("sbatch") != None:
 print(rho_free_command)
 print()
 
-order_overall_command = "sbatch -J \"PLOT order_overall\" submit_plot.sh " + os.path.join(dir_of_this_script,"order_overall.py") + " --file " + args.file + " --time " + str(args.time[0]) + " " + str(args.time[1])
+order_overall_command = "sbatch -J \"PLOT order_overall\" submit_plot.sh " + os.path.join(dir_of_this_script,"order_full.py") + " --file " + args.file + " --time " + str(args.time[0]) + " " + str(args.time[1])
 if shutil.which("sbatch") != None:
     subprocess.getstatusoutput(order_overall_command)
 print(order_overall_command)
+print()
+
+rho_free_time_T026_command = "sbatch -J \"PLOT rho_free_time_T026\" submit_plot.sh " + os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.26 --dens 0.01 0.03 --out rho_free_time_T026"
+if shutil.which("sbatch") != None:
+    subprocess.getstatusoutput(rho_free_time_T026_command)
+print(rho_free_time_T026_command)
+print()
+
+rho_free_time_T027_command = "sbatch -J \"PLOT rho_free_time_T027\" submit_plot.sh " + os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.27 --dens 0.015 0.04 --out rho_free_time_T027"
+if shutil.which("sbatch") != None:
+    subprocess.getstatusoutput(rho_free_time_T027_command)
+print(rho_free_time_T027_command)
+print()
+
+rho_free_time_T028_command = "sbatch -J \"PLOT rho_free_time_T028\" submit_plot.sh " + os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.02 0.05 --out rho_free_time_T028"
+if shutil.which("sbatch") != None:
+    subprocess.getstatusoutput(rho_free_time_T028_command)
+print(rho_free_time_T028_command)
 print()

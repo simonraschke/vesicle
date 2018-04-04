@@ -22,7 +22,6 @@ import argparse
 import pprint
 import numpy as np
 import matplotlib as mpl
-mpl.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import plot_helper_functions as plthelp
 
@@ -33,15 +32,19 @@ parser.add_argument("--origin", type=str, default=os.getcwd(), help="this direct
 parser.add_argument("--file", type=str, help="path to config_files.json file")
 parser.add_argument("--time", type=float, nargs=2, default=[0,1e10], help="path to config_files.json file")
 parser.add_argument("--con", type=str, nargs='*', default=[], help="constrain to parameters as {...}")
+parser.add_argument("--out", type=str, default="rho_free", help="output file name")
 args = parser.parse_args()
 
 fig = plt.figure()
+plt.style.use('seaborn-paper')
+# plt.rc('text', usetex=True)
 
 
 constraints = {}
 for i in range(len(args.con[::2])):
     constraints.update({args.con[i*2]:args.con[i*2+1]})
 
+max_rho_free = 0
 for t in plthelp.getMatchedValues(args.file, "temperature", constraints):
     newconstraints = constraints
     newconstraints.update({"temperature":str(t)})
@@ -53,6 +56,7 @@ for t in plthelp.getMatchedValues(args.file, "temperature", constraints):
         rho_free.append(plthelp.getFreeParticleDensity(args.file, {**newconstraints,**{"density":str(density)}}, args.time))
 
     rho,rho_free = plthelp.removeBadEntries2D(rho,rho_free)
+    if max(rho_free) > max_rho_free: max_rho_free = max(rho_free)
 
     print("rho    rho_free")
     for r, rf in zip(rho,rho_free):
@@ -65,12 +69,13 @@ for t in plthelp.getMatchedValues(args.file, "temperature", constraints):
     plt.plot(rho,rho_free, label=label)
 
 plt.plot([-1,1],[-1,1], color="black",zorder=1)
-plt.style.use('seaborn-paper')
-plt.rc('text', usetex=True)
-plt.xlabel(r'$\rho$')
-plt.ylabel(r'$\rho_\mathrm{free}^{}$')
 plt.legend(loc='best')
 plt.xlim(0.0, float(max(plthelp.getMatchedValues(args.file,"density",constraints))))
-plt.ylim(0.0, 0.035)
+plt.ylim(0.0, max_rho_free+0.001)
+plt.xlabel(r'$\rho$')
+plt.ylabel(r'$\rho_\mathrm{free}^{}$')
 fig.tight_layout()
-plt.show()
+plt.plot(rasterized=False)
+plt.savefig(args.out+'.'+'eps'.format(), bbox_inches='tight', format='eps')
+plt.plot(rasterized=True)
+plt.savefig(args.out+'.'+'png'.format(), bbox_inches='tight', format='png', dpi=600)
