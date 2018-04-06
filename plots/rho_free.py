@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.6
 
 #
 #   Copyright 2017-2018 Simon Raschke

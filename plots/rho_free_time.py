@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.6
 
 #
 #   Copyright 2017-2018 Simon Raschke
@@ -68,12 +68,11 @@ for density in plthelp.getValuesInRange(args.file, "density", args.dens):
     plt.semilogx(timepoints,rho_free, label=label+str(round(density,4)))
 
 plt.style.use('seaborn-paper')
-plt.rc('text', usetex=True)
-plt.xlabel(r'simulation steps')
-plt.ylabel(r'$\rho_\mathrm{free}^{}$')
 plt.legend(loc='best')
 plt.xlim(min(args.time)+1e4, max(args.time))
 plt.ylim(0.0, max_rho_free+0.001)
+plt.xlabel(r'simulation steps')
+plt.ylabel(r'$\rho_\mathrm{free}^{}$')
 fig.tight_layout()
 plt.plot(rasterized=False)
 plt.savefig(args.out+'.'+'eps'.format(), bbox_inches='tight', format='eps')

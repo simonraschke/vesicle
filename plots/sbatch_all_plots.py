@@ -21,6 +21,8 @@
 import os
 import argparse
 import shutil
+import subprocess
+import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--origin", type=str, default=os.getcwd(), help="this directory")
@@ -52,32 +54,56 @@ with open(filepath, "w") as slurmfile:
     print("srun $@", file=slurmfile)
 
 
-rho_free_command = "sbatch -J \"PLOT rho_free\" submit_plot.sh " + os.path.join(dir_of_this_script,"rho_free.py") + " --file " + args.file + " --time " + str(args.time[0]) + " " + str(args.time[1])
+rho_free_args = os.path.join(dir_of_this_script,"rho_free.py") + " --file " + args.file + " --time " + str(args.time[0]) + " " + str(args.time[1])
+rho_free_command = "sbatch -J \"PLOT rho_free\" submit_plot.sh " + rho_free_args
+
+order_overall_args = os.path.join(dir_of_this_script,"order_full.py") + " --file " + args.file + " --time " + str(args.time[0]) + " " + str(args.time[1])
+order_overall_command = "sbatch -J \"PLOT order_overall\" submit_plot.sh " + order_overall_args
+
+n_avg_args = os.path.join(dir_of_this_script,"N_avg.py") + " --file " + args.file + " --time " + str(args.time[0]) + " " + str(args.time[1]) + " --min 5"
+n_avg_command = "sbatch -J \"PLOT N_avg\" submit_plot.sh " + n_avg_args
+
+rho_free_time_T026_args = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.26 --dens 0.01 0.03 --out rho_free_time_T026"
+rho_free_time_T026_command = "sbatch -J \"PLOT rho_free_time_T026\" submit_plot.sh " + rho_free_time_T026_args
+
+rho_free_time_T027_args = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.27 --dens 0.015 0.04 --out rho_free_time_T027"
+rho_free_time_T027_command = "sbatch -J \"PLOT rho_free_time_T027\" submit_plot.sh " + rho_free_time_T027_args
+
+rho_free_time_T028_args = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.02 0.05 --out rho_free_time_T028"
+rho_free_time_T028_command = "sbatch -J \"PLOT rho_free_time_T028\" submit_plot.sh " + rho_free_time_T028_args
+
 if shutil.which("sbatch") != None:
+    print(rho_free_command)
     subprocess.getstatusoutput(rho_free_command)
-print(rho_free_command)
-print()
-
-order_overall_command = "sbatch -J \"PLOT order_overall\" submit_plot.sh " + os.path.join(dir_of_this_script,"order_full.py") + " --file " + args.file + " --time " + str(args.time[0]) + " " + str(args.time[1])
-if shutil.which("sbatch") != None:
+    print(order_overall_command)
     subprocess.getstatusoutput(order_overall_command)
-print(order_overall_command)
-print()
-
-rho_free_time_T026_command = "sbatch -J \"PLOT rho_free_time_T026\" submit_plot.sh " + os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.26 --dens 0.01 0.03 --out rho_free_time_T026"
-if shutil.which("sbatch") != None:
+    print(n_avg_command)
+    subprocess.getstatusoutput(n_avg_command)
+    print(rho_free_time_T026_command)
     subprocess.getstatusoutput(rho_free_time_T026_command)
-print(rho_free_time_T026_command)
-print()
-
-rho_free_time_T027_command = "sbatch -J \"PLOT rho_free_time_T027\" submit_plot.sh " + os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.27 --dens 0.015 0.04 --out rho_free_time_T027"
-if shutil.which("sbatch") != None:
+    print(rho_free_time_T027_command)
     subprocess.getstatusoutput(rho_free_time_T027_command)
-print(rho_free_time_T027_command)
-print()
-
-rho_free_time_T028_command = "sbatch -J \"PLOT rho_free_time_T028\" submit_plot.sh " + os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.02 0.05 --out rho_free_time_T028"
-if shutil.which("sbatch") != None:
+    print(rho_free_time_T028_command)
     subprocess.getstatusoutput(rho_free_time_T028_command)
-print(rho_free_time_T028_command)
-print()
+else:
+    time.sleep(.1)
+    prog_right = input("sbatch not found. run on this machine?   [Y/n]  ")
+    if prog_right == 'y' or prog_right == 'Y':
+        print("continue")
+        print()
+    else:
+        print("aborting")
+        print()
+        sys.exit()
+    print(rho_free_args)
+    subprocess.getstatusoutput(rho_free_args)
+    print(order_overall_args)
+    subprocess.getstatusoutput(order_overall_args)
+    print(n_avg_args)
+    subprocess.getstatusoutput(n_avg_args)
+    print(rho_free_time_T026_args)
+    subprocess.getstatusoutput(rho_free_time_T026_args)
+    print(rho_free_time_T027_args)
+    subprocess.getstatusoutput(rho_free_time_T027_args)
+    print(rho_free_time_T028_args)
+    subprocess.getstatusoutput(rho_free_time_T028_args)
