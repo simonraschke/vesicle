@@ -16,28 +16,82 @@
 
 #include "angular_lennard_jones.hpp"
 
-
-#include <iostream>
 float AngularLennardJones::potential(const Particle& p1, const Particle& p2) const 
 {
-    cartesian distance_vec = distanceVector(p1, p2);
+    if(p1.getType() == OSMOTIC)
+    {
+        if(p2.getType() == OSMOTIC)
+            return 0.f;
+        else
+            return osmoticPotential(p1,p2);
+    }
+    else if(p2.getType() == OSMOTIC)
+    {
+        if(p1.getType() == OSMOTIC)
+            return 0.f;
+        else
+            return osmoticPotential(p1,p2);
+    }
+    else
+    {
+        cartesian distance_vec = distanceVector(p1, p2);
 
-    const float r2 = sigma/distance_vec.squaredNorm();
-    if(r2 < cutoff_rez_sq) return 0.f;
+        const float r2 = sigma/distance_vec.squaredNorm();
+        if(r2 < cutoff_rez_sq) return 0.f;
 
-    const float r6 = r2*r2*r2;
+        const float r6 = r2*r2*r2;
 
-    distance_vec.normalize();
-    const cartesian p1_orien_kappa = p1.orientation()*kappa/2.f;
-    const cartesian p2_orien_kappa = p2.orientation()*kappa/2.f;
+        distance_vec.normalize();
+        const cartesian p1_orien_kappa = p1.orientation()*kappa/2.f;
+        const cartesian p2_orien_kappa = p2.orientation()*kappa/2.f;
 
-    const float chi = 
-           std::pow(cartesian( -p1_orien_kappa + distance_vec + p2_orien_kappa ).norm() - a,2)
-         + std::pow(cartesian(  p1_orien_kappa + distance_vec - p2_orien_kappa ).norm() - b,2)
-         + std::pow(cartesian( -p1_orien_kappa + distance_vec - p2_orien_kappa ).norm() - c,2)
-         + std::pow(cartesian(  p1_orien_kappa + distance_vec + p2_orien_kappa ).norm() - c,2);
+        const float chi = 
+            std::pow(cartesian( -p1_orien_kappa + distance_vec + p2_orien_kappa ).norm() - a,2)
+            + std::pow(cartesian(  p1_orien_kappa + distance_vec - p2_orien_kappa ).norm() - b,2)
+            + std::pow(cartesian( -p1_orien_kappa + distance_vec - p2_orien_kappa ).norm() - c,2)
+            + std::pow(cartesian(  p1_orien_kappa + distance_vec + p2_orien_kappa ).norm() - c,2);
+            
+        return 4.f*epsilon*(r6*r6-(1.f-chi)*r6);
+    }
+}
 
-    return 4.f*epsilon*(r6*r6-(1.f-chi)*r6);
+
+
+float AngularLennardJones::osmoticPotential(const Particle& p1, const Particle& p2) const 
+{
+    assert(p1.getType() == OSMOTIC || p2.getType() == OSMOTIC);
+    assert(p1.getType() != p2.getType());
+    
+    // const Particle& osmotic = p1.getType() == OSMOTIC ? p1 : p2;
+    const Particle& nonosmotic = p1.getType() != OSMOTIC ? p1 : p2;
+    assert(std::addressof(p1) != std::addressof(p2));
+
+    // attractive part
+    float attractive = 0;
+    {
+        const cartesian nonosmotic_orien_kappa = nonosmotic.orientation()*kappa/2.f;
+        cartesian distance_vec = distanceVector(p1, p2) - nonosmotic_orien_kappa;
+
+        const float r2 = sigma/distance_vec.squaredNorm();
+        if(r2 < cutoff_rez_sq) return 0.f;
+
+        const float r6 = r2*r2*r2;
+
+        distance_vec.normalize();
+        attractive = r6*r6-r6;
+    }
+
+    float repulsive = 0;
+    {
+        const cartesian nonosmotic_orien_kappa = nonosmotic.orientation()*kappa/2.f;
+        cartesian distance_vec = distanceVector(p1, p2) + nonosmotic_orien_kappa;
+
+        const float r2 = sigma/distance_vec.squaredNorm();
+        if(r2 < cutoff_rez_sq) return 0.f;
+        const float r6 = r2*r2*r2;
+        repulsive = r6;
+    }
+    return epsilon*(attractive + repulsive);
 }
 
 

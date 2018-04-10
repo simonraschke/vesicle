@@ -17,6 +17,15 @@
 #include "sphere.hpp"
 
 
+std::ostream& operator<<(std::ostream& os, const SphereGeometry& sphere)
+{   
+    os << "SphereGeometry at " << sphere.origin.format(ROWFORMAT) << " with radius " << sphere.radius << " and " << sphere.points.size() << " points\n";
+    for(const auto& point : sphere.points)
+        os << "point: " <<point.format(ROWFORMAT) << '\n';
+    return os;
+}
+
+
 
 SphereGeometry::SphereGeometry()
 {
@@ -36,21 +45,21 @@ SphereGeometry::SphereGeometry(cartesian _origin, float _radius, std::size_t _si
 
 void SphereGeometry::generate()
 {
-    points.reserve(size);
+    points.resize(size);
 
     if(size == 1)
     {
-        points[0] = origin + cartesian::UnitZ();
+        points[0] = cartesian::UnitZ();
     }
     else if(size == 2)
     {
-        points[0] = origin + cartesian::UnitZ();
-        points[1] = origin - cartesian::UnitZ();
+        points[0] = cartesian::UnitZ();
+        points[1] = cartesian::UnitZ();
     }
     else if(size == 3)
     {
         const Eigen::AngleAxisf rotation (M_PI * 2.f / 3.f, cartesian::UnitY());
-        points[0] = origin + cartesian::UnitZ();
+        points[0] = cartesian::UnitZ();
         points[1] = rotation * points[0];
         points[2] = rotation * points[1];
     }
@@ -58,7 +67,7 @@ void SphereGeometry::generate()
     {
         const Eigen::AngleAxisf rotation_down (enhance::deg_to_rad(109.471221) , cartesian::UnitY());
         const Eigen::AngleAxisf rotation_plane (M_PI * 2.f / 3.f , cartesian::UnitZ());
-        points[0] = origin + cartesian::UnitZ();
+        points[0] = cartesian::UnitZ();
         points[1] = rotation_down * points[0];
         points[2] = rotation_plane * points[1];
         points[3] = rotation_plane * points[2];
@@ -67,7 +76,7 @@ void SphereGeometry::generate()
     {
         const Eigen::AngleAxisf rotation_down (M_PI_2 , cartesian::UnitY());
         const Eigen::AngleAxisf rotation_plane (M_PI * 2.f / 3.f , cartesian::UnitZ());
-        points[0] = origin + cartesian::UnitZ();
+        points[0] = cartesian::UnitZ();
         points[1] = rotation_down * points[0];
         points[2] = rotation_plane * points[1];
         points[3] = rotation_plane * points[2];
@@ -77,7 +86,7 @@ void SphereGeometry::generate()
     {
         const Eigen::AngleAxisf rotation_down (M_PI_2 , cartesian::UnitY());
         const Eigen::AngleAxisf rotation_plane (M_PI_2 , cartesian::UnitZ());
-        points[0] = origin + cartesian::UnitZ();
+        points[0] = cartesian::UnitZ();
         points[1] = rotation_down * points[0];
         points[2] = rotation_plane * points[1];
         points[3] = rotation_plane * points[2];
@@ -88,7 +97,7 @@ void SphereGeometry::generate()
     {
         const Eigen::AngleAxisf rotation_down (M_PI_2 , cartesian::UnitY());
         const Eigen::AngleAxisf rotation_plane (M_PI * 2.f / 5.f , cartesian::UnitZ());
-        points[0] = origin + cartesian::UnitZ();
+        points[0] = cartesian::UnitZ();
         points[1] = rotation_down * points[0];
         points[2] = rotation_plane * points[1];
         points[3] = rotation_plane * points[2];
@@ -101,7 +110,7 @@ void SphereGeometry::generate()
         const Eigen::AngleAxisf rotation_down_initial (M_PI_2 , cartesian::UnitY());
         const Eigen::AngleAxisf rotation_down (M_PI_2 , cartesian::UnitY());
         const Eigen::AngleAxisf rotation_plane (M_PI_2 , cartesian::UnitZ());
-        points[0] = rotation_down_initial * (origin + cartesian::UnitZ());
+        points[0] = rotation_down_initial * (cartesian::UnitZ());
         points[1] = rotation_plane * points[0];
         points[2] = rotation_plane * points[1];
         points[3] = rotation_plane * points[2];
@@ -150,8 +159,7 @@ void SphereGeometry::generate()
 
     // scale to radius
     for(auto& point : points)
-        point = point.normalized()*radius;
-        
+        point = origin + point.normalized()*radius;
 }
 
 

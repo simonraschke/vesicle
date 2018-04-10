@@ -33,6 +33,7 @@ public:
     
 protected:
     // float chi(const Particle&, const Particle&) const; 
+    float osmoticPotential(const Particle&, const Particle&) const;
 
     float kappa {0};
     float a {0};

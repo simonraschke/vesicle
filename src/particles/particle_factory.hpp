@@ -19,6 +19,7 @@
 #include <vector>
 #include "particle_mobile.hpp"
 #include "particle_frame.hpp"
+#include "particle_osmotic.hpp"
 #include "enhance/random.hpp"
 
 

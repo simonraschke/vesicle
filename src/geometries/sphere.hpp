@@ -33,4 +33,6 @@ struct SphereGeometry
     cartesian origin {cartesian::Zero()};
     float radius {1.0};
     std::size_t size {100};
+
+    friend std::ostream& operator<<(std::ostream&, const SphereGeometry&);
 };

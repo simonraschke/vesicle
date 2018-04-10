@@ -106,11 +106,24 @@ void SimulationControl::setup()
     // MUST
     {
         // add particles via factory class 
+        system.addParticles(ParticleFactory<ParticleFrame>(getParameters().guiding_elements));
         system.addParticles(ParticleFactory<ParticleMobile>(getParameters().mobile));
+        system.addParticles(ParticleFactory<ParticleOsmotic>(getParameters().osmotic));
         
+        for(const auto& p : system.getParticles())
+        {
+            vesLOG(*p);
+        }
+        vesLOG(getParameters().guiding_elements << " " <<  getParameters().mobile << " " << getParameters().osmotic);
+
         // and chose distribution
         if(GLOBAL::getInstance().mode == GLOBAL::NEWRUN)
-            system.distributeParticles<RandomDistributor>();
+        {
+            if(getParameters().osmotic > 0)
+                system.distributeParticles<OsmoticSystemDistributor>();
+            else
+                system.distributeParticles<RandomDistributor>();
+        }
         else if(GLOBAL::getInstance().mode == GLOBAL::RESTART && getParameters().in_traj == std::string("gro"))
             system.distributeParticles<TrajectoryDistributorGro>();
         if(GLOBAL::getInstance().mode == GLOBAL::RESTART)

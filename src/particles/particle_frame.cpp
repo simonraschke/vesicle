@@ -21,11 +21,20 @@
 void ParticleFrame::setCoords(const cartesian& newCoords)
 {
     assert(!newCoords.hasNaN());
-    assert(currentCoords);
-    assert(originCoords);
-    if( (newCoords-(*originCoords)).norm() < 0.5f )
+    if(coordsSetupDone)
     {
-        *currentCoords = newCoords;
+        assert(currentCoords);
+        if( (newCoords-(*originCoords)).norm() < 0.5f )
+        {
+            *currentCoords = newCoords;
+        }
+    }
+    else
+    {
+        originCoords = std::make_unique<cartesian>(newCoords);
+        currentCoords = std::make_unique<cartesian>(newCoords);
+        assert(originOrientation->squaredNorm()-1.f < 1e-3);
+        coordsSetupDone = true;
     }
 }
 
@@ -52,14 +61,23 @@ void ParticleFrame::setForce(const cartesian& newForce)
 void ParticleFrame::setOrientation(const cartesian& newOrientation)
 {
     assert(!newOrientation.hasNaN());
-    assert(currentOrientation);
-    assert(originOrientation);
-    if( std::acos(newOrientation.normalized().dot(originOrientation->normalized()) < M_PI_4/2.f) )
+    if(orientationSetupDone)
     {
-        *currentOrientation = newOrientation;
+        assert(currentOrientation);
+        if( std::acos(newOrientation.normalized().dot(originOrientation->normalized()) < M_PI_4/2.f) )
+        {
+            *currentOrientation = newOrientation;
+        }
+        currentOrientation->normalize();
+        assert(currentOrientation->squaredNorm()-1.f < 1e-3);
     }
-    currentOrientation->normalize();
-    assert(currentOrientation->squaredNorm()-1.f < 1e-3);
+    else
+    {
+        originOrientation = std::make_unique<cartesian>(newOrientation);
+        currentOrientation = std::make_unique<cartesian>(newOrientation);
+        assert(originOrientation->squaredNorm()-1.f < 1e-3);
+        orientationSetupDone = true;
+    }
 }
 
 

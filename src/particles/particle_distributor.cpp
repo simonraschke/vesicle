@@ -152,6 +152,54 @@ void GridDistributor::operator()(PARTICLERANGE* range)
 
 
 
+void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
+{
+    const std::size_t num_frame = std::count_if(std::begin(*range), std::end(*range), [](const auto& particle){ return particle->getType() == PARTICLETYPE::FRAME;});
+    const std::size_t num_mobile = std::count_if(std::begin(*range), std::end(*range), [](const auto& particle){ return particle->getType() == PARTICLETYPE::MOBILE;});
+    const std::size_t num_osmotic = std::count_if(std::begin(*range), std::end(*range), [](const auto& particle){ return particle->getType() == PARTICLETYPE::OSMOTIC;});
+    vesLOG("distributing particles for an osmotic pressure analysis system with " << num_frame << " frames, " << num_mobile << " mobiles, " << num_osmotic << " osmotic particles");
+
+    const float optimum_distance = enhance::nth_root<6>(getParameters().LJsigma*2);
+    const float radius = optimum_distance/(2.0*std::sin(getParameters().gamma));
+
+    vesLOG("optimum_distance " << optimum_distance)
+    vesLOG("radius " << radius)
+    
+    SphereGeometry sphere(getCenter(), radius, num_frame+num_mobile);
+    assert(sphere.points.size() == num_frame+num_mobile);
+    vesLOG(sphere);
+
+    std::size_t sphere_counter = 0;
+    for(std::size_t i = 0; i < range->size(); ++i)
+    {
+        Particle& particle = *range->at(i);
+        switch(particle.getType())
+        {
+            case UNDEFINED : 
+                throw std::logic_error("Got particle of undefined type"); 
+                break;
+            case FRAME : 
+                particle.setCoords(sphere.points[sphere_counter]); 
+                particle.setOrientation(sphere.points[sphere_counter]-sphere.origin); 
+                ++sphere_counter;
+                break;
+            case MOBILE : 
+                particle.setCoords(sphere.points[sphere_counter]); 
+                particle.setOrientation(sphere.points[sphere_counter]-sphere.origin); 
+                ++sphere_counter;
+                break;
+            case OSMOTIC : 
+                particle.setCoords(getCenter() + Eigen::Vector3f::Random().normalized()*radius/2); 
+                break;
+            default :
+                throw std::logic_error("encountered default in switch statement");
+        }
+        vesLOG(particle);
+    }
+}
+
+
+
 void TrajectoryDistributorGro::operator()(PARTICLERANGE* range)
 {   
     vesLOG("distributing particles from " << getParameters().in_traj_path)

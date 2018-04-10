@@ -48,6 +48,8 @@ struct Parameters
 
     // SYSTEM
     std::size_t mobile {};
+    std::size_t guiding_elements {};
+    std::size_t osmotic {};
     float density {};
     float x {};
     float y {};

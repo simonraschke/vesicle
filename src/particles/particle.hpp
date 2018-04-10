@@ -30,7 +30,7 @@ class ParticleIDGenerator : public enhance::IncrementalNumberGenerator<ParticleI
 
 
 
-enum PARTICLETYPE { UNDEFINED, MOBILE, FRAME };
+enum PARTICLETYPE { UNDEFINED, MOBILE, FRAME, OSMOTIC };
 
 
 /*
@@ -53,6 +53,8 @@ class Particle
 public:
     // inheritance reuired
     virtual ~Particle() {};
+
+    friend std::ostream& operator<<(std::ostream& os, const Particle&);
     
     // setting the floating point precision
     typedef float real;

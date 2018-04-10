@@ -148,4 +148,12 @@ namespace enhance
         if(__height < 0) throw std::logic_error("height must not be negative");
         return enhance::circle_area(__rad)*__height/(static_cast<T>(3));
     }
+
+
+
+    template<std::size_t N, typename T>
+    constexpr typename std::enable_if<std::is_floating_point<T>::value,T>::type nth_root(const T& __val )
+    {
+        return std::pow(__val, 1.0/N);
+    }
 }

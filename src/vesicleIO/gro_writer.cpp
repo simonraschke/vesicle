@@ -95,15 +95,36 @@ void TrajectoryWriterGro::write(const float& time_elapsed, bool FORCE)
     for(unsigned long residue = 0; residue < target_range->size(); ++residue)
     {
         const auto& target = target_range->operator[](residue);
-        const cartesian& coords = scaleDownForVMD(target->coords());
-        // const cartesian& coords = target->coords();
-
+        // const cartesian& coords = scaleDownForVMD(target->coords());
+        const cartesian& coords = scaleDown( target->coords());
+        std::string color_up;
+        std::string color_down;
+        switch(target->getType())
+        {
+            case UNDEFINED : 
+                throw std::logic_error("Got particle of undefined type"); 
+                break;
+            case FRAME : 
+                color_up = color_down = "B"; 
+                break;
+            case MOBILE : 
+                color_up = "A"; 
+                color_down = "B"; 
+                break;
+            case OSMOTIC : 
+                color_up = "O"; 
+                color_down = "O"; 
+                break;
+            default :
+                throw std::logic_error("encountered default in switch statement");
+        }
+        
         if(!anisotropic)
         {
             const cartesian velocity = target->velocity();
             FILE << std::setw(5) <<  residue+1;
             FILE << std::setw(5) <<  target->name();
-            FILE << std::setw(5) <<  "A";
+            FILE << std::setw(5) <<  color_down;
             FILE << std::setw(5) <<  atom+1;
             FILE << std::setprecision(3);
             FILE << std::setw(8) <<  coords(0);
@@ -123,7 +144,7 @@ void TrajectoryWriterGro::write(const float& time_elapsed, bool FORCE)
             
             FILE << std::setw(5) <<  residue+1;
             FILE << std::setw(5) <<  target->name();
-            FILE << std::setw(5) <<  "B";
+            FILE << std::setw(5) <<  color_down;
             FILE << std::setw(5) <<  atom+1;
             FILE << std::setprecision(3);
             FILE << std::setw(8) <<  coords(0) + orientation(0)*getParameters().kappa/2.f;
@@ -138,7 +159,7 @@ void TrajectoryWriterGro::write(const float& time_elapsed, bool FORCE)
 
             FILE << std::setw(5) <<  residue+1;
             FILE << std::setw(5) <<  target->name();
-            FILE << std::setw(5) <<  "A";
+            FILE << std::setw(5) <<  color_up;
             FILE << std::setw(5) <<  atom+1;
             FILE << std::setprecision(3);
             FILE << std::setw(8) <<  coords(0) - orientation(0)*getParameters().kappa/2.f;
@@ -168,6 +189,8 @@ void TrajectoryWriterGro::makeStartFileVMD() const
     // STARTER << "vmd" << '\n';
     // STARTER.close();
 
+    const std::size_t anisotropic_particles = std::count_if(std::begin(*target_range), std::end(*target_range), [](const auto& particle){ vesLOG(*particle); return particle->getType() == PARTICLETYPE::FRAME || particle->getType() == PARTICLETYPE::MOBILE;});
+
     OFSTREAM VMD;
     VMD.open(".vmdrc");
     VMD << "mol load gro " << file_path->string() << '\n';
@@ -187,6 +210,7 @@ void TrajectoryWriterGro::makeStartFileVMD() const
     VMD << "display reposition" << '\n';
     VMD << "display projection perspective" << '\n';
     VMD << "display rendermode GLSL" << '\n';
+    VMD << "display cuedensity 0.12" << '\n';
     VMD << "color Display Background white" << '\n';
     // VMD << "draw color black" << '\n';
     VMD << "mol coloring 7 2 ResName" << '\n';
@@ -206,7 +230,7 @@ void TrajectoryWriterGro::makeStartFileVMD() const
     VMD << "color change rgb 16 0.15 0.15 0.15 ;# black" << '\n';
 
     VMD << "after idle {" << '\n';
-    VMD << "  pbc box -center origin -color black -width 1" << '\n';
+    VMD << "  pbc box -color black -width 1" << '\n';
     VMD << "  # set colors" << '\n';
     VMD << "  # create dummy molecule with one atom" << '\n';
     VMD << "  set mol [mol new atoms 1]" << '\n';
@@ -225,6 +249,8 @@ void TrajectoryWriterGro::makeStartFileVMD() const
     VMD << "  color Type B 23" << '\n';
     VMD << "  color Name C gray" << '\n';
     VMD << "  color Type C gray" << '\n';
+    VMD << "  color Name O orange" << '\n';
+    VMD << "  color Type O orange" << '\n';
     VMD << "  mol delete $mol" << '\n';
 
     if(anisotropic)
@@ -233,7 +259,7 @@ void TrajectoryWriterGro::makeStartFileVMD() const
         VMD << "  $sel delete" << '\n';
         // VMD << "  set mol [mol new atoms 1]" << '\n';
         // VMD << "  set sel [atomselect $mol all]" << '\n';
-        VMD << "  for {set x 0} {$x < " << target_range->size()*2 <<"} {incr x} {" << '\n';
+        VMD << "  for {set x 0} {$x < " << anisotropic_particles*2 <<"} {incr x} {" << '\n';
         VMD << "    set y [expr $x+1]" << '\n'; 
         VMD << "    set sel [atomselect top \"index $x $y\"]" << '\n';
         VMD << "    incr x 1" << '\n';

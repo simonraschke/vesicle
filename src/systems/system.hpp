@@ -132,7 +132,7 @@ template<typename T>
 void System::addParticles(ParticleFactory<T>&& factory)
 {
     vesDEBUG(__PRETTY_FUNCTION__)
-    particles.reserve(particles.size()+factory.size());
+    // particles.reserve(particles.size()+factory.size());
     while(factory)
     {
         particles.push_back(factory.createParticle());
@@ -147,6 +147,7 @@ void System::distributeParticles()
     vesDEBUG(__PRETTY_FUNCTION__)
     D dist;
     dist.setParameters(getParameters());
+    dist.check_for_aligned_box_setup();
     dist(&particles);
 }
 
@@ -198,7 +199,6 @@ void System::setTrajectoryWriter()
     trajectory_writer = std::make_unique<W>();
     assert(trajectory_writer);
     trajectory_writer->setParameters(getParameters());
-    trajectory_writer->setPath("trajectory.gro");
-    // trajectory_writer->setFilename("trajectory");
     trajectory_writer->setTarget(&particles);
+    trajectory_writer->setPath("trajectory.gro");
 }

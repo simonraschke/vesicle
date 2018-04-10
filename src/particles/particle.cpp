@@ -18,6 +18,14 @@
 
 
 
+std::ostream& operator<<(std::ostream& os, const Particle& p)
+{
+    os << "particle " << p.ID << " (" << p.name() << ") at " << p.coords().format(ROWFORMAT);
+    return os;
+}
+
+
+
 bool Particle::operator==(const Particle& other)
 {
     return std::addressof(*this) == std::addressof(other);

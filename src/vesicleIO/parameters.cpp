@@ -39,6 +39,8 @@ void Parameters::read(int argc, const char* argv[])
     po::options_description systemOptions("System Options");
     systemOptions.add_options()
         ("system.mobile,m", po::value<std::size_t>(), "number of mobile particles")
+        ("system.guiding_elements", po::value<std::size_t>(), "number of guiding elements")
+        ("system.osmotic", po::value<std::size_t>(), "number of osmotic particles")
         ("system.density,c", po::value<float>(), "particle density")
         ("system.box.x", po::value<float>(), "box edge x")
         ("system.box.y", po::value<float>(), "box edge y")
@@ -194,6 +196,9 @@ void Parameters::setup()
         && optionsMap.count("system.box.y") 
         && optionsMap.count("system.box.z")) ++counter;
 
+        guiding_elements = optionsMap.count("system.guiding_elements") ? optionsMap["system.guiding_elements"].as<std::size_t>() : 0;
+        osmotic = optionsMap.count("system.osmotic") ? optionsMap["system.osmotic"].as<std::size_t>() : 0;
+
         if(counter != 2)
         {
             vesCRITICAL("define 2 of the 3: system.mobile, system.density, system.box.{_}!")
@@ -330,6 +335,8 @@ void Parameters::setup()
         vesLOG("general.interaction                 " << interaction )
         vesLOG("general.thermostat                  " << thermostat )
         vesLOG("system.mobile                       " << mobile )
+        vesLOG("system.guiding_elements             " << guiding_elements )
+        vesLOG("system.osmotic                      " << osmotic )
         vesLOG("system.density                      " << density )
         vesLOG("system.box.x                        " << x )
         vesLOG("system.box.y                        " << y )
