@@ -22,7 +22,7 @@
 
 
 
-int main(int argc, const char *argv[]) try
+int main(int argc, const char *argv[])// try
 {
     // register important signals in Controller bas class
     // allowing civilized shutdown
@@ -62,7 +62,7 @@ int main(int argc, const char *argv[]) try
 
     return EXIT_SUCCESS;
 }
-catch(std::exception& e)
-{
-    vesLOG("caught exception at main scope: " << e.what() )
-}
+// catch(std::exception& e)
+// {
+//     vesLOG("caught exception at main scope: " << e.what() )
+// }

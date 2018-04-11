@@ -91,7 +91,8 @@ float AngularLennardJones::osmoticPotential(const Particle& p1, const Particle& 
         const float r6 = r2*r2*r2;
         repulsive = r6;
     }
-    return epsilon*(attractive + repulsive);
+
+    return attractive + 4.f*epsilon*repulsive;
 }
 
 

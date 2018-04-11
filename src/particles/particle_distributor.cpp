@@ -218,6 +218,7 @@ void TrajectoryDistributorGro::operator()(PARTICLERANGE* range)
         if(num_particles != range->size())
             vesWARNING("PARTICLERANGE != num_particles from" << getParameters().in_traj_path)
 
+        // vesCRITICAL("reader.isAnisotropic() " << std::boolalpha << reader.isAnisotropic());
         for(std::size_t i = 0; i < num_particles ; ++i)
         {
             PARTICLERANGE::value_type::element_type& particle = *((*range)[i]);

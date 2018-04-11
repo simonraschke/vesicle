@@ -97,6 +97,7 @@ void SimulationControl::make_nodes()
 void SimulationControl::setup()
 {   
     vesDEBUG(__PRETTY_FUNCTION__)
+    GLOBAL::getInstance().status.store(GLOBAL::PREPARATION);
 
     {
         // syytem is ParameterDependentComponent
@@ -214,6 +215,7 @@ void SimulationControl::setup()
 void SimulationControl::start()
 {
     vesDEBUG(__PRETTY_FUNCTION__)
+    GLOBAL::getInstance().status.store(GLOBAL::RUNNING);
 
     if(std::abs(system.getTime() - getParameters().time_max) < 1e-3 ) 
     {

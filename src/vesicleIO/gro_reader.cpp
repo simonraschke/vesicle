@@ -44,7 +44,7 @@ void TrajectoryReaderGro::readAllFrames(bool direct_match_check)
                         }
                     }
                     // or just add every frame
-                    // THIS IS MEMORY HEAVY 
+                    // THIS MIGHT BE MEMORY HEAVY 
                     else
                     {
                         frames.emplace_back(std::make_pair(frame_counter,frame_buffer));
@@ -194,11 +194,15 @@ bool TrajectoryReaderGro::isAnisotropic() const
 {
     vesDEBUG(__PRETTY_FUNCTION__)
     if(frames.empty()) throw std::logic_error("no frame was read");
-    std::string number_a { *( std::begin(getFrame(0).second[2]) + 14 ) };
-    std::string number_b { *( std::begin(getFrame(0).second[3]) + 14 ) };
+    std::string number_a { *( std::begin(getFrame(0).second[2]) + 4 ) };
+    std::string name_a { getFrame(0).second[2].substr(5,5) };
+    std::string number_b { *( std::begin(getFrame(0).second[3]) + 4 ) };
+    std::string name_b { getFrame(0).second[3].substr(5,5) };
     try
     {
-        return std::string( number_a ) != std::string( number_b );
+        // vesDEBUG( "comparing strings " << number_a << " " << number_b);
+        // vesDEBUG( "comparing strings " << name_a << " " << name_b);
+        return std::string( number_a ) == std::string( number_b ) && name_a == name_b;
     }
     catch (const std::exception& e)
     {
@@ -220,16 +224,95 @@ std::map<std::string,std::string> TrajectoryReaderGro::particleLineTokens(std::s
         line.append(std::string("  0.0000"));
     }
 
-    map["resnum"] = line.substr(0,5);
-    map["resname"] = line.substr(5,5);
-    map["atomname"] = line.substr(10,5);
-    map["atomnum"] = line.substr(15,5);
-    map["pos x"] = line.substr(20,8);
-    map["pos y"] = line.substr(28,8);
-    map["pos z"] = line.substr(36,8);
-    map["vel x"] = line.substr(44,8);
-    map["vel y"] = line.substr(52,8);
-    map["vel z"] = line.substr(60,8);
+    try
+    {
+        map["resnum"] = line.substr(0,5);
+    }
+    catch(std::out_of_range& e)
+    {
+        vesCRITICAL(e.what() << " with line \"" << line << "\"")
+    }
+
+    try
+    {
+        map["resname"] = line.substr(5,5);
+    }
+    catch(std::out_of_range& e)
+    {
+        vesCRITICAL(e.what() << " with line \"" << line << "\"")
+    }
+
+    try
+    {
+        map["atomname"] = line.substr(10,5);
+    }
+    catch(std::out_of_range& e)
+    {
+        vesCRITICAL(e.what() << " with line \"" << line << "\"")
+    }
+
+    try
+    {
+        map["atomnum"] = line.substr(15,5);
+    }
+    catch(std::out_of_range& e)
+    {
+        vesCRITICAL(e.what() << " with line \"" << line << "\"")
+    }
+
+    try
+    {
+        map["pos x"] = line.substr(20,8);
+    }
+    catch(std::out_of_range& e)
+    {
+        vesCRITICAL(e.what() << " with line \"" << line << "\"")
+    }
+
+    try
+    {
+        map["pos y"] = line.substr(28,8);
+    }
+    catch(std::out_of_range& e)
+    {
+        vesCRITICAL(e.what() << " with line \"" << line << "\"")
+    }
+
+    try
+    {
+        map["pos z"] = line.substr(36,8);
+    }
+    catch(std::out_of_range& e)
+    {
+        vesCRITICAL(e.what() << " with line \"" << line << "\"")
+    }
+
+    try
+    {
+        map["vel x"] = line.substr(44,8);
+    }
+    catch(std::out_of_range& e)
+    {
+        vesCRITICAL(e.what() << " with line \"" << line << "\"")
+    }
+
+    try
+    {
+        map["vel y"] = line.substr(52,8);
+    }
+    catch(std::out_of_range& e)
+    {
+        vesCRITICAL(e.what() << " with line \"" << line << "\"")
+    }
+
+    try
+    {
+        map["vel z"] = line.substr(60,8);
+    }
+    catch(std::out_of_range& e)
+    {
+        vesCRITICAL(e.what() << " with line \"" << line << "\"")
+    }
 
     for( auto& pair : map )
     #ifdef BOOST_VERSION

@@ -21,7 +21,7 @@
 void ParticleFrame::setCoords(const cartesian& newCoords)
 {
     assert(!newCoords.hasNaN());
-    if(coordsSetupDone)
+    if(coordsSetupDone && GLOBAL::getInstance().status == GLOBAL::RUNNING)
     {
         assert(currentCoords);
         if( (newCoords-(*originCoords)).norm() < 0.5f )
@@ -33,7 +33,6 @@ void ParticleFrame::setCoords(const cartesian& newCoords)
     {
         originCoords = std::make_unique<cartesian>(newCoords);
         currentCoords = std::make_unique<cartesian>(newCoords);
-        assert(originOrientation->squaredNorm()-1.f < 1e-3);
         coordsSetupDone = true;
     }
 }
@@ -61,7 +60,7 @@ void ParticleFrame::setForce(const cartesian& newForce)
 void ParticleFrame::setOrientation(const cartesian& newOrientation)
 {
     assert(!newOrientation.hasNaN());
-    if(orientationSetupDone)
+    if(orientationSetupDone && GLOBAL::getInstance().status == GLOBAL::RUNNING)
     {
         assert(currentOrientation);
         if( std::acos(newOrientation.normalized().dot(originOrientation->normalized()) < M_PI_4/2.f) )

@@ -55,3 +55,18 @@
     },\
     std::plus<type>())
 
+
+
+#include "enhance/singleton.hpp"
+#include <atomic>
+
+class GLOBAL
+    : public enhance::Singleton<GLOBAL>
+{
+public:
+    enum MODE { UNDEFINED, NEWRUN, RESTART };
+    std::atomic<MODE> mode {UNDEFINED};
+
+    enum STATUS { UNKNOWN, PREPARATION, PAUSED, RUNNING };
+    std::atomic<STATUS> status {UNKNOWN};
+};
