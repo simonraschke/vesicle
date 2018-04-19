@@ -316,7 +316,6 @@ void FrameGuidedGridDistributor::operator()(PARTICLERANGE* range)
         for(const auto& point : sphere.points)
         {
             Particle& particle = *(it->get());
-            assert(particle);
             if(particle.getType() != FRAME)
             {
                 throw std::logic_error("Didn't get PARTICLETYPE::FRAME, where it should have been");

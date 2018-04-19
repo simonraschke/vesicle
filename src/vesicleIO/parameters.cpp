@@ -211,17 +211,19 @@ void Parameters::setup()
             vesLOG("system.mobile and system.density were set. Assuming cubic box")
             mobile = optionsMap["system.mobile"].as<std::size_t>();
             num_all_particles = mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
-            x = std::cbrt(static_cast<float>(num_all_particles)/optionsMap["system.density"].as<float>());
-            y = std::cbrt(static_cast<float>(num_all_particles)/optionsMap["system.density"].as<float>());
-            z = std::cbrt(static_cast<float>(num_all_particles)/optionsMap["system.density"].as<float>());
+            density = optionsMap["system.density"].as<float>();
+            x = std::cbrt(static_cast<float>(num_all_particles)/density);
+            y = std::cbrt(static_cast<float>(num_all_particles)/density);
+            z = std::cbrt(static_cast<float>(num_all_particles)/density);
         }
         else if(optionsMap.count("system.box.x") && optionsMap.count("system.density"))
         {
             x = optionsMap["system.box.x"].as<float>();
             y = optionsMap["system.box.y"].as<float>();
             z = optionsMap["system.box.z"].as<float>();
+            density = optionsMap["system.density"].as<float>();
             std::size_t num_all_particles_minus_mobile = osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
-            mobile = std::round( optionsMap["system.density"].as<float>() * x * y * z) - num_all_particles_minus_mobile;
+            mobile = std::round( density * x * y * z) - num_all_particles_minus_mobile;
             num_all_particles = mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
         }
         else if(optionsMap.count("system.box.x") && optionsMap.count("system.box.y") && optionsMap.count("system.box.z")  && optionsMap.count("system.mobile"))
