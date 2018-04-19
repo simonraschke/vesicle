@@ -213,7 +213,7 @@ void DataCollector::write_fg_histogram()
     typedef float hist_t;
     const auto largestFGCluster = clusters.getLargest([](const auto& cluster)
     { 
-        return ! (cluster.template containsParticleType<PARTICLETYPE::FRAME>()); 
+        return (cluster.template containsParticleType<PARTICLETYPE::FRAME>()); 
     });
 
     const std::size_t numFrameGuidedClusters = std::count_if(std::begin(clusters), std::end(clusters), [](const auto& cluster)
@@ -236,31 +236,54 @@ void DataCollector::write_fg_histogram()
     // matrix with 
     // column 0 size of cluster
     // further columns with particle IDs in this cluster
-    for(std::size_t i = 0; i < numFrameGuidedClusters; ++i)
-    {   
-        const auto& cluster = *(clusters.begin()+i);
-        if( !cluster.containsParticleType<PARTICLETYPE::FRAME>() )
+    std::size_t row = 0;
+    for(const auto& cluster : clusters)
+    {
+        if(!cluster.containsParticleType<PARTICLETYPE::FRAME>())
             continue;
-
-        // size
-        cluster_histogram[i][0] = static_cast<hist_t>(cluster.size());
-        cluster_histogram[i][1] = static_cast<hist_t>(cluster.getOrder());
-        cluster_histogram[i][2] = static_cast<hist_t>(cluster.getStructure().getVolume());
-        cluster_histogram[i][3] = static_cast<hist_t>(cluster.getStructure().getSurfaceArea());
+        
+        cluster_histogram[row][0] = static_cast<hist_t>(cluster.size());
+        cluster_histogram[row][1] = static_cast<hist_t>(cluster.getOrder());
+        cluster_histogram[row][2] = static_cast<hist_t>(cluster.getStructure().getVolume());
+        cluster_histogram[row][3] = static_cast<hist_t>(cluster.getStructure().getSurfaceArea());
 
         // all particles of cluster
-        for(std::size_t j = 0; j < cluster.size(); ++j)
+        for(std::size_t col = 4; col < cluster.size() + 4; ++col)
         {
-            const auto& particle = *(cluster.begin()+j);
+            const auto& particle = *(cluster.begin()+col-4);
 
             // ID of particle in cluster
-            cluster_histogram[i][j+4] = static_cast<hist_t>(particle.ID);
+            cluster_histogram[row][col] = static_cast<hist_t>(particle.ID);
         }
+        ++row;
     }
+
+    // for(std::size_t i = 0; i < numFrameGuidedClusters; )
+    // {   
+    //     const auto& cluster = *(clusters.begin()+i);
+    //     if( !cluster.containsParticleType<PARTICLETYPE::FRAME>() )
+    //         continue;
+
+    //     // size
+    //     cluster_histogram[i][0] = static_cast<hist_t>(cluster.size());
+    //     cluster_histogram[i][1] = static_cast<hist_t>(cluster.getOrder());
+    //     cluster_histogram[i][2] = static_cast<hist_t>(cluster.getStructure().getVolume());
+    //     cluster_histogram[i][3] = static_cast<hist_t>(cluster.getStructure().getSurfaceArea());
+
+    //     // all particles of cluster
+    //     for(std::size_t j = 0; j < cluster.size(); ++j)
+    //     {
+    //         const auto& particle = *(cluster.begin()+j);
+
+    //         // ID of particle in cluster
+    //         cluster_histogram[i][j+4] = static_cast<hist_t>(particle.ID);
+    //     }
+    //     ++i;
+    // }
 
     vesLOG("HDF5: create dataset /cluster_frame_guided/time"+boost::lexical_cast<std::string>(timepoints.back()))
     HighFive::DataSet dataset = FILE->createDataSet<hist_t>("/cluster_frame_guided/time"+boost::lexical_cast<std::string>(timepoints.back()), HighFive::DataSpace::From(cluster_histogram));
-    vesLOG("HDF5: write dataset  /cluster_frame_guided/time"+boost::lexical_cast<std::string>(timepoints.back())+" with size " << numFrameGuidedClusters << "x" << maxClusterFrameGuided+1)
+    vesLOG("HDF5: write dataset  /cluster_frame_guided/time"+boost::lexical_cast<std::string>(timepoints.back())+" with size " << numFrameGuidedClusters << "x" << maxClusterFrameGuided+4)
     dataset.write(cluster_histogram);
 }
 
@@ -269,9 +292,20 @@ void DataCollector::write_fg_histogram()
 void DataCollector::write_sa_histogram()
 {
     typedef float hist_t;
-    const std::size_t numSelfAssembledClusters = std::count_if(std::begin(clusters), std::end(clusters),[](const auto& cluster){ return ! (cluster.template containsParticleType<PARTICLETYPE::FRAME>()); });
-    const std::size_t maxClusterSelfAssembled = clusters.getLargest().size();
-    
+    // const std::size_t numSelfAssembledClusters = std::count_if(std::begin(clusters), std::end(clusters),[](const auto& cluster){ return ! (cluster.template containsParticleType<PARTICLETYPE::FRAME>()); });
+    // const std::size_t maxClusterSelfAssembled = clusters.getLargest().size();
+    const auto largestSACluster = clusters.getLargest([](const auto& cluster)
+    { 
+        return ! (cluster.template containsParticleType<PARTICLETYPE::FRAME>()); 
+    });
+    const std::size_t numSelfAssembledClusters = std::count_if(std::begin(clusters), std::end(clusters), [](const auto& cluster)
+    { 
+        return ! (cluster.template containsParticleType<PARTICLETYPE::FRAME>());
+    });
+
+    const auto maxClusterSelfAssembled = largestSACluster->size();
+
+
     boost::multi_array<hist_t,2> cluster_histogram(boost::extents[numSelfAssembledClusters][maxClusterSelfAssembled+4]);
 
     if(numSelfAssembledClusters == 0)
@@ -287,30 +321,53 @@ void DataCollector::write_sa_histogram()
     // matrix with 
     // column 0 size of cluster
     // further columns with particle IDs in this cluster
-    for(std::size_t i = 0; i < numSelfAssembledClusters; ++i)
-    {   
-        const auto& cluster = *(clusters.begin()+i);
-        if( cluster.containsParticleType<PARTICLETYPE::FRAME>() )
+    std::size_t row = 0;
+    for(const auto& cluster : clusters)
+    {
+        if( cluster.containsParticleType<PARTICLETYPE::FRAME>())
             continue;
-
-        // size
-        cluster_histogram[i][0] = static_cast<hist_t>(cluster.size());
-        cluster_histogram[i][1] = static_cast<hist_t>(cluster.getOrder());
-        cluster_histogram[i][2] = static_cast<hist_t>(cluster.getStructure().getVolume());
-        cluster_histogram[i][3] = static_cast<hist_t>(cluster.getStructure().getSurfaceArea());
+        
+        cluster_histogram[row][0] = static_cast<hist_t>(cluster.size());
+        cluster_histogram[row][1] = static_cast<hist_t>(cluster.getOrder());
+        cluster_histogram[row][2] = static_cast<hist_t>(cluster.getStructure().getVolume());
+        cluster_histogram[row][3] = static_cast<hist_t>(cluster.getStructure().getSurfaceArea());
 
         // all particles of cluster
-        for(std::size_t j = 0; j < cluster.size(); ++j)
+        for(std::size_t col = 4; col < cluster.size() + 4; ++col)
         {
-            const auto& particle = *(cluster.begin()+j);
+            const auto& particle = *(cluster.begin()+col-4);
 
             // ID of particle in cluster
-            cluster_histogram[i][j+4] = static_cast<hist_t>(particle.ID);
+            cluster_histogram[row][col] = static_cast<hist_t>(particle.ID);
         }
+        ++row;
     }
+
+    // for(std::size_t i = 0; i < numSelfAssembledClusters; )
+    // {   
+    //     const auto& cluster = *(clusters.begin()+i);
+    //     if( cluster.containsParticleType<PARTICLETYPE::FRAME>() )
+    //         continue;
+
+    //     // size
+    //     cluster_histogram[i][0] = static_cast<hist_t>(cluster.size());
+    //     cluster_histogram[i][1] = static_cast<hist_t>(cluster.getOrder());
+    //     cluster_histogram[i][2] = static_cast<hist_t>(cluster.getStructure().getVolume());
+    //     cluster_histogram[i][3] = static_cast<hist_t>(cluster.getStructure().getSurfaceArea());
+
+    //     // all particles of cluster
+    //     for(std::size_t j = 0; j < cluster.size(); ++j)
+    //     {
+    //         const auto& particle = *(cluster.begin()+j);
+
+    //         // ID of particle in cluster
+    //         cluster_histogram[i][j+4] = static_cast<hist_t>(particle.ID);
+    //     }
+    //     ++i;
+    // }
 
     vesLOG("HDF5: create dataset /cluster_self_assembled/time"+boost::lexical_cast<std::string>(timepoints.back()))
     HighFive::DataSet dataset = FILE->createDataSet<hist_t>("/cluster_self_assembled/time"+boost::lexical_cast<std::string>(timepoints.back()), HighFive::DataSpace::From(cluster_histogram));
-    vesLOG("HDF5: write dataset  /cluster_self_assembled/time"+boost::lexical_cast<std::string>(timepoints.back())+" with size " << numSelfAssembledClusters << "x" << maxClusterSelfAssembled+1);
+    vesLOG("HDF5: write dataset  /cluster_self_assembled/time"+boost::lexical_cast<std::string>(timepoints.back())+" with size " << numSelfAssembledClusters << "x" << maxClusterSelfAssembled+4);
     dataset.write(cluster_histogram);
 }

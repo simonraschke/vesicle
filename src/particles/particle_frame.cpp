@@ -24,7 +24,7 @@ void ParticleFrame::setCoords(const cartesian& newCoords)
     if(coordsSetupDone && GLOBAL::getInstance().status == GLOBAL::RUNNING)
     {
         assert(currentCoords);
-        if( (newCoords-(*originCoords)).norm() < 0.5f )
+        if( (newCoords-(*originCoords)).squaredNorm() < 0.3f*0.3f )
         {
             *currentCoords = newCoords;
         }
@@ -63,7 +63,7 @@ void ParticleFrame::setOrientation(const cartesian& newOrientation)
     if(orientationSetupDone && GLOBAL::getInstance().status == GLOBAL::RUNNING)
     {
         assert(currentOrientation);
-        if( std::acos(newOrientation.normalized().dot(originOrientation->normalized()) < M_PI_4/2.f) )
+        if( std::acos(newOrientation.normalized().dot(originOrientation->normalized())) < M_PI_4/2 )
         {
             *currentOrientation = newOrientation;
         }
@@ -87,6 +87,7 @@ void ParticleFrame::setOriginCoords(const cartesian& origin)
     assert(originCoords);
     originCoords = std::make_unique<cartesian>(origin);
     assert(originOrientation->squaredNorm()-1.f < 1e-3);
+    coordsSetupDone = true;
 }
 
 
@@ -97,6 +98,7 @@ void ParticleFrame::setOriginOrientation(const cartesian& origin)
     assert(originOrientation);
     originOrientation = std::make_unique<cartesian>(origin);
     assert(originOrientation->squaredNorm()-1.f < 1e-3);
+    orientationSetupDone = true;
 }
 
 

@@ -63,28 +63,64 @@ order_overall_command = "sbatch -J \"PLOT order_overall\" submit_plot.sh " + ord
 n_avg_args = os.path.join(dir_of_this_script,"N_avg.py") + " --file " + args.file + " --time " + str(args.time[0]) + " " + str(args.time[1]) + " --min 5"
 n_avg_command = "sbatch -J \"PLOT N_avg\" submit_plot.sh " + n_avg_args
 
-rho_free_time_T026_args = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.26 --dens 0.01 0.03 --out rho_free_time_T026"
-rho_free_time_T026_command = "sbatch -J \"PLOT rho_free_time_T026\" submit_plot.sh " + rho_free_time_T026_args
 
-rho_free_time_T027_args = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.27 --dens 0.015 0.04 --out rho_free_time_T027"
-rho_free_time_T027_command = "sbatch -J \"PLOT rho_free_time_T027\" submit_plot.sh " + rho_free_time_T027_args
+rho_free_time_T026_args0 = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.26 --dens 0.01 0.03 --out rho_free_time_T026_0"
+rho_free_time_T026_command0 = "sbatch -J \"PLOT rho_free_time_T026\" submit_plot.sh " + rho_free_time_T026_args0
 
-rho_free_time_T028_args = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.02 0.05 --out rho_free_time_T028"
-rho_free_time_T028_command = "sbatch -J \"PLOT rho_free_time_T028\" submit_plot.sh " + rho_free_time_T028_args
+rho_free_time_T026_args1 = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.26 --dens 0.04 0.06 --out rho_free_time_T026_1"
+rho_free_time_T026_command1 = "sbatch -J \"PLOT rho_free_time_T026\" submit_plot.sh " + rho_free_time_T026_args1
+
+rho_free_time_T026_args2 = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.26 --dens 0.07 0.1 --out rho_free_time_T026_2"
+rho_free_time_T026_command2 = "sbatch -J \"PLOT rho_free_time_T026\" submit_plot.sh " + rho_free_time_T026_args2
+
+
+
+rho_free_time_T027_args0 = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.27 --dens 0.001 0.01 --out rho_free_time_T027_0"
+rho_free_time_T027_command0 = "sbatch -J \"PLOT rho_free_time_T027\" submit_plot.sh " + rho_free_time_T027_args0
+
+rho_free_time_T027_args1 = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.27 --dens 0.015 0.04 --out rho_free_time_T027_1"
+rho_free_time_T027_command1 = "sbatch -J \"PLOT rho_free_time_T027\" submit_plot.sh " + rho_free_time_T027_args1
+
+rho_free_time_T027_args2 = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.27 --dens 0.05 0.1 --out rho_free_time_T027_2"
+rho_free_time_T027_command2 = "sbatch -J \"PLOT rho_free_time_T027\" submit_plot.sh " + rho_free_time_T027_args2
+
+
+rho_free_time_T028_args0 = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.001 0.015 --out rho_free_time_T028_0"
+rho_free_time_T028_command0 = "sbatch -J \"PLOT rho_free_time_T028\" submit_plot.sh " + rho_free_time_T028_args0
+
+
+rho_free_time_T028_args1 = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.02 0.05 --out rho_free_time_T028_1"
+rho_free_time_T028_command1 = "sbatch -J \"PLOT rho_free_time_T028\" submit_plot.sh " + rho_free_time_T028_args1
+
+
+rho_free_time_T028_args2 = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.06 0.1 --out rho_free_time_T028_2"
+rho_free_time_T028_command2 = "sbatch -J \"PLOT rho_free_time_T028\" submit_plot.sh " + rho_free_time_T028_args2
 
 if shutil.which("sbatch") != None:
-    print(rho_free_command)
-    subprocess.getstatusoutput(rho_free_command)
     print(order_overall_command)
     subprocess.getstatusoutput(order_overall_command)
+    print(rho_free_command)
+    subprocess.getstatusoutput(rho_free_command)
     print(n_avg_command)
     subprocess.getstatusoutput(n_avg_command)
-    print(rho_free_time_T026_command)
-    subprocess.getstatusoutput(rho_free_time_T026_command)
-    print(rho_free_time_T027_command)
-    subprocess.getstatusoutput(rho_free_time_T027_command)
-    print(rho_free_time_T028_command)
-    subprocess.getstatusoutput(rho_free_time_T028_command)
+    print(rho_free_time_T026_command0)
+    subprocess.getstatusoutput(rho_free_time_T026_command0)
+    print(rho_free_time_T026_command1)
+    subprocess.getstatusoutput(rho_free_time_T026_command1)
+    print(rho_free_time_T026_command2)
+    subprocess.getstatusoutput(rho_free_time_T026_command2)
+    print(rho_free_time_T027_command0)
+    subprocess.getstatusoutput(rho_free_time_T027_command0)
+    print(rho_free_time_T027_command1)
+    subprocess.getstatusoutput(rho_free_time_T027_command1)
+    print(rho_free_time_T027_command2)
+    subprocess.getstatusoutput(rho_free_time_T027_command2)
+    print(rho_free_time_T028_command0)
+    subprocess.getstatusoutput(rho_free_time_T028_command0)
+    print(rho_free_time_T028_command1)
+    subprocess.getstatusoutput(rho_free_time_T028_command1)
+    print(rho_free_time_T028_command2)
+    subprocess.getstatusoutput(rho_free_time_T028_command2)
 else:
     time.sleep(.1)
     prog_right = input("sbatch not found. run on this machine?   [Y/n]  ")
@@ -101,9 +137,21 @@ else:
     subprocess.getstatusoutput(order_overall_args)
     print(n_avg_args)
     subprocess.getstatusoutput(n_avg_args)
-    print(rho_free_time_T026_args)
-    subprocess.getstatusoutput(rho_free_time_T026_args)
-    print(rho_free_time_T027_args)
-    subprocess.getstatusoutput(rho_free_time_T027_args)
-    print(rho_free_time_T028_args)
-    subprocess.getstatusoutput(rho_free_time_T028_args)
+    print(rho_free_time_T026_args0)
+    subprocess.getstatusoutput(rho_free_time_T026_args0)
+    print(rho_free_time_T026_args1)
+    subprocess.getstatusoutput(rho_free_time_T026_args1)
+    print(rho_free_time_T026_args2)
+    subprocess.getstatusoutput(rho_free_time_T026_args2)
+    print(rho_free_time_T027_args0)
+    subprocess.getstatusoutput(rho_free_time_T027_args0)
+    print(rho_free_time_T027_args1)
+    subprocess.getstatusoutput(rho_free_time_T027_args1)
+    print(rho_free_time_T027_args2)
+    subprocess.getstatusoutput(rho_free_time_T027_args2)
+    # print(rho_free_time_T028_args0)
+    # subprocess.getstatusoutput(rho_free_time_T028_args0)
+    # print(rho_free_time_T028_args1)
+    # subprocess.getstatusoutput(rho_free_time_T028_args1)
+    # print(rho_free_time_T028_args2)
+    # subprocess.getstatusoutput(rho_free_time_T028_args2)

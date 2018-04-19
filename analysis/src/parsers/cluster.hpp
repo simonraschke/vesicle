@@ -118,7 +118,7 @@ void ClusterBase<P>::setupRegionQueries(FUNCTOR&& condition)
                 particle1.regionQuery.add(std::ref(particle2));
             }
         });
-        if(particle1.regionQuery.size() > 12)
+        if(particle1.regionQuery.size() > 12*getParameters().analysis_cluster_distance_threshold)
             throw std::logic_error("particle region query too large: "+std::to_string(particle1.regionQuery.size()));
     });
 }

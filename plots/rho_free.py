@@ -24,6 +24,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import plot_helper_functions as plthelp
+import paper_style as style
 
 pp = pprint.PrettyPrinter(indent=4, compact=False)
 
@@ -35,9 +36,8 @@ parser.add_argument("--con", type=str, nargs='*', default=[], help="constrain to
 parser.add_argument("--out", type=str, default="rho_free", help="output file name")
 args = parser.parse_args()
 
+style.setStyle()
 fig = plt.figure()
-plt.style.use('seaborn-paper')
-# plt.rc('text', usetex=True)
 
 
 constraints = {}
@@ -69,7 +69,8 @@ for t in plthelp.getMatchedValues(args.file, "temperature", constraints):
     plt.plot(rho,rho_free, label=label)
 
 plt.plot([-1,1],[-1,1], color="black",zorder=1)
-plt.legend(loc='best')
+plt.legend(loc='best', frameon=False)
+plt.gca().tick_params(axis='both', which='both', direction='in')
 plt.xlim(0.0, float(max(plthelp.getMatchedValues(args.file,"density",constraints))))
 plt.ylim(0.0, max_rho_free+0.001)
 plt.xlabel(r'$\rho$')

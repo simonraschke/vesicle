@@ -12,6 +12,8 @@ Particle::cartesian AnisotropicCoordsTranslatorGro::operator()(std::string line1
         ;
     else if (tokens1.at("atomname") == "A" && tokens2.at("atomname") == "B")
         std::swap(tokens1,tokens2);
+    else if (tokens1.at("atomname") == tokens2.at("atomname") )
+        ;
     else
         throw std::logic_error(__PRETTY_FUNCTION__ + enhance::toStringViaStream(" atomnames are ", tokens1.at("atomname")," and ", tokens2.at("atomname")));
 
@@ -37,6 +39,8 @@ Particle::cartesian AnisotropicOrientationTranslatorGro::operator()(std::string 
         ;
     else if (tokens1.at("atomname") == "A" && tokens2.at("atomname") == "B")
         std::swap(tokens1,tokens2);
+    else if (tokens1.at("atomname") == tokens2.at("atomname") )
+        ;
     else
         throw std::logic_error(__PRETTY_FUNCTION__ + enhance::toStringViaStream(" atomnames are ", tokens1.at("atomname")," and ", tokens2.at("atomname")));
 

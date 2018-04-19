@@ -39,7 +39,8 @@ void Parameters::read(int argc, const char* argv[])
     po::options_description systemOptions("System Options");
     systemOptions.add_options()
         ("system.mobile,m", po::value<std::size_t>(), "number of mobile particles")
-        ("system.guiding_elements", po::value<std::size_t>(), "number of guiding elements")
+        ("system.guiding_elements_each", po::value<std::size_t>(), "number of guiding elements per frame guide")
+        ("system.frame_guides_grid_edge", po::value<std::size_t>(), "number of frame guides per dimension")
         ("system.osmotic", po::value<std::size_t>(), "number of osmotic particles")
         ("system.density,c", po::value<float>(), "particle density")
         ("system.box.x", po::value<float>(), "box edge x")
@@ -196,8 +197,10 @@ void Parameters::setup()
         && optionsMap.count("system.box.y") 
         && optionsMap.count("system.box.z")) ++counter;
 
-        guiding_elements = optionsMap.count("system.guiding_elements") ? optionsMap["system.guiding_elements"].as<std::size_t>() : 0;
+        guiding_elements_each = optionsMap.count("system.guiding_elements_each") ? optionsMap["system.guiding_elements_each"].as<std::size_t>() : 0;
+        frame_guides_grid_edge = optionsMap.count("system.frame_guides_grid_edge") ? optionsMap["system.frame_guides_grid_edge"].as<std::size_t>() : 0;
         osmotic = optionsMap.count("system.osmotic") ? optionsMap["system.osmotic"].as<std::size_t>() : 0;
+
 
         if(counter != 2)
         {
@@ -207,16 +210,19 @@ void Parameters::setup()
         {
             vesLOG("system.mobile and system.density were set. Assuming cubic box")
             mobile = optionsMap["system.mobile"].as<std::size_t>();
-            x = std::cbrt(static_cast<float>(mobile)/optionsMap["system.density"].as<float>());
-            y = std::cbrt(static_cast<float>(mobile)/optionsMap["system.density"].as<float>());
-            z = std::cbrt(static_cast<float>(mobile)/optionsMap["system.density"].as<float>());
+            num_all_particles = mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
+            x = std::cbrt(static_cast<float>(num_all_particles)/optionsMap["system.density"].as<float>());
+            y = std::cbrt(static_cast<float>(num_all_particles)/optionsMap["system.density"].as<float>());
+            z = std::cbrt(static_cast<float>(num_all_particles)/optionsMap["system.density"].as<float>());
         }
         else if(optionsMap.count("system.box.x") && optionsMap.count("system.density"))
         {
             x = optionsMap["system.box.x"].as<float>();
             y = optionsMap["system.box.y"].as<float>();
             z = optionsMap["system.box.z"].as<float>();
-            mobile = std::round( optionsMap["system.density"].as<float>() * x * y * z);
+            std::size_t num_all_particles_minus_mobile = osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
+            mobile = std::round( optionsMap["system.density"].as<float>() * x * y * z) - num_all_particles_minus_mobile;
+            num_all_particles = mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
         }
         else if(optionsMap.count("system.box.x") && optionsMap.count("system.box.y") && optionsMap.count("system.box.z")  && optionsMap.count("system.mobile"))
         {
@@ -224,10 +230,14 @@ void Parameters::setup()
             y = optionsMap["system.box.y"].as<float>();
             z = optionsMap["system.box.z"].as<float>();
             mobile = optionsMap["system.mobile"].as<std::size_t>();
-            density = mobile/(x*y*z);
+            num_all_particles = mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
+            density = num_all_particles/(x*y*z);
         }
         else 
+        {
             vesCRITICAL("UNKNOWN ERROR: maybe box not fully defined")
+        }
+
 
 
         if(optionsMap.count("system.temperature"))
@@ -335,8 +345,10 @@ void Parameters::setup()
         vesLOG("general.interaction                 " << interaction )
         vesLOG("general.thermostat                  " << thermostat )
         vesLOG("system.mobile                       " << mobile )
-        vesLOG("system.guiding_elements             " << guiding_elements )
+        vesLOG("system.guiding_elements_each        " << guiding_elements_each )
+        vesLOG("system.frame_guides_grid_edge       " << frame_guides_grid_edge )
         vesLOG("system.osmotic                      " << osmotic )
+        vesLOG("system.num_all_particles            " << num_all_particles )
         vesLOG("system.density                      " << density )
         vesLOG("system.box.x                        " << x )
         vesLOG("system.box.y                        " << y )
@@ -382,6 +394,9 @@ std::map<std::string,std::string> ParameterDependentComponent::systemAttributes(
 {
     std::map<std::string,std::string> attributes;
     attributes["system.mobile"] = boost::lexical_cast<std::string>(getParameters().mobile);
+    attributes["system.guiding_elements_each"] = boost::lexical_cast<std::string>(getParameters().guiding_elements_each);
+    attributes["system.frame_guides_grid_edge"] = boost::lexical_cast<std::string>(getParameters().frame_guides_grid_edge);
+    attributes["system.osmotic"] = boost::lexical_cast<std::string>(getParameters().osmotic);
     attributes["system.density"] = boost::lexical_cast<std::string>(getParameters().density);
     attributes["system.box.x"] = boost::lexical_cast<std::string>(getParameters().x);
     attributes["system.box.y"] = boost::lexical_cast<std::string>(getParameters().y);

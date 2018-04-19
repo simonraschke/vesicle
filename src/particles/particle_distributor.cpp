@@ -297,9 +297,66 @@ void TrajectoryDistributorGro::setupIsotropicParticle(const tokens_type& tokens,
 
 
 
-// void SequentialTrajectoryDistributorGro::setSnapshot(const TrajectoryReaderGro::Frame& snap)
-// {
-//     snapshot.reset(std::make_unique(snap));
-//     assert(snapshot);
-// }
+void FrameGuidedGridDistributor::operator()(PARTICLERANGE* range)
+{
+    const float radius = std::sqrt(1.1027)*getParameters().LJsigma/(std::sin(getParameters().gamma)*2);
+    const float dist_x = getLengthX()/getParameters().frame_guides_grid_edge;
+    const float dist_y = getLengthY()/getParameters().frame_guides_grid_edge;
+    const float dist_z = getLengthZ()/getParameters().frame_guides_grid_edge;
 
+    vesLOG("distributing " << std::pow(getParameters().frame_guides_grid_edge,3) << " frame guides (" << getParameters().guiding_elements_each << " guiding elements each) on sphere grid and " << getParameters().mobile << " mobile particles randomly")
+    vesLOG("radius of spheres is " << radius)
+    SphereGridGeometry spheregrid(getParameters().frame_guides_grid_edge, radius, getParameters().guiding_elements_each);
+    spheregrid.scale(cartesian(dist_x, dist_y, dist_z));
+    spheregrid.shift(cartesian(dist_x/2, dist_y/2, dist_z/2));
+
+    auto it = range->begin();
+    for(const auto& sphere : spheregrid.spheres)
+    {
+        for(const auto& point : sphere.points)
+        {
+            Particle& particle = *(it->get());
+            assert(particle);
+            if(particle.getType() != FRAME)
+            {
+                throw std::logic_error("Didn't get PARTICLETYPE::FRAME, where it should have been");
+            }
+            else
+            {
+                particle.setCoords(point); 
+                particle.setOrientation(point-sphere.origin);
+            }
+
+            // next particle
+            std::advance(it,1);
+        }
+    }
+
+    RandomDistributor random_dist;
+    random_dist.setParameters(getParameters());
+
+    tbb::parallel_for_each(it, range->end(), [&](auto& p) 
+    {
+        assert(p);
+        p->setCoords(random_dist.randomCoords());
+        p->setOrientation(random_dist.randomOrientation());
+    });
+
+    for(auto mobile_it = it; mobile_it != range->end(); ++mobile_it)
+    {
+
+        std::unique_ptr<Particle>& particle = *mobile_it;
+        assert(particle);
+        std::size_t try_counter = 0;
+        while(conflicting_placement(range,particle))
+        {
+            assert(particle);
+            particle->setCoords(random_dist.randomCoords());
+            if( ++try_counter > 1e6 )
+            {
+                vesWARNING("placing particle exceeded 1M tries")
+                throw std::runtime_error("particle placement not possible");
+            }
+        }
+    }
+}

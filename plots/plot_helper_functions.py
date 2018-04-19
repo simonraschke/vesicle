@@ -35,6 +35,18 @@ import contextlib
 pp = pprint.PrettyPrinter(indent=4, compact=True)
 
 
+def makesize(width,ratio=None, scale=1):
+    fig_width_pt = width  # Get this from LaTeX using \the\XXXXwidth
+    inches_per_pt = 1.0/72.27                                       # Convert pt to inch
+    golden_mean = (np.sqrt(5.0)-1.0)/2.0
+    if ratio == None:
+        ratio = golden_mean
+    #golden_mean = 0.54  if twocolumn == True else 0.9
+    fig_width = fig_width_pt*inches_per_pt*scale                    # width in inches
+    fig_height = fig_width*ratio                              # height in inches
+    return [fig_width,fig_height]
+
+
 
 class DummyFile(object):
     def write(self, x): pass
@@ -329,6 +341,13 @@ def getClustersSmallerThan(datafile, datasetname, size):
     dataset = datafile.get(datasetname).value.transpose()
     unique, counts = np.unique(dataset[0], return_counts=True)
     return sum([c for u,c in zip(unique,counts) if u < size])
+    
+
+
+def getLargestClusterGreaterEqual(datafile, datasetname, min_size=1):
+    dataset = datafile.get(datasetname).value.transpose()
+    unique, counts = np.unique(dataset[0], return_counts=True)
+    return max(unique) if max(unique) >= min_size else 0
 
 
 
@@ -359,14 +378,30 @@ def getVolumeOfClustersSmallerThan(datafile, datasetname, size):
 
 
 def getOrderOfClustersGreaterThan(datafile, datasetname, size):
-    dataset = datafile.get(datasetname).value.transpose()
-    return sum([ dataset[1,i]*dataset[0,i] for i in range(len(dataset[0])) if dataset[0,i] > size ]) / getNumParticlesInClustersGreaterThan(datafile,datasetname,size)
+    dataset = datafile.get(datasetname)
+    if dataset == None:
+        return np.NaN
+    else:
+        dataset = datafile.get(datasetname).value.transpose()
+    num_particles = getNumParticlesInClustersGreaterThan(datafile,datasetname,size)
+    if np.absolute(num_particles) < 1e-6:
+        return np.NaN
+    else:
+        return sum([ dataset[1,i]*dataset[0,i] for i in range(len(dataset[0])) if dataset[0,i] > size ]) / getNumParticlesInClustersGreaterThan(datafile,datasetname,size)
 
 
 
 def getOrderOfClustersSmallerThan(datafile, datasetname, size):
-    dataset = datafile.get(datasetname).value.transpose()
-    return sum([ dataset[1,i]*dataset[0,i] for i in range(len(dataset[0])) if dataset[0,i] < size ]) / getNumParticlesInClustersGreaterThan(datafile,datasetname,size)
+    dataset = datafile.get(datasetname)
+    if dataset == None:
+        return np.NaN
+    else:
+        dataset = datafile.get(datasetname).value.transpose()
+    num_particles = getNumParticlesInClustersGreaterThan(datafile,datasetname,size)
+    if np.absolute(num_particles) < 1e-6:
+        return np.NaN
+    else:
+        return sum([ dataset[1,i]*dataset[0,i] for i in range(len(dataset[0])) if dataset[0,i] < size ]) / getNumParticlesInClustersGreaterThan(datafile,datasetname,size)
 
 
 
@@ -405,6 +440,7 @@ def getTimeAverageNum_FUNCTOR(datafilepath, size, time_range, functor, time_incr
     try:
         file = h5py.File(datafilepath, 'r')
     except:
+        print("cannot open file", datafilepath)
         return []
     values = []
     # predict dataset names
@@ -414,11 +450,16 @@ def getTimeAverageNum_FUNCTOR(datafilepath, size, time_range, functor, time_incr
         datasetnames = [clustergroup+"/time"+str(int(time_range[0]))]
     for datasetname in datasetnames:
         result = functor(file, datasetname, size)
-        values.append(result)
+        if result != None:
+            values.append(result)
     # return average if possible, else return zero
+    cleaned_data = np.ma.masked_array(values,mask=np.isnan(values))
     if len(values) > 0:
-        return np.average(values)
+        print("time_averaged",np.ma.average(cleaned_data))
+        print(cleaned_data.compressed())
+        return np.ma.average(cleaned_data)
     else:
+        print("time_averaged", 0)
         return 0
 
 
@@ -499,8 +540,8 @@ def getFreeParticleDensity(overviewfilepath, constraints, time_range):
 
 
 
-def __detail_getFreeParticleDensityFullEvolultion_single_simulation_datafile(datafilepath, size):
-    print(__detail_getFreeParticleDensityFullEvolultion_single_simulation_datafile.__name__, "in", datafilepath )
+def __detail_getFreeParticleDensityFullEvolution_single_simulation_datafile(datafilepath, size):
+    print(__detail_getFreeParticleDensityFullEvolution_single_simulation_datafile.__name__, "in", datafilepath )
     rho_free = []
     FILE = None
     group = None
@@ -524,16 +565,19 @@ def __detail_getFreeParticleDensityFullEvolultion_single_simulation_datafile(dat
     timepoints = []
     inaccessible_volumes = []
     free_particles = []
-    datasets = [ d.name for d in group.values() ]
+    datasets = sorted([ d.name for d in group.values() ])
+    # only read every n'th dataset
+    # datasets = datasets[:100:1]+datasets[100::10]
     for datasetname in datasets:
         timepoints.append(float(numbersListFromString(datasetname)[0]))
         dataset = group.get(datasetname).value.transpose()
         inaccessible_volumes.append(sum([ dataset[2,i] for i in range(len(dataset[0])) if dataset[0,i] > size ]))
         unique, counts = np.unique(dataset[0], return_counts=True)
         free_particles.append(sum([c*u for u,c in zip(unique,counts) if u < size]))
+        # if len(free_particles) == len(timepoints) + 1:
     rho_free = [ float(fp)/(volume - vi) for fp,vi in zip(free_particles, inaccessible_volumes) ]
     assert(len(timepoints) == len(rho_free))
-    print("got",len(timepoints),"timepoints and",len(rho_free),"rho_frees")
+    # print("got",len(timepoints),"timepoints and",len(rho_free),"rho_frees")
     return timepoints, rho_free
 
 
@@ -548,14 +592,17 @@ def getFreeParticleDensityTimeEvolution(overviewfilepath, constraints, time_rang
     rho_free_values = []
     results = []
     for path in paths:
-        results.append(pool.apply_async(__detail_getFreeParticleDensityFullEvolultion_single_simulation_datafile,(path, 5,)))
+        results.append(pool.apply_async(__detail_getFreeParticleDensityFullEvolution_single_simulation_datafile,(path, 5,)))
     for r in results:
         timepoints_single, rho_free_single = r.get()
+        assert(len(timepoints_single) == len(rho_free_single))
         rho_free_average_single = []
         for i,tp in enumerate(timepoints):
             accumulator = [ rho_free_single[j] for j,tps in enumerate(timepoints_single) if timepoints[i-1] < tps <= timepoints[i] ]
             if(len(accumulator) > 0):
                 rho_free_average_single.append(np.average(accumulator))
+            # except AssertionError:
+            #     print("ASSERTION ERROR: between timepoints", timepoints[i-1], "and", timepoints[i] , "accumulator", accumulator)
         if len(rho_free_average_single) > 0:
             rho_free_values.append(rho_free_average_single)
     if len(rho_free_values) > 0:
@@ -568,25 +615,27 @@ def getFreeParticleDensityTimeEvolution(overviewfilepath, constraints, time_rang
 
 
 # get the order averaged over @time_range from @datafilepath
-def __detail_getOrder_single_simulation_datafile(datafilepath, time_range):
+def __detail_getOrder_single_simulation_datafile(datafilepath, time_range, min_size):
     order_values = []
-    try:
-        order_values = getTimeAverageNum_FUNCTOR(datafilepath, 5, time_range, getOrderOfClustersGreaterThan)
-    except:
-        return np.NaN
-    return np.average(order_values)
+    # try:
+    order_values = getTimeAverageNum_FUNCTOR(datafilepath, min_size-1, time_range, getOrderOfClustersGreaterThan)
+    #     print("order_values",order_values)
+    # except:
+    #     print("order_values EXCEPTION",order_values)
+    #     return np.NaN
+    return np.average([order_values])
 
 
 
 # get order from all files with given @constraints in @time_range
-def getOrder(overviewfilepath, constraints, time_range, part="full"):
+def getOrder(overviewfilepath, constraints, time_range, min_size, part="full"):
     print(getOrder.__name__, "  with constraints", constraints)
     dirs = getMatchedDirs(overviewfilepath,constraints)
     paths = [os.path.join(dir,"data.h5") for dir in dirs]
     # get theses values in parallel
     results = []
     for path in paths:
-        results.append(pool.apply_async(__detail_getOrder_single_simulation_datafile,(path, time_range,)))
+        results.append(pool.apply_async(__detail_getOrder_single_simulation_datafile,(path, time_range, min_size,)))
     order_values = removeBadEntries1D([r.get() for r in results if r.get() != None])
     if len(order_values) > 0:
         print(getOrder.__name__, "  result", "{:.5f}".format(np.average(order_values)))
@@ -631,6 +680,37 @@ def getAverageClustersize(overviewfilepath, constraints, time_range, min_size, p
 
 
 # get the order averaged over @time_range from @datafilepath
+def __detail_getLargestCluster_single_simulation_datafile(datafilepath, time_range, min_size):
+    average_values = []
+    try:
+        average_values = getTimeAverageNum_FUNCTOR(datafilepath, min_size, time_range, getLargestClusterGreaterEqual)
+    except:
+        return np.NaN
+    return np.average(average_values)
+
+
+# get order from all files with given @constraints in @time_range
+def getLargestCluster(overviewfilepath, constraints, time_range, min_size, part="full"):
+    print(getLargestCluster.__name__, "  with constraints", constraints)
+    dirs = getMatchedDirs(overviewfilepath,constraints)
+    paths = [os.path.join(dir,"data.h5") for dir in dirs]
+    # get theses values in parallel
+    results = []
+    for path in paths:
+        results.append(pool.apply_async(__detail_getLargestCluster_single_simulation_datafile,(path, time_range, min_size)))
+    average_values = removeBadEntries1D([r.get() for r in results if r.get() != None])
+    if len(average_values) > 0:
+        print(getLargestCluster.__name__, "  result", "{:.5f}".format(np.average(average_values)))
+        print()
+        return np.average(average_values)
+    else:
+        print(getLargestCluster.__name__, "  result", "None")
+        print()
+        return None
+
+
+
+# get the order averaged over @time_range from @datafilepath
 def __detail_getGamma_single_simulation_datafile(datafilepath, time_range, min_size):
     average_values = []
     try:
@@ -666,4 +746,36 @@ def getGamma(overviewfilepath, constraints, time_range, min_size, part="full"):
 
 
 #MUST be at the EOF
-pool = multiprocessing.Pool(10)
+# pool = multiprocessing.Pool(1)
+
+import traceback
+from multiprocessing.pool import Pool
+# Shortcut to multiprocessing's logger
+def error(msg, *args):
+    return multiprocessing.get_logger().error(msg, *args)
+
+class LogExceptions(object):
+    def __init__(self, callable):
+        self.__callable = callable
+
+    def __call__(self, *args, **kwargs):
+        try:
+            result = self.__callable(*args, **kwargs)
+
+        except Exception as e:
+            # Here we add some debugging help. If multiprocessing's
+            # debugging is on, it will arrange to log the traceback
+            error(traceback.format_exc())
+            # Re-raise the original exception so the Pool worker can
+            # clean up
+            raise
+
+        # It was fine, give a normal answer
+        return result
+
+class LoggingPool(Pool):
+    def apply_async(self, func, args=(), kwds={}, callback=None):
+        return Pool.apply_async(self, LogExceptions(func), args, kwds, callback)
+
+multiprocessing.log_to_stderr()
+pool = LoggingPool(processes=10)

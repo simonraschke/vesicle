@@ -21,10 +21,9 @@
 #include <tbb/task_arena.h>
 
 
-
 int main(int argc, const char *argv[])// try
 {
-    // register important signals in Controller bas class
+    // register important signals in Controller base class
     // allowing civilized shutdown
     std::signal( SIGHUP,  Controller::signal );
     std::signal( SIGINT,  Controller::signal );

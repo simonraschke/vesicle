@@ -26,17 +26,15 @@ import matplotlib.pyplot as plt
 import plot_helper_functions as plthelp
 import paper_style as style
 
-
 pp = pprint.PrettyPrinter(indent=4, compact=False)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--origin", type=str, default=os.getcwd(), help="this directory")
 parser.add_argument("--file", type=str, help="path to config_files.json file")
-parser.add_argument("--time", type=float, nargs=2, default=[1e4,1e8], help="path to config_files.json file")
-parser.add_argument("--dens", type=float, nargs=2, default=[0,1], help="density range")
+parser.add_argument("--time", type=float, nargs=2, default=[0,1e10], help="path to config_files.json file")
 parser.add_argument("--con", type=str, nargs='*', default=[], help="constrain to parameters as {...}")
-parser.add_argument("--min", type=int, default=20, help="min size of clusters to analyze")
-parser.add_argument("--out", type=str, default="gamma", help="output file name")
+parser.add_argument("--min", type=int, default=1, help="min size of clusters to analyze")
+parser.add_argument("--out", type=str, default="N_max", help="output file name")
 args = parser.parse_args()
 
 style.setStyle()
@@ -47,37 +45,37 @@ constraints = {}
 for i in range(len(args.con[::2])):
     constraints.update({args.con[i*2]:args.con[i*2+1]})
 
-max_gamma = 0
-max_rho_free = 0
-
-print("densities", plthelp.getValuesInRange(args.file, "density", args.dens))
+max_n_max = 0
 for t in plthelp.getMatchedValues(args.file, "temperature", constraints):
     newconstraints = constraints
     newconstraints.update({"temperature":str(t)})
-    
-    rho_free,gamma = plthelp.getGamma(args.file, newconstraints, args.time, args.min)
-    rho_free,gamma = plthelp.removeBadEntries2D(rho_free,gamma)
 
-    if max(gamma) > max_gamma: max_gamma = max(gamma)
-    if max(rho_free) > max_rho_free: max_rho_free = max(rho_free)
-    
-    print("rho_free   gamma")
-    for rf, g in zip(rho_free,gamma):
+    rho = [float(x) for x in plthelp.getMatchedValues(args.file,"density", newconstraints)]
+    n_max = []
+
+    for density in rho:
+        n_max.append(plthelp.getLargestCluster(args.file, {**newconstraints,**{"density":str(density)}}, args.time, args.min))
+
+    rho,n_max = plthelp.removeBadEntries2D(rho,n_max)
+    print(max(n_max))
+    if max(n_max) > max_n_max: max_n_max = max(n_max)
+
+    print("  rho    n_max")
+    for r, n in zip(rho,n_max):
         try:
-            print("  {:.3f}".format(rf), "  {:.5f}".format(g))
+            print("  {:.3f}".format(r), "  {:.5f}".format(n))
         except TypeError:
-            print("  {:.3f}".format(rf), "  None")
+            print("  {:.3f}".format(r), "  None")
     print()
     label = "T="+str(t)
-    plt.scatter(rho_free,gamma, label=label)
+    plt.plot(rho,n_max, label=label)
 
 plt.legend(loc='best', frameon=False)
 plt.gca().tick_params(axis='both', which='both', direction='in')
-plt.ylim(0.0, max_rho_free+0.001)
-plt.ylim(0.0, max_gamma+0.001)
-plt.xlabel(r'$\rho_\mathrm{free}^{}$')
-plt.ylabel(r'$\Gamma_{(\mathrm{c_{first}^{}})}^{}$')
-plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+plt.xlim(0.0, float(max(plthelp.getMatchedValues(args.file,"density",constraints))))
+plt.ylim(0.0, int(np.ceil(max_n_max / 10.0)) * 10)
+plt.xlabel(r'$\rho$')
+plt.ylabel(r'$\mathrm{N}_{\mathrm{max}}$')
 fig.tight_layout()
 plt.plot(rasterized=False)
 plt.savefig(args.out+'.'+'eps'.format(), bbox_inches='tight', format='eps')

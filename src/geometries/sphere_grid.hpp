@@ -16,23 +16,34 @@
 
 #pragma once
 
-#include "geometry.hpp"
+#include "sphere.hpp"
+#include "grid.hpp"
 
 
 
-struct GridGeometry
-    :public Geometry
+struct SphereGridGeometry
+    : public GridGeometry
 {    
-    GridGeometry();
-    GridGeometry(std::size_t, std::size_t, std::size_t);
+    typedef PARTICLERANGE::value_type::element_type::cartesian cartesian;
+
+    SphereGridGeometry();
+    SphereGridGeometry(std::size_t, float, std::size_t);
+    SphereGridGeometry(std::size_t, std::size_t, std::size_t, float, std::size_t);
 
     virtual void generate() override;
     virtual void scale(const cartesian&) override;
     virtual void shift(const cartesian&) override;
-    cartesian& matrixView(const std::size_t&, const std::size_t&, const std::size_t&);
-    const cartesian& matrixView(const std::size_t&, const std::size_t&, const std::size_t&) const;
+    
+    // const std::vector<SphereGeometry>& getSpheres();
 
     std::size_t x {1};
     std::size_t y {1};
     std::size_t z {1};
+    float radius {1};
+    std::size_t spherepoints {10};
+
+    std::vector<SphereGeometry> spheres {};
+
+protected:
+    void set_sphere_points_new();
 };

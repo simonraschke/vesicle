@@ -107,26 +107,38 @@ void SimulationControl::setup()
     // MUST
     {
         // add particles via factory class 
-        system.addParticles(ParticleFactory<ParticleFrame>(getParameters().guiding_elements));
+        std::size_t guiding_elements_all = std::pow(getParameters().frame_guides_grid_edge, 3) * getParameters().guiding_elements_each;
+        system.addParticles(ParticleFactory<ParticleFrame>(guiding_elements_all));
         system.addParticles(ParticleFactory<ParticleMobile>(getParameters().mobile));
         system.addParticles(ParticleFactory<ParticleOsmotic>(getParameters().osmotic));
         
-        for(const auto& p : system.getParticles())
-        {
-            vesLOG(*p);
-        }
-        vesLOG(getParameters().guiding_elements << " " <<  getParameters().mobile << " " << getParameters().osmotic);
+        // for(const auto& p : system.getParticles())
+        // {
+        //     vesLOG(*p);
+        // }
+        vesLOG(getParameters().guiding_elements_each << " " <<  getParameters().mobile << " " << getParameters().osmotic);
 
         // and chose distribution
         if(GLOBAL::getInstance().mode == GLOBAL::NEWRUN)
         {
             if(getParameters().osmotic > 0)
+            {
                 system.distributeParticles<OsmoticSystemDistributor>();
+            }
+            else if (getParameters().frame_guides_grid_edge > 0 && getParameters().guiding_elements_each > 0)
+            {
+                system.distributeParticles<FrameGuidedGridDistributor>();
+            }
             else
+            {
                 system.distributeParticles<RandomDistributor>();
+            }
         }
         else if(GLOBAL::getInstance().mode == GLOBAL::RESTART && getParameters().in_traj == std::string("gro"))
+        {
             system.distributeParticles<TrajectoryDistributorGro>();
+        }
+
         if(GLOBAL::getInstance().mode == GLOBAL::RESTART)
         {
             TrajectoryReaderGro reader;

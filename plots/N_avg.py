@@ -24,6 +24,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import plot_helper_functions as plthelp
+import paper_style as style
 
 pp = pprint.PrettyPrinter(indent=4, compact=False)
 
@@ -36,9 +37,8 @@ parser.add_argument("--min", type=int, default=1, help="min size of clusters to 
 parser.add_argument("--out", type=str, default="N_avg", help="output file name")
 args = parser.parse_args()
 
+style.setStyle()
 fig = plt.figure()
-plt.style.use('seaborn-paper')
-# plt.rc('text', usetex=True)
 
 
 constraints = {}
@@ -70,7 +70,8 @@ for t in plthelp.getMatchedValues(args.file, "temperature", constraints):
     label = "T="+str(t)
     plt.plot(rho,n_avg, label=label)
 
-plt.legend(loc='best')
+plt.legend(loc='best', frameon=False)
+plt.gca().tick_params(axis='both', which='both', direction='in')
 plt.xlim(0.0, float(max(plthelp.getMatchedValues(args.file,"density",constraints))))
 plt.ylim(0.0, int(np.ceil(max_n_avg / 10.0)) * 10)
 plt.xlabel(r'$\rho$')

@@ -105,7 +105,7 @@ void TrajectoryWriterGro::write(const float& time_elapsed, bool FORCE)
                 throw std::logic_error("Got particle of undefined type"); 
                 break;
             case FRAME : 
-                color_up = color_down = "B"; 
+                color_up = color_down = "R"; 
                 break;
             case MOBILE : 
                 color_up = "A"; 
@@ -189,7 +189,7 @@ void TrajectoryWriterGro::makeStartFileVMD() const
     // STARTER << "vmd" << '\n';
     // STARTER.close();
 
-    const std::size_t anisotropic_particles = std::count_if(std::begin(*target_range), std::end(*target_range), [](const auto& particle){ vesLOG(*particle); return particle->getType() == PARTICLETYPE::FRAME || particle->getType() == PARTICLETYPE::MOBILE;});
+    const std::size_t anisotropic_particles = std::count_if(std::begin(*target_range), std::end(*target_range), [](const auto& particle){ return particle->getType() == PARTICLETYPE::FRAME || particle->getType() == PARTICLETYPE::MOBILE;});
 
     OFSTREAM VMD;
     VMD.open(".vmdrc");
@@ -251,6 +251,8 @@ void TrajectoryWriterGro::makeStartFileVMD() const
     VMD << "  color Type C gray" << '\n';
     VMD << "  color Name O orange" << '\n';
     VMD << "  color Type O orange" << '\n';
+    VMD << "  color Name R red" << '\n';
+    VMD << "  color Type R red" << '\n';
     VMD << "  mol delete $mol" << '\n';
 
     if(anisotropic)
