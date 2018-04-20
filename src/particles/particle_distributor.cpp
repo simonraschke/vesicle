@@ -161,17 +161,29 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
 
     const float optimum_distance = enhance::nth_root<6>(getParameters().LJsigma*2);
     const float radius = optimum_distance/(2.0*std::sin(getParameters().gamma));
+    const float volume = enhance::sphere_volume(radius);
+    const std::size_t osmotic_bulk = std::round( getParameters().density * ((getParameters().x * getParameters().y * getParameters().z) - volume) );
+    const std::size_t osmotic_inside = std::round( getParameters().osmotic_density_inside * volume);
+    // vesLOG(getParameters().density << " " <<  getParameters().x << " " << getParameters().osmotic_density_inside);
+    if(osmotic_inside+osmotic_bulk != getParameters().osmotic)
+    {
+        vesCRITICAL("osmotic_inside " << osmotic_inside << "  osmotic_bulk " << osmotic_bulk)
+    }
 
     vesLOG("optimum_distance " << optimum_distance)
     vesLOG("radius " << radius)
+    vesLOG(osmotic_inside << " osmotic particles in micelle and " << osmotic_bulk << " in bulk")
     
-    SphereGeometry sphere(getCenter(), radius, num_frame+num_mobile);
-    assert(sphere.points.size() == num_frame+num_mobile);
-    vesLOG(sphere);
+    SphereGeometry sphere(getCenter(), radius, num_frame+num_mobile+2);
+    assert(sphere.points.size() == num_frame+num_mobile+2);
 
     std::size_t sphere_counter = 0;
+    std::size_t osmotic_counter = 0;
     for(std::size_t i = 0; i < range->size(); ++i)
     {
+        if( sphere_counter == 1 || sphere_counter == sphere.points.size()-2 )
+            ++sphere_counter;
+
         Particle& particle = *range->at(i);
         switch(particle.getType())
         {
@@ -189,12 +201,24 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
                 ++sphere_counter;
                 break;
             case OSMOTIC : 
-                particle.setCoords(getCenter() + Eigen::Vector3f::Random().normalized()*radius/2); 
+                if(osmotic_counter < osmotic_inside)
+                {
+                    particle.setCoords(getCenter() + Eigen::Vector3f::Random().normalized()*(radius-getParameters().kappa*2)); 
+                }
+                else
+                {
+                    Eigen::Vector3f vector;
+                    do
+                    {
+                        vector = decltype(vector)(enhance::random<float>(0,getParameters().x) , enhance::random<float>(0,getParameters().y) , enhance::random<float>(0,getParameters().z));
+                    } while((vector - getCenter()).norm() < radius+getParameters().kappa*2);
+                    particle.setCoords(vector); 
+                }
+                ++osmotic_counter;
                 break;
             default :
                 throw std::logic_error("encountered default in switch statement");
         }
-        vesLOG(particle);
     }
 }
 
@@ -299,7 +323,8 @@ void TrajectoryDistributorGro::setupIsotropicParticle(const tokens_type& tokens,
 
 void FrameGuidedGridDistributor::operator()(PARTICLERANGE* range)
 {
-    const float radius = std::sqrt(1.1027)*getParameters().LJsigma/(std::sin(getParameters().gamma)*2);
+    // const float radius = std::sqrt(1.1027)*getParameters().LJsigma/(std::sin(getParameters().gamma)*2);
+    const float radius = std::pow(getParameters().LJsigma,1.0/6.0)/(2.0*std::sin(getParameters().gamma));
     const float dist_x = getLengthX()/getParameters().frame_guides_grid_edge;
     const float dist_y = getLengthY()/getParameters().frame_guides_grid_edge;
     const float dist_z = getLengthZ()/getParameters().frame_guides_grid_edge;

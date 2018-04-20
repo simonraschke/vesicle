@@ -52,6 +52,7 @@ struct Parameters
     std::size_t frame_guides_grid_edge {};
     std::size_t osmotic {};
     std::size_t num_all_particles {};
+    float osmotic_density_inside {};
     float density {};
     float x {};
     float y {};

@@ -41,7 +41,8 @@ void Parameters::read(int argc, const char* argv[])
         ("system.mobile,m", po::value<std::size_t>(), "number of mobile particles")
         ("system.guiding_elements_each", po::value<std::size_t>(), "number of guiding elements per frame guide")
         ("system.frame_guides_grid_edge", po::value<std::size_t>(), "number of frame guides per dimension")
-        ("system.osmotic", po::value<std::size_t>(), "number of osmotic particles")
+        // ("system.osmotic", po::value<std::size_t>(), "number of osmotic particles")
+        ("system.osmotic_density_inside", po::value<float>(&osmotic_density_inside), "density of osmotic particles in bulk")
         ("system.density,c", po::value<float>(), "particle density")
         ("system.box.x", po::value<float>(), "box edge x")
         ("system.box.y", po::value<float>(), "box edge y")
@@ -200,7 +201,10 @@ void Parameters::setup()
         guiding_elements_each = optionsMap.count("system.guiding_elements_each") ? optionsMap["system.guiding_elements_each"].as<std::size_t>() : 0;
         frame_guides_grid_edge = optionsMap.count("system.frame_guides_grid_edge") ? optionsMap["system.frame_guides_grid_edge"].as<std::size_t>() : 0;
         osmotic = optionsMap.count("system.osmotic") ? optionsMap["system.osmotic"].as<std::size_t>() : 0;
-
+        if( std::abs(osmotic_density_inside) < 1e-6 )
+        {
+            osmotic = 0;
+        }
 
         if(counter != 2)
         {
@@ -210,11 +214,18 @@ void Parameters::setup()
         {
             vesLOG("system.mobile and system.density were set. Assuming cubic box")
             mobile = optionsMap["system.mobile"].as<std::size_t>();
-            num_all_particles = mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
             density = optionsMap["system.density"].as<float>();
+            // calc first time without osmotic particles
+            num_all_particles = mobile + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
             x = std::cbrt(static_cast<float>(num_all_particles)/density);
             y = std::cbrt(static_cast<float>(num_all_particles)/density);
             z = std::cbrt(static_cast<float>(num_all_particles)/density);
+            const float optimum_distance = enhance::nth_root<6>(LJsigma*2);
+            const float radius = optimum_distance/(2.0*std::sin(enhance::deg_to_rad(gamma)));
+            const float volume = enhance::sphere_volume(radius);
+            osmotic = std::round( density * ((x * y * z) - volume) ) + std::round( osmotic_density_inside * volume); 
+            // calc first time with osmotic particles
+            num_all_particles = mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
         }
         else if(optionsMap.count("system.box.x") && optionsMap.count("system.density"))
         {
@@ -224,6 +235,10 @@ void Parameters::setup()
             density = optionsMap["system.density"].as<float>();
             std::size_t num_all_particles_minus_mobile = osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
             mobile = std::round( density * x * y * z) - num_all_particles_minus_mobile;
+            const float optimum_distance = enhance::nth_root<6>(LJsigma*2);
+            const float radius = optimum_distance/(2.0*std::sin(enhance::deg_to_rad(gamma)));
+            const float volume = enhance::sphere_volume(radius);
+            osmotic = std::round( density * ((x * y * z) - volume) ) + std::round( osmotic_density_inside * volume); 
             num_all_particles = mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
         }
         else if(optionsMap.count("system.box.x") && optionsMap.count("system.box.y") && optionsMap.count("system.box.z")  && optionsMap.count("system.mobile"))
@@ -232,6 +247,10 @@ void Parameters::setup()
             y = optionsMap["system.box.y"].as<float>();
             z = optionsMap["system.box.z"].as<float>();
             mobile = optionsMap["system.mobile"].as<std::size_t>();
+            const float optimum_distance = enhance::nth_root<6>(LJsigma*2);
+            const float radius = optimum_distance/(2.0*std::sin(enhance::deg_to_rad(gamma)));
+            const float volume = enhance::sphere_volume(radius);
+            osmotic = std::round( density * ((x * y * z) - volume) ) + std::round( osmotic_density_inside * volume); 
             num_all_particles = mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
             density = num_all_particles/(x*y*z);
         }
@@ -239,7 +258,6 @@ void Parameters::setup()
         {
             vesCRITICAL("UNKNOWN ERROR: maybe box not fully defined")
         }
-
 
 
         if(optionsMap.count("system.temperature"))
@@ -350,6 +368,7 @@ void Parameters::setup()
         vesLOG("system.guiding_elements_each        " << guiding_elements_each )
         vesLOG("system.frame_guides_grid_edge       " << frame_guides_grid_edge )
         vesLOG("system.osmotic                      " << osmotic )
+        vesLOG("system.osmotic_density_inside       " << osmotic_density_inside )
         vesLOG("system.num_all_particles            " << num_all_particles )
         vesLOG("system.density                      " << density )
         vesLOG("system.box.x                        " << x )

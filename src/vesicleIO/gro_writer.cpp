@@ -105,7 +105,8 @@ void TrajectoryWriterGro::write(const float& time_elapsed, bool FORCE)
                 throw std::logic_error("Got particle of undefined type"); 
                 break;
             case FRAME : 
-                color_up = color_down = "R"; 
+                color_up = "C";
+                color_down = "C"; 
                 break;
             case MOBILE : 
                 color_up = "A"; 
@@ -144,7 +145,7 @@ void TrajectoryWriterGro::write(const float& time_elapsed, bool FORCE)
             
             FILE << std::setw(5) <<  residue+1;
             FILE << std::setw(5) <<  target->name();
-            FILE << std::setw(5) <<  color_down;
+            FILE << std::setw(5) <<  color_up;
             FILE << std::setw(5) <<  atom+1;
             FILE << std::setprecision(3);
             FILE << std::setw(8) <<  coords(0) + orientation(0)*getParameters().kappa/2.f;
@@ -159,7 +160,7 @@ void TrajectoryWriterGro::write(const float& time_elapsed, bool FORCE)
 
             FILE << std::setw(5) <<  residue+1;
             FILE << std::setw(5) <<  target->name();
-            FILE << std::setw(5) <<  color_up;
+            FILE << std::setw(5) <<  color_down;
             FILE << std::setw(5) <<  atom+1;
             FILE << std::setprecision(3);
             FILE << std::setw(8) <<  coords(0) - orientation(0)*getParameters().kappa/2.f;
@@ -243,16 +244,14 @@ void TrajectoryWriterGro::makeStartFileVMD() const
     VMD << "  $sel set name C" << '\n';
     VMD << "  $sel set type C" << '\n';
     VMD << "  # now we can define colors" << '\n';
-    VMD << "  color Name A black" << '\n';
-    VMD << "  color Type A black" << '\n';
-    VMD << "  color Name B 23" << '\n';
-    VMD << "  color Type B 23" << '\n';
-    VMD << "  color Name C gray" << '\n';
-    VMD << "  color Type C gray" << '\n';
+    VMD << "  color Name A 23" << '\n';
+    VMD << "  color Type A 23" << '\n';
+    VMD << "  color Name B black" << '\n';
+    VMD << "  color Type B black" << '\n';
+    VMD << "  color Name C red" << '\n';
+    VMD << "  color Type C red" << '\n';
     VMD << "  color Name O orange" << '\n';
     VMD << "  color Type O orange" << '\n';
-    VMD << "  color Name R red" << '\n';
-    VMD << "  color Type R red" << '\n';
     VMD << "  mol delete $mol" << '\n';
 
     if(anisotropic)
@@ -262,7 +261,7 @@ void TrajectoryWriterGro::makeStartFileVMD() const
         // VMD << "  set mol [mol new atoms 1]" << '\n';
         // VMD << "  set sel [atomselect $mol all]" << '\n';
         VMD << "  for {set x 0} {$x < " << anisotropic_particles*2 <<"} {incr x} {" << '\n';
-        VMD << "    set y [expr $x+1]" << '\n'; 
+        VMD << "    set y [expr $x+1]" << '\n';
         VMD << "    set sel [atomselect top \"index $x $y\"]" << '\n';
         VMD << "    incr x 1" << '\n';
         VMD << "    set bonds [$sel getbonds]" << '\n';
