@@ -259,6 +259,11 @@ void Parameters::setup()
             vesCRITICAL("UNKNOWN ERROR: maybe box not fully defined")
         }
 
+        // again set osmotic to 0 if no density inside micelle is 0
+        if( std::abs(osmotic_density_inside) < 1e-6 )
+        {
+            osmotic = 0;
+        }
 
         if(optionsMap.count("system.temperature"))
             temperature = optionsMap["system.temperature"].as<float>();
