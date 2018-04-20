@@ -151,7 +151,7 @@ def fileReplaceLineWithKeyword(filepath, keyword, replacement):
     replacement_counter = 0
     assert(filepath)
     for line in fileinput.input(filepath, inplace=1):
-        if keyword in line:
+        if keyword in line and line[:len(keyword)] == keyword:
             line = replacement
             replacement_counter += 1
             print(line, end='\n')
