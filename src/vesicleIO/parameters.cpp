@@ -220,8 +220,10 @@ void Parameters::setup()
             x = std::cbrt(static_cast<float>(num_all_particles)/density);
             y = std::cbrt(static_cast<float>(num_all_particles)/density);
             z = std::cbrt(static_cast<float>(num_all_particles)/density);
+            // FIXME: this is bullcrap
             const float optimum_distance = enhance::nth_root<6>(LJsigma*2);
-            const float radius = optimum_distance/(2.0*std::sin(enhance::deg_to_rad(gamma)));
+            // const float radius = optimum_distance/(2.0*std::sin(enhance::deg_to_rad(gamma)));
+            const float radius = optimum_distance*std::sqrt(1.1027*num_all_particles)/4;
             const float volume = enhance::sphere_volume(radius);
             osmotic = std::round( density * ((x * y * z) - volume) ) + std::round( osmotic_density_inside * volume); 
             // calc first time with osmotic particles
