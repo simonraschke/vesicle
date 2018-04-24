@@ -174,7 +174,9 @@ void DataCollector::try_cluster()
 {
     // perform cluster algorithm
     {
-        clusters.setTarget(translator.particles.begin(),translator.particles.end());
+        auto first_osmotic= std::find_if(translator.particles.begin(), translator.particles.end(),
+            [](const auto& particle){ return particle->getType() == PARTICLETYPE::OSMOTIC; });
+        clusters.setTarget(translator.particles.begin(),first_osmotic);
         clusters.scan();
     }
 
@@ -303,9 +305,12 @@ void DataCollector::write_sa_histogram()
         return ! (cluster.template containsParticleType<PARTICLETYPE::FRAME>());
     });
 
+
+    if(!largestSACluster || numSelfAssembledClusters == 0)
+        return;
+    
     const auto maxClusterSelfAssembled = largestSACluster->size();
-
-
+    
     boost::multi_array<hist_t,2> cluster_histogram(boost::extents[numSelfAssembledClusters][maxClusterSelfAssembled+4]);
 
     if(numSelfAssembledClusters == 0)

@@ -185,6 +185,6 @@ float Cluster::getOrder() const
     const auto center = getCenter();
     return std::accumulate(begin(), end(), float(0), [&center](float order, const ParticleSimple& p)
     { 
-        return order + (p.position-center).normalized().dot(p.orientation.normalized());
+        return order + (center-p.position).normalized().dot(p.orientation.normalized());
     }) / size();
 }

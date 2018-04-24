@@ -60,6 +60,11 @@ void AnisotropicSnapshotTranslatorGro::operator()(TrajectoryReader::Frame snapsh
             ParticleFactory<ParticleFrame> factory(1);
             particles.emplace_back(factory.createParticle());
         }
+        else if ( boost::algorithm::contains(tokens1.at("resname"), "OSMOT") && boost::algorithm::contains(tokens2.at("resname"), "OSMOT") )
+        {
+            ParticleFactory<ParticleOsmotic> factory(1);
+            particles.emplace_back(factory.createParticle());
+        }
         else
             throw std::logic_error(__PRETTY_FUNCTION__ + enhance::toStringViaStream(" resname are ", tokens1.at("resname")," and ", tokens2.at("resname")));
         

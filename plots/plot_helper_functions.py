@@ -586,9 +586,9 @@ def getFreeParticleDensityTimeEvolution(overviewfilepath, constraints, time_rang
     print(getFreeParticleDensityTimeEvolution.__name__,"of time_range", time_range, "  with constraints", constraints)
     dirs = getMatchedDirs(overviewfilepath,constraints)
     paths = [os.path.join(dir,"data.h5") for dir in dirs]
-    timepoints = np.logspace(4, 8, num=20, endpoint=True, base=10.0, dtype=float)
+    timepoints = np.logspace(np.log10(min(time_range)), np.log10(max(time_range)), num=20, endpoint=True, base=10.0, dtype=float)
     timepoints = np.insert(timepoints, 0, 0)
-    timepoints = np.around(timepoints, decimals=-4).tolist()
+    timepoints = sorted(list(set(np.around(timepoints, decimals=-4).tolist())))
     rho_free_values = []
     results = []
     for path in paths:
@@ -707,6 +707,66 @@ def getLargestCluster(overviewfilepath, constraints, time_range, min_size, part=
         print(getLargestCluster.__name__, "  result", "None")
         print()
         return None
+
+
+
+def __detail_getlargestClusterFullEvolution_single_simulation_datafile(datafilepath):
+    print(__detail_getlargestClusterFullEvolution_single_simulation_datafile.__name__, "in", datafilepath )
+    N_max = []
+    FILE = None
+    group = None
+    try:
+        FILE = h5py.File(datafilepath, 'r')
+    except:
+        print("cannot open file", datafilepath)
+        return [],[]
+    try:
+        group = FILE.get("cluster_self_assembled")
+    except:
+        print("cannot find group /cluster_self_assembled in", datafilepath)
+        return [],[]
+
+    timepoints = []
+    datasets = sorted([ d.name for d in group.values() ])
+    for datasetname in datasets:
+        timepoints.append(float(numbersListFromString(datasetname)[0]))
+        dataset = group.get(datasetname).value.transpose()
+        unique, counts = np.unique(dataset[0], return_counts=True)
+        N_max.append(max(unique))
+    assert(len(timepoints) == len(N_max))
+    return timepoints, N_max
+
+
+
+def getLargestClusterTimeEvolution(overviewfilepath, constraints, time_range):
+    print(getLargestClusterTimeEvolution.__name__,"of time_range", time_range, "  with constraints", constraints)
+    dirs = getMatchedDirs(overviewfilepath,constraints)
+    paths = [os.path.join(dir,"data.h5") for dir in dirs]
+    timepoints = np.logspace(np.log10(min(time_range)), np.log10(max(time_range)), num=20, endpoint=True, base=10.0, dtype=float)
+    timepoints = np.insert(timepoints, 0, 0)
+    timepoints = sorted(list(set(np.around(timepoints, decimals=-4).tolist())))
+    print(timepoints)
+    N_max_values = []
+    results = []
+    for path in paths:
+        results.append(pool.apply_async(__detail_getlargestClusterFullEvolution_single_simulation_datafile,(path,)))
+    for r in results:
+        timepoints_single, N_max_single = r.get()
+        assert(len(timepoints_single) == len(N_max_single))
+        N_max_average_single = []
+        for i,tp in enumerate(timepoints):
+            accumulator = [ N_max_single[j] for j,tps in enumerate(timepoints_single) if timepoints[i-1] < tps <= timepoints[i] ]
+            if(len(accumulator) > 0):
+                N_max_average_single.append(np.average(accumulator))
+        if len(N_max_average_single) > 0:
+            N_max_values.append(N_max_average_single)
+    if len(N_max_values) > 0:
+        N_max_values = averageNestedLists(N_max_values)
+    timepoints.pop(0)
+    for i,j in zip(timepoints, N_max_values): print(i,j)
+    assert(len(timepoints) == len(N_max_values))
+    print("got",len(timepoints),"timepoints and",len(N_max_values),"N_max_values")
+    return timepoints, N_max_values
 
 
 
