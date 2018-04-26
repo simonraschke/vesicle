@@ -201,17 +201,20 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
                 ++sphere_counter;
                 break;
             case OSMOTIC : 
-                if(osmotic_counter < osmotic_inside)
+                if(Eigen::Vector3f vector; osmotic_counter < osmotic_inside)
                 {
-                    particle.setCoords(getCenter() + Eigen::Vector3f::Random().normalized()*(radius-getParameters().kappa*2)); 
-                }
-                else
-                {
-                    Eigen::Vector3f vector;
                     do
                     {
                         vector = decltype(vector)(enhance::random<float>(0,getParameters().x) , enhance::random<float>(0,getParameters().y) , enhance::random<float>(0,getParameters().z));
-                    } while((vector - getCenter()).norm() < radius+getParameters().kappa*2);
+                    } while((vector - getCenter()).norm() > radius-getParameters().kappa);
+                    particle.setCoords(vector);
+                }
+                else
+                {
+                    do
+                    {
+                        vector = decltype(vector)(enhance::random<float>(0,getParameters().x) , enhance::random<float>(0,getParameters().y) , enhance::random<float>(0,getParameters().z));
+                    } while((vector - getCenter()).norm() < radius+getParameters().kappa);
                     particle.setCoords(vector); 
                 }
                 ++osmotic_counter;

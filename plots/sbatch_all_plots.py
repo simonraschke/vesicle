@@ -64,6 +64,7 @@ n_avg_args = os.path.join(dir_of_this_script,"N_avg.py") + " --file " + args.fil
 n_avg_command = "sbatch -J \"PLOT N_avg\" submit_plot.sh " + n_avg_args
 
 
+
 rho_free_time_T026_args0 = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.26 --dens 0.01 0.03 --out rho_free_time_T026_0"
 rho_free_time_T026_command0 = "sbatch -J \"PLOT rho_free_time_T026\" submit_plot.sh " + rho_free_time_T026_args0
 
@@ -85,6 +86,7 @@ rho_free_time_T027_args2 = os.path.join(dir_of_this_script,"rho_free_time.py") +
 rho_free_time_T027_command2 = "sbatch -J \"PLOT rho_free_time_T027\" submit_plot.sh " + rho_free_time_T027_args2
 
 
+
 rho_free_time_T028_args0 = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.001 0.015 --out rho_free_time_T028_0"
 rho_free_time_T028_command0 = "sbatch -J \"PLOT rho_free_time_T028\" submit_plot.sh " + rho_free_time_T028_args0
 
@@ -95,6 +97,41 @@ rho_free_time_T028_command1 = "sbatch -J \"PLOT rho_free_time_T028\" submit_plot
 
 rho_free_time_T028_args2 = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.06 0.1 --out rho_free_time_T028_2"
 rho_free_time_T028_command2 = "sbatch -J \"PLOT rho_free_time_T028\" submit_plot.sh " + rho_free_time_T028_args2
+
+
+
+N_max_time_T026_args0 = os.path.join(dir_of_this_script,"N_max_time.py") + " --file " + args.file + " --con temperature 0.26 --dens 0.01 0.03 --out N_max_time_T026_0"
+N_max_time_T026_command0 = "sbatch -J \"PLOT N_max_time_T026\" submit_plot.sh " + N_max_time_T026_args0
+
+N_max_time_T026_args1 = os.path.join(dir_of_this_script,"N_max_time.py") + " --file " + args.file + " --con temperature 0.26 --dens 0.04 0.06 --out N_max_time_T026_1"
+N_max_time_T026_command1 = "sbatch -J \"PLOT N_max_time_T026\" submit_plot.sh " + N_max_time_T026_args1
+
+N_max_time_T026_args2 = os.path.join(dir_of_this_script,"N_max_time.py") + " --file " + args.file + " --con temperature 0.26 --dens 0.07 0.1 --out N_max_time_T026_2"
+N_max_time_T026_command2 = "sbatch -J \"PLOT N_max_time_T026\" submit_plot.sh " + N_max_time_T026_args2
+
+
+
+N_max_time_T027_args0 = os.path.join(dir_of_this_script,"N_max_time.py") + " --file " + args.file + " --con temperature 0.27 --dens 0.001 0.01 --out N_max_time_T027_0"
+N_max_time_T027_command0 = "sbatch -J \"PLOT N_max_time_T027\" submit_plot.sh " + N_max_time_T027_args0
+
+N_max_time_T027_args1 = os.path.join(dir_of_this_script,"N_max_time.py") + " --file " + args.file + " --con temperature 0.27 --dens 0.015 0.04 --out N_max_time_T027_1"
+N_max_time_T027_command1 = "sbatch -J \"PLOT N_max_time_T027\" submit_plot.sh " + N_max_time_T027_args1
+
+N_max_time_T027_args2 = os.path.join(dir_of_this_script,"N_max_time.py") + " --file " + args.file + " --con temperature 0.27 --dens 0.05 0.1 --out N_max_time_T027_2"
+N_max_time_T027_command2 = "sbatch -J \"PLOT N_max_time_T027\" submit_plot.sh " + N_max_time_T027_args2
+
+
+
+N_max_time_T028_args0 = os.path.join(dir_of_this_script,"N_max_time.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.001 0.015 --out N_max_time_T028_0"
+N_max_time_T028_command0 = "sbatch -J \"PLOT N_max_time_T028\" submit_plot.sh " + N_max_time_T028_args0
+
+
+N_max_time_T028_args1 = os.path.join(dir_of_this_script,"N_max_time.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.02 0.05 --out N_max_time_T028_1"
+N_max_time_T028_command1 = "sbatch -J \"PLOT N_max_time_T028\" submit_plot.sh " + N_max_time_T028_args1
+
+
+N_max_time_T028_args2 = os.path.join(dir_of_this_script,"N_max_time.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.06 0.1 --out N_max_time_T028_2"
+N_max_time_T028_command2 = "sbatch -J \"PLOT N_max_time_T028\" submit_plot.sh " + N_max_time_T028_args2
 
 if shutil.which("sbatch") != None:
     print(order_overall_command)
@@ -121,6 +158,24 @@ if shutil.which("sbatch") != None:
     subprocess.getstatusoutput(rho_free_time_T028_command1)
     print(rho_free_time_T028_command2)
     subprocess.getstatusoutput(rho_free_time_T028_command2)
+    print(N_max_time_T026_command0)
+    subprocess.getstatusoutput(N_max_time_T026_command0)
+    print(N_max_time_T026_command1)
+    subprocess.getstatusoutput(N_max_time_T026_command1)
+    print(N_max_time_T026_command2)
+    subprocess.getstatusoutput(N_max_time_T026_command2)
+    print(N_max_time_T027_command0)
+    subprocess.getstatusoutput(N_max_time_T027_command0)
+    print(N_max_time_T027_command1)
+    subprocess.getstatusoutput(N_max_time_T027_command1)
+    print(N_max_time_T027_command2)
+    subprocess.getstatusoutput(N_max_time_T027_command2)
+    print(N_max_time_T028_command0)
+    subprocess.getstatusoutput(N_max_time_T028_command0)
+    print(N_max_time_T028_command1)
+    subprocess.getstatusoutput(N_max_time_T028_command1)
+    print(N_max_time_T028_command2)
+    subprocess.getstatusoutput(N_max_time_T028_command2)
 else:
     time.sleep(.1)
     prog_right = input("sbatch not found. run on this machine?   [Y/n]  ")
@@ -131,27 +186,45 @@ else:
         print("aborting")
         print()
         sys.exit()
-    print(rho_free_args)
-    subprocess.getstatusoutput(rho_free_args)
-    print(order_overall_args)
-    subprocess.getstatusoutput(order_overall_args)
-    print(n_avg_args)
-    subprocess.getstatusoutput(n_avg_args)
-    print(rho_free_time_T026_args0)
-    subprocess.getstatusoutput(rho_free_time_T026_args0)
-    print(rho_free_time_T026_args1)
-    subprocess.getstatusoutput(rho_free_time_T026_args1)
-    print(rho_free_time_T026_args2)
-    subprocess.getstatusoutput(rho_free_time_T026_args2)
-    print(rho_free_time_T027_args0)
-    subprocess.getstatusoutput(rho_free_time_T027_args0)
-    print(rho_free_time_T027_args1)
-    subprocess.getstatusoutput(rho_free_time_T027_args1)
-    print(rho_free_time_T027_args2)
-    subprocess.getstatusoutput(rho_free_time_T027_args2)
+    # print(rho_free_args)
+    # subprocess.getstatusoutput(rho_free_args)
+    # print(order_overall_args)
+    # subprocess.getstatusoutput(order_overall_args)
+    # print(n_avg_args)
+    # subprocess.getstatusoutput(n_avg_args)
+    # print(rho_free_time_T026_args0)
+    # subprocess.getstatusoutput(rho_free_time_T026_args0)
+    # print(rho_free_time_T026_args1)
+    # subprocess.getstatusoutput(rho_free_time_T026_args1)
+    # print(rho_free_time_T026_args2)
+    # subprocess.getstatusoutput(rho_free_time_T026_args2)
+    # print(rho_free_time_T027_args0)
+    # subprocess.getstatusoutput(rho_free_time_T027_args0)
+    # print(rho_free_time_T027_args1)
+    # subprocess.getstatusoutput(rho_free_time_T027_args1)
+    # print(rho_free_time_T027_args2)
+    # subprocess.getstatusoutput(rho_free_time_T027_args2)
     # print(rho_free_time_T028_args0)
     # subprocess.getstatusoutput(rho_free_time_T028_args0)
     # print(rho_free_time_T028_args1)
     # subprocess.getstatusoutput(rho_free_time_T028_args1)
     # print(rho_free_time_T028_args2)
     # subprocess.getstatusoutput(rho_free_time_T028_args2)
+    print(N_max_time_T026_args0)
+    subprocess.getstatusoutput(N_max_time_T026_args0)
+    print(N_max_time_T026_args1)
+    subprocess.getstatusoutput(N_max_time_T026_args1)
+    print(N_max_time_T026_args2)
+    subprocess.getstatusoutput(N_max_time_T026_args2)
+    print(N_max_time_T027_args0)
+    subprocess.getstatusoutput(N_max_time_T027_args0)
+    print(N_max_time_T027_args1)
+    subprocess.getstatusoutput(N_max_time_T027_args1)
+    print(N_max_time_T027_args2)
+    subprocess.getstatusoutput(N_max_time_T027_args2)
+    print(N_max_time_T028_args0)
+    subprocess.getstatusoutput(N_max_time_T028_args0)
+    print(N_max_time_T028_args1)
+    subprocess.getstatusoutput(N_max_time_T028_args1)
+    print(N_max_time_T028_args2)
+    subprocess.getstatusoutput(N_max_time_T028_args2)
