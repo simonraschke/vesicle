@@ -322,7 +322,7 @@ void Parameters::setup()
         // and path not none
         if(in_traj != std::string("none") && !boost::filesystem::exists(in_traj_path) && in_traj_path != std::string("none"))
         {
-            vesCRITICAL("input.path=" << in_traj_path << " input trajectory not found, setting to \"none\"")
+            vesWARNING("input.path=" << in_traj_path << " input trajectory not found, setting to \"none\"")
             in_traj_path = "none";
         }
 

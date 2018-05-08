@@ -42,6 +42,8 @@ struct Distributor
     typedef PARTICLERANGE::value_type::element_type::cartesian cartesian;
 
     virtual void operator()(PARTICLERANGE*) = 0;
+    cartesian randomCoords() const;
+    cartesian randomOrientation() const;
     
     virtual ~Distributor() = default;
 
@@ -58,8 +60,6 @@ struct RandomDistributor
 {
     virtual void operator()(PARTICLERANGE*) override;
     
-    cartesian randomCoords() const;
-    cartesian randomOrientation() const;
 };
 
 

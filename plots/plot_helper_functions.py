@@ -77,7 +77,10 @@ def averageNestedLists(nested_vals):
         for lst in nested_vals: # Go through each list
             if index < len(lst): # If not an index error
                 temp.append(lst[index])
-        output.append(np.nanmean(temp))
+        try:
+            output.append(np.nanmean(temp))
+        except:
+            output.append(np.NaN)
     return output
 
 
@@ -233,6 +236,56 @@ def getHDF5DatasetAttributes(filepath, datasetname, attributename):
 
 
 
+def save_dict_to_hdf5(dic, filename):
+    """
+    Save a dictionary whose contents are only strings, np.float64, np.int64,
+    np.ndarray, and other dictionaries following this structure
+    to an HDF5 file. These are the sorts of dictionaries that are meant
+    to be produced by the ReportInterface__to_dict__() method.
+    """
+    with h5py.File(filename, 'w') as h5file:
+        recursively_save_dict_contents_to_group(h5file, '/', dic)
+
+def recursively_save_dict_contents_to_group(h5file, path, dic):
+    """
+    Take an already open HDF5 file and insert the contents of a dictionary
+    at the current path location. Can call itself recursively to fill
+    out HDF5 files with the contents of a dictionary.
+    """
+    for key, item in dic.items():
+        if isinstance(item, (np.ndarray, np.int64, np.float64, str, bytes)):
+            h5file[path + key] = item
+        elif isinstance(item, dict):
+            recursively_save_dict_contents_to_group(h5file, path + key + '/', item)
+        else:
+            raise ValueError('Cannot save %s type'%type(item))
+
+def load_dict_from_hdf5(filename):
+    """
+    Load a dictionary whose contents are only strings, floats, ints,
+    numpy arrays, and other dictionaries following this structure
+    from an HDF5 file. These dictionaries can then be used to reconstruct
+    ReportInterface subclass instances using the
+    ReportInterface.__from_dict__() method.
+    """
+    with h5py.File(filename, 'r') as h5file:
+        return recursively_load_dict_contents_from_group(h5file, '/')
+
+def recursively_load_dict_contents_from_group(h5file, path):
+    """
+    Load contents of an HDF5 group. If further groups are encountered,
+    treat them like dicts and continue to load them recursively.
+    """
+    ans = {}
+    for key, item in h5file[path].items():
+        if isinstance(item, h5py._hl.dataset.Dataset):
+            ans[key] = item.value
+        elif isinstance(item, h5py._hl.group.Group):
+            ans[key] = recursively_load_dict_contents_from_group(h5file, path + key + '/')
+    return ans
+
+
+
 # open @overviewfilepath to look for dir_paths with given @constraints
 # open all @datasetname datasets (which must be 2D arrays) and average every field
 # return averaged [np.array]s
@@ -304,7 +357,7 @@ def getVolume(datafilepath,elementname="cluster_self_assembled"):
             z = float(getHDF5DatasetAttributes(datafilepath,elementname,"system.box.z"))
         except:
             return np.NaN
-    return x*y*z
+        return x*y*z
 
 
 
@@ -415,7 +468,7 @@ def getAverageParticlesInClustersizeSmallerThan(datafile, datasetname, size):
 
 
 
-def getTimeOfFirstCluster(datafilepath, size, time_range, functor, time_increment=10000, clustergroup="/cluster_self_assembled"):
+def __detail_getTimeOfFirstCluster_singleSimulationDatafile(datafilepath, time_range, size, time_increment=10000, clustergroup="/cluster_self_assembled"):
     try:
         file = h5py.File(datafilepath, 'r')
     except:
@@ -426,9 +479,14 @@ def getTimeOfFirstCluster(datafilepath, size, time_range, functor, time_incremen
     if int(min(time_range)) == int(max(time_range)):
         datasetnames = [clustergroup+"/time"+str(int(time_range[0]))]
     for datasetname in datasetnames:
-        if getClustersGreaterThan(file, datasetname, size) > 0:
-            return float(numbersListFromString(datasetname)[0])
-    return float(numbersListFromString(datasetnames[-1])[0])
+        try:
+            if getClustersGreaterThan(file, datasetname, size) > 0:
+                print("got", numbersListFromString(datasetname)[0], "in", datasetname)
+                return float(numbersListFromString(datasetname)[0])
+        except:
+            pass
+    # return float(numbersListFromString(datasetnames[-1])[0])
+    return None
 
 
 
@@ -774,7 +832,7 @@ def getLargestClusterTimeEvolution(overviewfilepath, constraints, time_range):
 def __detail_getGamma_single_simulation_datafile(datafilepath, time_range, min_size):
     average_values = []
     try:
-        average_values = getTimeOfFirstCluster(datafilepath, min_size-1, time_range, getClustersGreaterThan)
+        average_values = __detail_getTimeOfFirstCluster_singleSimulationDatafile(datafilepath, min_size-1, time_range, getClustersGreaterThan)
     except:
         return np.NaN, np.NaN
     time_of_first_cluster = np.average(average_values)
@@ -802,6 +860,164 @@ def getGamma(overviewfilepath, constraints, time_range, min_size, part="full"):
             rho_free.append(float(rho_free_temp))
             gamma.append(float(gamma_temp))
     return rho_free, gamma
+
+
+
+def getParticleHistory(overviewfilepath, constraints, time_range, particle, part="full"):
+    print(getParticleHistory.__name__, "  with constraints", constraints)
+    dirs = getMatchedDirs(overviewfilepath,constraints)
+    paths = [os.path.join(dir,"data.h5") for dir in dirs]
+    for path in paths:
+        result = load_dict_from_hdf5(path)
+        pp.pprint(result)
+        sys.exit()
+
+
+def getTimeOfFirstCluster(overviewfilepath, constraints, time_range, size, part="full"):
+    print(getTimeOfFirstCluster.__name__, "  with constraints", constraints)
+    dirs = getMatchedDirs(overviewfilepath,constraints)
+    paths = [os.path.join(dir,"data.h5") for dir in dirs]
+    results = []
+    for path in paths:
+        results.append(pool.apply_async(__detail_getTimeOfFirstCluster_singleSimulationDatafile,(path, time_range, size, 10000)))
+    time = []
+    for r in results:
+        time_temp = r.get()
+        if time_temp != None:
+            if np.isfinite(time_temp) and time_temp != None: 
+                time.append(float(time_temp))
+    if len(time) > 0:
+        return np.average(time)
+
+
+
+# get the order averaged over @time_range from @datafilepath
+def __detail_getPotentialEnergy_single_simulation_datafile(datafilepath, time_range):
+    dataset = []
+    try:
+        dataset = getHDF5Dataset(datafilepath,"potential_energies")
+    except:
+        return None
+    epot_values = []
+    if isinstance(dataset, (list, np.generic)):
+        if len(dataset) == 2:
+            for time, epot in zip(dataset[0],dataset[1]):
+                if min(time_range) <= time <= max(time_range):
+                    epot_values.append(epot)
+            return np.average(epot_values)
+    return None
+
+
+
+# get order from all files with given @constraints in @time_range
+def getPotentialEnergy(overviewfilepath, constraints, time_range):
+    print(getPotentialEnergy.__name__, "  with constraints", constraints)
+    dirs = getMatchedDirs(overviewfilepath,constraints)
+    paths = [os.path.join(dir,"data.h5") for dir in dirs]
+    # get theses values in parallel
+    results = []
+    for path in paths:
+        results.append(pool.apply_async(__detail_getPotentialEnergy_single_simulation_datafile,(path, time_range,)))
+    epot_values = removeBadEntries1D([r.get() for r in results if r.get() != None])
+    if len(epot_values) > 0:
+        print(getPotentialEnergy.__name__, "  result", "{:.5f}".format(np.average(epot_values)))
+        print()
+        return np.average(epot_values)
+    else:
+        print(getPotentialEnergy.__name__, "  result", "None")
+        print()
+        return None
+
+
+
+def __detail_getExchangeFullEvolution_single_simulation_datafile(datafilepath, min_size=50):
+    print(__detail_getlargestClusterFullEvolution_single_simulation_datafile.__name__, "in", datafilepath )
+    FILE = None
+    group = None
+    try:
+        FILE = h5py.File(datafilepath, 'r')
+    except:
+        print("cannot open file", datafilepath)
+        return [],[]
+    try:
+        group = FILE.get("cluster_self_assembled")
+    except:
+        print("cannot find group /cluster_self_assembled in", datafilepath)
+        return [],[]
+    datamap = {}
+    timepoints = [x for x in np.arange(1e7,1.1e7+1,1e4, dtype=int) ]
+    exchanges = [np.NaN]*len(timepoints)
+    datasets = ["time"+str(x) for x in timepoints ]
+    # datasets = sorted([ d.name for d in group.values() ])
+    for i, timepoint in enumerate(timepoints):
+        datamap[timepoint] = group.get(datasets[i]).value
+    for timepoint in timepoints:
+        clusters = []
+        for row in datamap[timepoint]:
+            if row[0] >= min_size:
+                temp_list = [int(x) for x in row[4:] if x >= 0]
+                try:
+                    assert(len(temp_list) == int(row[0]))
+                except AssertionError:
+                    # print(len(temp_list), int(row[0]))
+                    assert(False)
+                clusters.append(sorted(temp_list))
+        if len(clusters) > 0:
+            datamap[timepoint] = sorted(clusters)
+            # pp.pprint(datamap[timepoint])
+            # print()
+    for i, timepoint in enumerate(timepoints):
+        exchange_collector = []
+        if i == 0:
+            continue
+        for cluster in datamap[timepoint]:
+            biggest_overlap = max( [ len(set(cluster).intersection(set(old_cluster))) for old_cluster in datamap[timepoints[i-1]]] )
+            old_cluster = []
+            for old in datamap[timepoints[i-1]]:
+                if len(set(cluster).intersection(set(old))) == biggest_overlap:
+                    old_cluster = old
+                    break
+            size_before = len(cluster)
+            number_of_old_in_new = biggest_overlap
+            exchange = (size_before-number_of_old_in_new)/size_before
+            # print()
+            # print("cluster of size", len(cluster), "has ",number_of_old_in_new, "in common with old cluster of size",len(old_cluster),"so exchange is", exchange)
+            exchange_collector.append(exchange)
+        if len(exchange_collector) > 0:
+            exchanges[i] = np.average(exchange_collector)
+    return timepoints, exchanges
+
+
+
+def getExchangeTimeEvolution(overviewfilepath, constraints, time_range):
+    print(getExchangeTimeEvolution.__name__,"of time_range", time_range, "  with constraints", constraints)
+    dirs = getMatchedDirs(overviewfilepath,constraints)
+    paths = [os.path.join(dir,"data.h5") for dir in dirs]
+    timepoints = np.logspace(np.log10(min(time_range)), np.log10(max(time_range)), num=20, endpoint=True, base=10.0, dtype=float)
+    timepoints = np.insert(timepoints, 0, 0)
+    timepoints = sorted(list(set(np.around(timepoints, decimals=-4).tolist())))
+    exchange_values = []
+    results = []
+    for path in paths:
+        results.append(pool.apply_async(__detail_getExchangeFullEvolution_single_simulation_datafile,(path, 50,)))
+    for r in results:
+        timepoints_single, exchange_single = r.get()
+        assert(len(timepoints_single) == len(exchange_single))
+        exchange_average_single = []
+        for i,tp in enumerate(timepoints):
+            accumulator = [ exchange_single[j] for j,tps in enumerate(timepoints_single) if timepoints[i-1] < tps <= timepoints[i] ]
+            if(len(accumulator) > 0):
+                exchange_average_single.append(np.average(accumulator))
+            # except AssertionError:
+            #     print("ASSERTION ERROR: between timepoints", timepoints[i-1], "and", timepoints[i] , "accumulator", accumulator)
+        if len(exchange_average_single) > 0:
+            exchange_values.append(exchange_average_single)
+    if len(exchange_values) > 0:
+        exchange_values = averageNestedLists(exchange_values)
+    timepoints.pop(0)
+    assert(len(timepoints) == len(exchange_values))
+    print("got",len(timepoints),"timepoints and",len(exchange_values),"exchange_values")
+    return timepoints, exchange_values
 
 
 

@@ -28,7 +28,7 @@ solvent = universe.select_atoms("resname OSMOT and name O")
 nonsolvent = universe.select_atoms("resname FRAME") + universe.select_atoms("resname MOBIL")
 
 # calc center of mass per residue
-centers_of_masses = [ res.atoms.center_of_mass() for res in nonsolvent.residues ]
+centers_of_masses = [ res.atoms.center_of_geometry() for res in nonsolvent.residues ]
 # divide all coords by 10, to get the original units back
 centers_of_masses = np.divide(centers_of_masses, 10)
 
@@ -38,6 +38,8 @@ print(center_of_micelle)
 
 #  list of distances from residue to center of micelle
 dist_hist = [ np.linalg.norm(c-center_of_micelle) for c in centers_of_masses ]
+
+print("average", np.average(dist_hist), "  variance", np.var(dist_hist))
 
 # a new matplotlib figure
 fig = plt.figure()

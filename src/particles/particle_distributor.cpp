@@ -26,9 +26,28 @@ bool Distributor::conflicting_placement(PARTICLERANGE* range, const PARTICLERANG
     {
         assert(p1 && p2);
         if(p1==p2 || conflict.load()) return;
-        if(squared_distance(*p1,*p2) <= 1.122f*1.122f) conflict.store(true);
+        if(squared_distance(*p1,*p2) <= std::pow(getParameters().LJsigma*1.122f,2)) conflict.store(true);
     });
     return conflict.load();
+}
+
+
+
+Distributor::cartesian Distributor::randomCoords() const
+{
+    return cartesian
+    (
+        enhance::random<cartesian::Scalar>(0.f,getLengthX()),
+        enhance::random<cartesian::Scalar>(0.f,getLengthY()),
+        enhance::random<cartesian::Scalar>(0.f,getLengthZ())
+    );
+}
+
+
+
+Distributor::cartesian Distributor::randomOrientation() const
+{
+    return Eigen::Vector3f::Random();
 }
 
 
@@ -73,25 +92,6 @@ void RandomDistributor::operator()(PARTICLERANGE* range)
         }
     }
 #endif
-}
-
-
-
-RandomDistributor::cartesian RandomDistributor::randomCoords() const
-{
-    return cartesian
-    (
-        enhance::random<cartesian::Scalar>(0.f,getLengthX()),
-        enhance::random<cartesian::Scalar>(0.f,getLengthY()),
-        enhance::random<cartesian::Scalar>(0.f,getLengthZ())
-    );
-}
-
-
-
-RandomDistributor::cartesian RandomDistributor::randomOrientation() const
-{
-    return Eigen::Vector3f::Random();
 }
 
 
@@ -167,13 +167,21 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
     // vesLOG(getParameters().density << " " <<  getParameters().x << " " << getParameters().osmotic_density_inside);
     if(osmotic_inside+osmotic_bulk != getParameters().osmotic)
     {
-        vesCRITICAL("osmotic_inside " << osmotic_inside << "  osmotic_bulk " << osmotic_bulk)
+        vesCRITICAL("osmotic_inside " << osmotic_inside << "  osmotic_bulk " << osmotic_bulk << "PLEASE CHANGE DENSITY SLIGHTLY!")
     }
 
     vesLOG("optimum_distance " << optimum_distance)
     vesLOG("radius " << radius)
     vesLOG(osmotic_inside << " osmotic particles in micelle and " << osmotic_bulk << " in bulk")
     
+    assert(range);
+    tbb::parallel_for_each(range->begin(), range->end(), [&](auto& p) 
+    {
+        assert(p);
+        p->setCoords(randomCoords());
+        p->setOrientation(randomOrientation());
+    });
+
     SphereGeometry sphere(getCenter(), radius, num_frame+num_mobile+2);
     assert(sphere.points.size() == num_frame+num_mobile+2);
 
@@ -200,22 +208,43 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
                 particle.setOrientation(sphere.points[sphere_counter]-sphere.origin); 
                 ++sphere_counter;
                 break;
-            case OSMOTIC : 
+            case OSMOTIC :
                 if(Eigen::Vector3f vector; osmotic_counter < osmotic_inside)
                 {
-                    do
+                    std::size_t try_counter = 0;
+                    while((particle.coords() - getCenter()).norm() > radius-getParameters().kappa*1.1 || conflicting_placement(range,range->at(i)))
                     {
-                        vector = decltype(vector)(enhance::random<float>(0,getParameters().x) , enhance::random<float>(0,getParameters().y) , enhance::random<float>(0,getParameters().z));
-                    } while((vector - getCenter()).norm() > radius-getParameters().kappa);
-                    particle.setCoords(vector);
+                        particle.setCoords(randomCoords());
+                        if( ++try_counter > 1e6 )
+                        {
+                            vesWARNING("placing particle exceeded 1M tries")
+                            throw std::runtime_error("particle placement not possible");
+                        }
+                    }
+                    vesLOG("placed particle after " << try_counter << " tries")
+                    // do
+                    // {
+                    //     vector = decltype(vector)(enhance::random<float>(0,getParameters().x) , enhance::random<float>(0,getParameters().y) , enhance::random<float>(0,getParameters().z));
+                    // } while((vector - getCenter()).norm() > radius-getParameters().kappa*1.1 && conflicting_placement(range,range->at(i)));
+                    // particle.setCoords(vector);
                 }
                 else
                 {
-                    do
+                    std::size_t try_counter = 0;
+                    while((particle.coords() - getCenter()).norm() < radius-getParameters().kappa*1.1 || conflicting_placement(range,range->at(i)))
                     {
-                        vector = decltype(vector)(enhance::random<float>(0,getParameters().x) , enhance::random<float>(0,getParameters().y) , enhance::random<float>(0,getParameters().z));
-                    } while((vector - getCenter()).norm() < radius+getParameters().kappa);
-                    particle.setCoords(vector); 
+                        particle.setCoords(randomCoords());
+                        if( ++try_counter > 1e6 )
+                        {
+                            vesWARNING("placing particle exceeded 1M tries")
+                            throw std::runtime_error("particle placement not possible");
+                        }
+                    }
+                    // do
+                    // {
+                    //     vector = decltype(vector)(enhance::random<float>(0,getParameters().x) , enhance::random<float>(0,getParameters().y) , enhance::random<float>(0,getParameters().z));
+                    // } while((vector - getCenter()).norm() < radius+getParameters().kappa*1.1 && conflicting_placement(range,range->at(i)));
+                    // particle.setCoords(vector); 
                 }
                 ++osmotic_counter;
                 break;
@@ -223,6 +252,12 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
                 throw std::logic_error("encountered default in switch statement");
         }
     }
+    
+    std::for_each(range->begin(), range->end(), [&](auto& p) 
+    {
+        if(conflicting_placement(range,p))
+            vesLOG("particle " << p->ID << " placement invalid")
+    });
 }
 
 

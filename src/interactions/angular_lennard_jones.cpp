@@ -20,16 +20,16 @@ float AngularLennardJones::potential(const Particle& p1, const Particle& p2) con
 {
     if(p1.getType() == OSMOTIC)
     {
-        if(p2.getType() == OSMOTIC)
-            return 0.f;
-        else
+        // if(p2.getType() == OSMOTIC)
+        //     return 0.f;
+        // else
             return osmoticPotential(p1,p2);
     }
     else if(p2.getType() == OSMOTIC)
     {
-        if(p1.getType() == OSMOTIC)
-            return 0.f;
-        else
+        // if(p1.getType() == OSMOTIC)
+        //     return 0.f;
+        // else
             return osmoticPotential(p1,p2);
     }
     else
@@ -62,47 +62,60 @@ float AngularLennardJones::osmoticPotential(const Particle& p1, const Particle& 
     assert(p1.getType() == OSMOTIC || p2.getType() == OSMOTIC);
     assert(p1.getType() != p2.getType());
     
-    // const Particle& osmotic = p1.getType() == OSMOTIC ? p1 : p2;
+    const Particle& osmotic = p1.getType() == OSMOTIC ? p1 : p2;
     const Particle& nonosmotic = p1.getType() != OSMOTIC ? p1 : p2;
     assert(std::addressof(p1) != std::addressof(p2));
 
-    // attractive part
-    float attractive = 0;
+    // // attractive part
+    // float attractive = 0;
+    // {
+    //     const cartesian nonosmotic_orien_kappa = nonosmotic.orientation()*kappa/2.f;
+    //     cartesian distance_vec = distanceVector(p1, p2) - nonosmotic_orien_kappa;
+
+    //     const float r2 = sigma/distance_vec.squaredNorm();
+    //     if(r2 < cutoff_rez_sq) 
+    //     {
+    //         attractive = 0.f;
+    //     }
+    //     else
+    //     {
+    //         const float r6 = r2*r2*r2;
+    //         attractive = r6*r6-r6;
+    //     }
+
+    // }
+
+    // float repulsive = 0;
+    // {
+    //     const cartesian nonosmotic_orien_kappa = nonosmotic.orientation()*kappa/2.f;
+    //     cartesian distance_vec = distanceVector(p1, p2) + nonosmotic_orien_kappa;
+
+    //     const float r2 = sigma/distance_vec.squaredNorm();
+    //     if(r2 < cutoff_rez_sq) 
+    //     {
+    //         repulsive = 0.f;
+    //     }
+    //     else
+    //     {
+    //         const float r6 = r2*r2*r2;
+    //         repulsive = r6;
+    //     }
+    // }
+
+    // return 0.5f*attractive + 4.f*epsilon*repulsive;
+
+    float repulsive = 0.f;
+    const float r2 = sigma/squared_distance(osmotic,nonosmotic);
+    if(r2 < cutoff_rez_sq) 
     {
-        const cartesian nonosmotic_orien_kappa = nonosmotic.orientation()*kappa/2.f;
-        cartesian distance_vec = distanceVector(p1, p2) - nonosmotic_orien_kappa;
-
-        const float r2 = sigma/distance_vec.squaredNorm();
-        if(r2 < cutoff_rez_sq) 
-        {
-            attractive = 0.f;
-        }
-        else
-        {
-            const float r6 = r2*r2*r2;
-            attractive = r6*r6-r6;
-        }
-
+        repulsive = 0.f;
     }
-
-    float repulsive = 0;
+    else
     {
-        const cartesian nonosmotic_orien_kappa = nonosmotic.orientation()*kappa/2.f;
-        cartesian distance_vec = distanceVector(p1, p2) + nonosmotic_orien_kappa;
-
-        const float r2 = sigma/distance_vec.squaredNorm();
-        if(r2 < cutoff_rez_sq) 
-        {
-            repulsive = 0.f;
-        }
-        else
-        {
-            const float r6 = r2*r2*r2;
-            repulsive = r6;
-        }
+        const float r6 = r2*r2*r2;
+        repulsive = r6*r6;
     }
-
-    return 0.5f*attractive + 4.f*epsilon*repulsive;
+    return repulsive*4;
 }
 
 
