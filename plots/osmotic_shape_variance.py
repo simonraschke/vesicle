@@ -8,6 +8,7 @@ import numpy as np
 import MDAnalysis as mda
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from scipy.stats import norm
 import paper_style as style
 
 parser = argparse.ArgumentParser()
@@ -38,6 +39,7 @@ print(center_of_micelle)
 
 #  list of distances from residue to center of micelle
 dist_hist = [ np.linalg.norm(c-center_of_micelle) for c in centers_of_masses ]
+dist_hist = [ x for x in dist_hist if 7.5 <= x <= 11]
 
 print("average", np.average(dist_hist), "  variance", np.var(dist_hist))
 
@@ -47,7 +49,12 @@ fig = plt.figure()
 # make a histogram from distances
 # bins=auto -> no need to pass bin array
 # density=True -> norm to 1
-n, bins, patches = plt.hist(dist_hist, bins='auto', density=True)
+n, bins, patches = plt.hist(dist_hist, bins='auto', density=1)
+
+# best fit of data
+(mu, sigma) = norm.fit(dist_hist)
+y_fit = mpl.mlab.normpdf(bins, mu, sigma)
+plt.plot(bins, y_fit)
 
 # label axis
 plt.xlabel('r')

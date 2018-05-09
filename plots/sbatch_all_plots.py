@@ -90,10 +90,8 @@ rho_free_time_T027_command2 = "sbatch -J \"PLOT rho_free_time_T027\" submit_plot
 rho_free_time_T028_args0 = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.001 0.015 --out rho_free_time_T028_0"
 rho_free_time_T028_command0 = "sbatch -J \"PLOT rho_free_time_T028\" submit_plot.sh " + rho_free_time_T028_args0
 
-
 rho_free_time_T028_args1 = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.02 0.05 --out rho_free_time_T028_1"
 rho_free_time_T028_command1 = "sbatch -J \"PLOT rho_free_time_T028\" submit_plot.sh " + rho_free_time_T028_args1
-
 
 rho_free_time_T028_args2 = os.path.join(dir_of_this_script,"rho_free_time.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.06 0.1 --out rho_free_time_T028_2"
 rho_free_time_T028_command2 = "sbatch -J \"PLOT rho_free_time_T028\" submit_plot.sh " + rho_free_time_T028_args2
@@ -132,6 +130,44 @@ N_max_time_T028_command1 = "sbatch -J \"PLOT N_max_time_T028\" submit_plot.sh " 
 
 N_max_time_T028_args2 = os.path.join(dir_of_this_script,"N_max_time.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.06 0.1 --out N_max_time_T028_2"
 N_max_time_T028_command2 = "sbatch -J \"PLOT N_max_time_T028\" submit_plot.sh " + N_max_time_T028_args2
+
+
+
+exchange_T026_args0 = os.path.join(dir_of_this_script,"exchanges.py") + " --file " + args.file + " --con temperature 0.26 --dens 0.01 0.03 --out exchange_T026_0"
+exchange_T026_command0 = "sbatch -J \"PLOT exchange_T026\" submit_plot.sh " + exchange_T026_args0
+
+exchange_T026_args1 = os.path.join(dir_of_this_script,"exchanges.py") + " --file " + args.file + " --con temperature 0.26 --dens 0.04 0.06 --out exchange_T026_1"
+exchange_T026_command1 = "sbatch -J \"PLOT exchange_T026\" submit_plot.sh " + exchange_T026_args1
+
+exchange_T026_args2 = os.path.join(dir_of_this_script,"exchanges.py") + " --file " + args.file + " --con temperature 0.26 --dens 0.07 0.1 --out exchange_T026_2"
+exchange_T026_command2 = "sbatch -J \"PLOT exchange_T026\" submit_plot.sh " + exchange_T026_args2
+
+
+
+exchange_T027_args0 = os.path.join(dir_of_this_script,"exchanges.py") + " --file " + args.file + " --con temperature 0.27 --dens 0.001 0.01 --out exchange_T027_0"
+exchange_T027_command0 = "sbatch -J \"PLOT exchange_T027\" submit_plot.sh " + exchange_T027_args0
+
+exchange_T027_args1 = os.path.join(dir_of_this_script,"exchanges.py") + " --file " + args.file + " --con temperature 0.27 --dens 0.015 0.04 --out exchange_T027_1"
+exchange_T027_command1 = "sbatch -J \"PLOT exchange_T027\" submit_plot.sh " + exchange_T027_args1
+
+exchange_T027_args2 = os.path.join(dir_of_this_script,"exchanges.py") + " --file " + args.file + " --con temperature 0.27 --dens 0.05 0.1 --out exchange_T027_2"
+exchange_T027_command2 = "sbatch -J \"PLOT exchange_T027\" submit_plot.sh " + exchange_T027_args2
+
+
+
+exchange_T028_args0 = os.path.join(dir_of_this_script,"exchanges.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.001 0.015 --out exchange_T028_0"
+exchange_T028_command0 = "sbatch -J \"PLOT exchange_T028\" submit_plot.sh " + exchange_T028_args0
+
+
+exchange_T028_args1 = os.path.join(dir_of_this_script,"exchanges.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.02 0.05 --out exchange_T028_1"
+exchange_T028_command1 = "sbatch -J \"PLOT exchange_T028\" submit_plot.sh " + exchange_T028_args1
+
+
+exchange_T028_args2 = os.path.join(dir_of_this_script,"exchanges.py") + " --file " + args.file + " --con temperature 0.28 --dens 0.06 0.1 --out exchange_T028_2"
+exchange_T028_command2 = "sbatch -J \"PLOT exchange_T028\" submit_plot.sh " + exchange_T028_args2
+
+
+
 
 if shutil.which("sbatch") != None:
     print(order_overall_command)
@@ -176,6 +212,24 @@ if shutil.which("sbatch") != None:
     subprocess.getstatusoutput(N_max_time_T028_command1)
     print(N_max_time_T028_command2)
     subprocess.getstatusoutput(N_max_time_T028_command2)
+    print(exchange_T026_command0)
+    subprocess.getstatusoutput(exchange_T026_command0)
+    print(exchange_T026_command1)
+    subprocess.getstatusoutput(exchange_T026_command1)
+    print(exchange_T026_command2)
+    subprocess.getstatusoutput(exchange_T026_command2)
+    print(exchange_T027_command0)
+    subprocess.getstatusoutput(exchange_T027_command0)
+    print(exchange_T027_command1)
+    subprocess.getstatusoutput(exchange_T027_command1)
+    print(exchange_T027_command2)
+    subprocess.getstatusoutput(exchange_T027_command2)
+    print(exchange_T028_command0)
+    subprocess.getstatusoutput(exchange_T028_command0)
+    print(exchange_T028_command1)
+    subprocess.getstatusoutput(exchange_T028_command1)
+    print(exchange_T028_command2)
+    subprocess.getstatusoutput(exchange_T028_command2)
 else:
     time.sleep(.1)
     prog_right = input("sbatch not found. run on this machine?   [Y/n]  ")
@@ -228,3 +282,21 @@ else:
     subprocess.getstatusoutput(N_max_time_T028_args1)
     print(N_max_time_T028_args2)
     subprocess.getstatusoutput(N_max_time_T028_args2)
+    print(exchange_T026_args0)
+    subprocess.getstatusoutput(exchange_T026_args0)
+    print(exchange_T026_args1)
+    subprocess.getstatusoutput(exchange_T026_args1)
+    print(exchange_T026_args2)
+    subprocess.getstatusoutput(exchange_T026_args2)
+    print(exchange_T027_args0)
+    subprocess.getstatusoutput(exchange_T027_args0)
+    print(exchange_T027_args1)
+    subprocess.getstatusoutput(exchange_T027_args1)
+    print(exchange_T027_args2)
+    subprocess.getstatusoutput(exchange_T027_args2)
+    print(exchange_T028_args0)
+    subprocess.getstatusoutput(exchange_T028_args0)
+    print(exchange_T028_args1)
+    subprocess.getstatusoutput(exchange_T028_args1)
+    print(exchange_T028_args2)
+    subprocess.getstatusoutput(exchange_T028_args2)

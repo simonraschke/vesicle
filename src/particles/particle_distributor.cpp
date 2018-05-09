@@ -256,7 +256,7 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
     std::for_each(range->begin(), range->end(), [&](auto& p) 
     {
         if(conflicting_placement(range,p))
-            vesLOG("particle " << p->ID << " placement invalid")
+            vesLOG("particle " << p->ID << " (" << p->getType() << ") placement invalid")
     });
 }
 

@@ -77,9 +77,12 @@ def averageNestedLists(nested_vals):
         for lst in nested_vals: # Go through each list
             if index < len(lst): # If not an index error
                 temp.append(lst[index])
-        try:
-            output.append(np.nanmean(temp))
-        except:
+        if len(temp) > 0:
+            try:
+                output.append(np.nanmean(temp))
+            except:
+                output.append(np.NaN)
+        else:
             output.append(np.NaN)
     return output
 
@@ -930,8 +933,8 @@ def getPotentialEnergy(overviewfilepath, constraints, time_range):
 
 
 
-def __detail_getExchangeFullEvolution_single_simulation_datafile(datafilepath, min_size=50):
-    print(__detail_getlargestClusterFullEvolution_single_simulation_datafile.__name__, "in", datafilepath )
+def __detail_getExchangeFullEvolution_single_simulation_datafile(datafilepath, time_range, min_size=50, time_increment=1e4):
+    print(__detail_getExchangeFullEvolution_single_simulation_datafile.__name__, "in", datafilepath )
     FILE = None
     group = None
     try:
@@ -944,47 +947,53 @@ def __detail_getExchangeFullEvolution_single_simulation_datafile(datafilepath, m
     except:
         print("cannot find group /cluster_self_assembled in", datafilepath)
         return [],[]
-    datamap = {}
-    timepoints = [x for x in np.arange(1e7,1.1e7+1,1e4, dtype=int) ]
+    data_before = []
+    timepoints = [x for x in np.arange(min(time_range),max(time_range)+1,time_increment, dtype=int) ]
     exchanges = [np.NaN]*len(timepoints)
     datasets = ["time"+str(x) for x in timepoints ]
-    # datasets = sorted([ d.name for d in group.values() ])
     for i, timepoint in enumerate(timepoints):
-        datamap[timepoint] = group.get(datasets[i]).value
-    for timepoint in timepoints:
+        dataset = group.get(datasets[i])
+        data_now = []
+        if dataset != None:
+            data_now = dataset.value
+        if len(data_before) == 0 or len(data_now) == 0:
+            data_before = data_now
+            continue
         clusters = []
-        for row in datamap[timepoint]:
-            if row[0] >= min_size:
+        for row in data_now:
+            if row[0] >= min_size+4:
                 temp_list = [int(x) for x in row[4:] if x >= 0]
                 try:
                     assert(len(temp_list) == int(row[0]))
                 except AssertionError:
-                    # print(len(temp_list), int(row[0]))
                     assert(False)
                 clusters.append(sorted(temp_list))
         if len(clusters) > 0:
-            datamap[timepoint] = sorted(clusters)
-            # pp.pprint(datamap[timepoint])
-            # print()
-    for i, timepoint in enumerate(timepoints):
+            data_now = sorted(clusters)
+        else:
+            data_now = []
         exchange_collector = []
         if i == 0:
             continue
-        for cluster in datamap[timepoint]:
-            biggest_overlap = max( [ len(set(cluster).intersection(set(old_cluster))) for old_cluster in datamap[timepoints[i-1]]] )
+        for cluster in data_now:
+            biggest_overlap = 0
+            try:
+                biggest_overlap = max( [ len(set(cluster).intersection(set(old_cluster))) for old_cluster in data_before] )
+            except:
+                pass
             old_cluster = []
-            for old in datamap[timepoints[i-1]]:
+            for old in data_before:
                 if len(set(cluster).intersection(set(old))) == biggest_overlap:
                     old_cluster = old
                     break
             size_before = len(cluster)
             number_of_old_in_new = biggest_overlap
             exchange = (size_before-number_of_old_in_new)/size_before
-            # print()
-            # print("cluster of size", len(cluster), "has ",number_of_old_in_new, "in common with old cluster of size",len(old_cluster),"so exchange is", exchange)
             exchange_collector.append(exchange)
         if len(exchange_collector) > 0:
             exchanges[i] = np.average(exchange_collector)
+        data_before = data_now
+    print("will return", len(timepoints),"timepoints and",len(exchanges),"exchange_values")
     return timepoints, exchanges
 
 
@@ -993,30 +1002,31 @@ def getExchangeTimeEvolution(overviewfilepath, constraints, time_range):
     print(getExchangeTimeEvolution.__name__,"of time_range", time_range, "  with constraints", constraints)
     dirs = getMatchedDirs(overviewfilepath,constraints)
     paths = [os.path.join(dir,"data.h5") for dir in dirs]
+    min_size = 20
+    time_increment = 1e4
     timepoints = np.logspace(np.log10(min(time_range)), np.log10(max(time_range)), num=20, endpoint=True, base=10.0, dtype=float)
     timepoints = np.insert(timepoints, 0, 0)
     timepoints = sorted(list(set(np.around(timepoints, decimals=-4).tolist())))
-    exchange_values = []
+    print(timepoints)
     results = []
     for path in paths:
-        results.append(pool.apply_async(__detail_getExchangeFullEvolution_single_simulation_datafile,(path, 50,)))
+        results.append(pool.apply_async(__detail_getExchangeFullEvolution_single_simulation_datafile,(path, time_range, min_size, time_increment,)))
+    timepoint_values = []
+    exchange_values = []
     for r in results:
         timepoints_single, exchange_single = r.get()
-        assert(len(timepoints_single) == len(exchange_single))
         exchange_average_single = []
-        for i,tp in enumerate(timepoints):
+        for i, tp in enumerate(timepoints):
             accumulator = [ exchange_single[j] for j,tps in enumerate(timepoints_single) if timepoints[i-1] < tps <= timepoints[i] ]
             if(len(accumulator) > 0):
                 exchange_average_single.append(np.average(accumulator))
-            # except AssertionError:
-            #     print("ASSERTION ERROR: between timepoints", timepoints[i-1], "and", timepoints[i] , "accumulator", accumulator)
         if len(exchange_average_single) > 0:
             exchange_values.append(exchange_average_single)
     if len(exchange_values) > 0:
         exchange_values = averageNestedLists(exchange_values)
     timepoints.pop(0)
-    assert(len(timepoints) == len(exchange_values))
     print("got",len(timepoints),"timepoints and",len(exchange_values),"exchange_values")
+    assert(len(timepoints) == len(exchange_values))
     return timepoints, exchange_values
 
 
@@ -1054,4 +1064,4 @@ class LoggingPool(Pool):
         return Pool.apply_async(self, LogExceptions(func), args, kwds, callback)
 
 multiprocessing.log_to_stderr()
-pool = LoggingPool(processes=10)
+pool = LoggingPool(processes=10,maxtasksperchild=1)
