@@ -58,6 +58,9 @@ for t in plthelp.getMatchedValues(args.file, "temperature", constraints):
     # order = [0 if x is None else x for x in order]
     rho,order = plthelp.removeBadEntries2D(rho,order)
 
+    if float(sum(1 for y in order if y < 0.0))/len(order) > 0.75:
+        order = [-f for f in order]
+
     print("rho    order")
     for r, o in zip(rho,order):
         try:
