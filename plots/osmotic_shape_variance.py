@@ -15,6 +15,8 @@ import paper_style as style
 from sklearn.cluster import DBSCAN
 from sklearn import metrics
 
+import vtk
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--top", type=str, help="path to topology file")
 parser.add_argument("--traj", type=str, help="path to trajectory file")
@@ -52,16 +54,60 @@ for snapshot in universe.trajectory:
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
 
     print('Estimated number of clusters: %d' % n_clusters_)
-    print(labels)
+    # print(labels)
 
     frame_guided_cluster = [ ]
     for i in range(len(all_com)):
         if labels[i] == 0:
             frame_guided_cluster.append(all_com[i])
+
     '''
-    getting all coordinates of residues in the frame guided cluster
+    calculating volume and surface area
     '''
-    
+    points = vtk.vtkPoints()
+    polyData = vtk.vtkPolyData()
+    for coords in frame_guided_cluster:
+        points.InsertNextPoint(coords[0],coords[1],coords[2])
+    polyData.SetPoints(points)
+
+    delaunay = vtk.vtkDelaunay3D()
+    delaunay.SetInputData(polyData)
+    delaunay.Update()
+
+    surface = vtk.vtkDataSetSurfaceFilter()
+    surface.SetInputConnection(delaunay.GetOutputPort())
+
+    properties = vtk.vtkMassProperties()
+    properties.SetInputConnection(surface.GetOutputPort())
+    print(int(properties.GetVolume()/1000))
+    print(int(properties.GetSurfaceArea()/100))
+    print("surface/volume", properties.GetSurfaceArea()/properties.GetVolume())
+
+    # mapper = vtk.vtkPolyDataMapper()
+    # mapper.SetInputData(surface.GetOutput())
+
+    # actor = vtk.vtkActor()
+    # actor.SetMapper(mapper)
+    # actor.GetProperty().SetColor(1.0,0.0,0.0)
+
+    # renderer = vtk.vtkRenderer()
+    # renderer.SetBackground(1.0,1.0,1.0)
+    # renderer.AddActor(actor)
+
+    # renderer_window = vtk.vtkRenderWindow()
+    # renderer_window.SetWindowName("Cluster")
+    # renderer_window.SetSize(1000,1000)
+    # renderer_window.AddRenderer(renderer)
+
+    # interactor = vtk.vtkRenderWindowInteractor()
+    # interactor.SetRenderWindow(renderer_window)
+
+    # interactor.Initialize()
+    # renderer_window.Render()
+    # interactor.Start()
+
+    # sys.exit()
+
     # center of micelle from all centers of mass from residues
     center_of_micelle = np.mean(frame_guided_cluster, axis=0)
     print(center_of_micelle)
@@ -97,8 +143,6 @@ for snapshot in universe.trajectory:
     times.append(snapshot.time)
     averages.append(np.average(dist_hist))
     variances.append(np.var(dist_hist)/2)
-
-
 
 fig = plt.figure()
 plt.errorbar(times,averages,variances)
