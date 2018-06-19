@@ -49,8 +49,9 @@ def askPermission(args):
     assert(args.k)
     assert(args.g)
     assert(args.d)
+    assert(args.ge)
     assert(args.it)
-    jobs = len(args.t)*len(args.k)*len(args.g)*len(args.d)*args.it
+    jobs = len(args.t)*len(args.k)*len(args.g)*len(args.d)*len(args.ge)*args.it
     time.sleep(.1)
     cont = input("About to submit "+str(jobs) + " Jobs (" +str(jobs*args.threads) + " threads), continue? [Y/n]  ")
     if cont == 'y' or cont == 'Y': 
@@ -97,21 +98,25 @@ def applyFunctionToDirectoryTree(args, func):
     for t in args.t:
         t_path = os.path.join(root_dir, "T"+str(t))
         
-        # kappa level
-        for k in args.k:
-            k_path = os.path.join(t_path, "kappa"+str(k))
-            
-            # gamma level
-            for g in args.g:
-                g_path = os.path.join(k_path, "gamma"+str(g))
+        # guiding elements level
+        for ge in args.ge:
+            ge_path = os.path.join(t_path, "ge"+str(ge))
+        
+            # kappa level
+            for k in args.k:
+                k_path = os.path.join(ge_path, "kappa"+str(k))
                 
-                # density level
-                for d in args.d:
-                    d_path = os.path.join(g_path, "dens"+str(d))
+                # gamma level
+                for g in args.g:
+                    g_path = os.path.join(k_path, "gamma"+str(g))
+                    
+                    # density level
+                    for d in args.d:
+                        d_path = os.path.join(g_path, "dens"+str(d))
 
-                    for it in range(args.it):
-                        it_path = os.path.join(d_path,"simulation"+str(it))
-                        func(args, it_path, t, k ,g, d)
+                        for it in range(args.it):
+                            it_path = os.path.join(d_path,"simulation"+str(it))
+                            func(args, it_path, t, k ,g, d)
 
 
 
@@ -164,11 +169,12 @@ def fileReplaceLineWithKeyword(filepath, keyword, replacement):
 
 def stripParametersFromPath(path):
     T = re.findall(r'T.*?([0-9.-]+)',path)[-1]
+    ge = re.findall(r'ge.*?([0-9.-]+)',path)[-1]
     k = re.findall(r'kappa.*?([0-9.-]+)',path)[-1]
     g = re.findall(r'gamma.*?([0-9.-]+)',path)[-1]
     d = re.findall(r'dens.*?([0-9.-]+)',path)[-1]
     it = re.findall(r'simulation.*?([0-9.-]+)',path)[-1]
-    return float(T), float(k), float(g), float(d), int(it)
+    return float(T), int(ge), float(k), float(g), float(d), int(it)
 
 
 
@@ -245,7 +251,7 @@ def updateConfigFiles(args):
     for dir in WORKING_DIRECTORIES:
         assert(os.path.exists(dir))
         assert(os.path.exists(args.config))
-        t,k,g,d,it = stripParametersFromPath(dir)
+        t,ge,k,g,d,it = stripParametersFromPath(dir)
         new_config_file = os.path.join(dir,"config.ini")
         print("change  [T, kappa, gamma, dens]  to ", [t,k,g,d], " in file ", new_config_file)
         fileReplaceLineWithKeyword(new_config_file, "mobile", "mobile="+str(args.mobile))
@@ -255,6 +261,9 @@ def updateConfigFiles(args):
         fileReplaceLineWithKeyword(new_config_file, "kappa", "kappa="+str(k))
         fileReplaceLineWithKeyword(new_config_file, "gamma", "gamma="+str(g))
         fileReplaceLineWithKeyword(new_config_file, "density", "density="+str(d))
+        fileReplaceLineWithKeyword(new_config_file, "guiding_elements_each", "guiding_elements_each="+str(ge))
+        fileReplaceLineWithKeyword(new_config_file, "frame_guides_grid_edge", "frame_guides_grid_edge="+str(args.grid))
+        fileReplaceLineWithKeyword(new_config_file, "osmotic_density_inside", "osmotic_density_inside=0")
     print()
 
 
@@ -358,8 +367,8 @@ def sbatchAll(args):
         dir = os.path.join(args.origin, dir)
         os.chdir(dir)
         program = "./"+args.prog.rsplit("/",maxsplit=1)[1]
-        T,k,g,d,it = stripParametersFromPath(dir)
-        name = "T"+str(T)+"kappa"+str(k)+"gamma"+str(g)+"dens"+str(d)+"it"+str(it)
+        T,ge,k,g,d,it = stripParametersFromPath(dir)
+        name = "T"+str(T)+"ge"+str(ge)+"kappa"+str(k)+"gamma"+str(g)+"dens"+str(d)+"it"+str(it)
         command = "sbatch -J \""+name+"\" submit.sh "+program+" --config config.ini"
         print(command)
         status, jobnum = None, None

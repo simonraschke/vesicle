@@ -42,28 +42,29 @@ fig = plt.figure()
 
 label = "T=0.26"
 x = [0.001, 0.01, 0.015, 0.02,  0.03, 0.04, 0.05, 0.06, 0.07,   0.08,   0.09,   0.1]
-y = [0,     0,    1.1e7, 1.1e6, 8e4,  4e4,  3e4,  2e4,  1.15e4, 1.15e4, 1.15e4, 1.15e4]
-plt.semilogy(x[2:], y[2:], label=label)
+y = [0,     0,    4e7,   1.1e6, 8e4,  4e4,  3e4,  2e4,  1.15e4, 1.15e4, 1.15e4, 1.15e4]
+plt.semilogy(np.subtract(x[2:], 0.011), y[2:], label=label)
 
 label = "T=0.27"
-x = [0.001, 0.01, 0.015, 0.02,   0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
-y = [0,     0,    0,     1.05e7, 6e5,  5e4,  5e4, 3e4, 3e4, 2e4, 1e4, 1e4]
-plt.semilogy(x[3:], y[3:], label=label)
+x = [0.001, 0.01, 0.015, 0.02,  0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
+y = [0,     0,    0,     1.1e7, 6e5,  5e4,  5e4, 3e4, 3e4, 2e4, 1e4, 1e4]
+plt.semilogy(np.subtract(x[3:], 0.017), y[3:], label=label)
 
 label = "T=0.28"
 x = [0.001, 0.01, 0.015, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
 y = [0,     0,    0,     0,    9e5,  9e4,  7e4,  5e4,  4e4,  2e4, 1.5e4, 1.5e4]
-plt.semilogy(x[4:], y[4:], label=label)
+plt.semilogy(np.subtract(x[4:], 0.027), y[4:], label=label)
 
-label = "T=0.29"
-x = [0.001, 0.01, 0.015, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
-y = [0,     0,    0,     0,    0,    7e4,  8e4,  3e4,  2.5e4, 2e4, 1.5e4, 1.5e4]
-plt.semilogy(x[5:], y[5:], label=label)
+# label = "T=0.29"
+# x = [0.001, 0.01, 0.015, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
+# y = [0,     0,    0,     0,    0,    7e4,  8e4,  3e4,  2.5e4, 2e4, 1.5e4, 1.5e4]
+# plt.semilogy(x[5:], y[5:], label=label)
 
 
 plt.legend(loc='best', frameon=False)
 plt.gca().tick_params(axis='both', which='both', direction='in')
-plt.xlabel(r'$\rho$')
+plt.xlim(xmax=0.06)
+plt.xlabel(r'$\rho-\rho_{\textrm{cmc}}$')
 plt.ylabel(r'$\tau$')
 plt.plot(rasterized=False)
 plt.savefig(args.out+'.'+'eps'.format(), bbox_inches='tight', format='eps')
