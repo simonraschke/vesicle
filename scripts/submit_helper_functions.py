@@ -253,7 +253,7 @@ def updateConfigFiles(args):
         assert(os.path.exists(args.config))
         t,ge,k,g,d,it = stripParametersFromPath(dir)
         new_config_file = os.path.join(dir,"config.ini")
-        print("change  [T, kappa, gamma, dens]  to ", [t,k,g,d], " in file ", new_config_file)
+        print("change  [T, ge, kappa, gamma, dens]  to ", [t,ge,k,g,d], " in file ", new_config_file)
         fileReplaceLineWithKeyword(new_config_file, "mobile", "mobile="+str(args.mobile))
         fileReplaceLineWithKeyword(new_config_file, "cpu_threads", "cpu_threads="+str(args.threads))
         fileReplaceLineWithKeyword(new_config_file, "time_max", "time_max="+str(args.maxtime))

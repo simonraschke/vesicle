@@ -21,6 +21,7 @@ import sys
 import argparse
 import pprint
 import numpy as np
+mpl.use('Agg')
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import plot_helper_functions as plthelp
@@ -34,7 +35,7 @@ parser.add_argument("--origin", type=str, default=os.getcwd(), help="this direct
 parser.add_argument("--file", type=str, help="path to config_files.json file")
 parser.add_argument("--time", type=float, nargs=2, default=[1e4,1e8], help="path to config_files.json file")
 parser.add_argument("--dens", type=float, nargs=2, default=[0,1], help="density range")
-parser.add_argument("--opt", type=float, default=90, help="Add optimum line at N")
+parser.add_argument("--opt", type=float, default=100, help="Add optimum line at N")
 parser.add_argument("--con", type=str, nargs='*', default=[], help="constrain to parameters as {...}")
 parser.add_argument("--out", type=str, default="N_max_time", help="output file name")
 args = parser.parse_args()
@@ -69,7 +70,7 @@ for density in plthelp.getValuesInRange(args.file, "density", args.dens):
     label = r'$\rho=$'
     plt.semilogx(timepoints,N_max, label=label+str(round(density,4)))
 
-plt.plot([min(args.time)+1e4, max(args.time)],[args.opt, args.opt], color="black",zorder=1, linestyle='--')
+plt.plot([min(args.time)+1e4, max(args.time)],[args.opt, args.opt], color="grey",zorder=0, linestyle='--', linewidth=.5)
 plt.legend(loc='best', frameon=False)
 plt.gca().tick_params(axis='both', which='both', direction='in')
 plt.xlim(min(args.time)+1e4, max(args.time))

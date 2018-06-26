@@ -22,6 +22,7 @@ import argparse
 import pprint
 import numpy as np
 import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import plot_helper_functions as plthelp
 import paper_style as style
