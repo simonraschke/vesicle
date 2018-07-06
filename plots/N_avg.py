@@ -34,6 +34,7 @@ parser.add_argument("--origin", type=str, default=os.getcwd(), help="this direct
 parser.add_argument("--file", type=str, help="path to config_files.json file")
 parser.add_argument("--time", type=float, nargs=2, default=[0,1e10], help="path to config_files.json file")
 parser.add_argument("--con", type=str, nargs='*', default=[], help="constrain to parameters as {...}")
+parser.add_argument("--opt", type=float, default=100, help="Add optimum line at N")
 parser.add_argument("--min", type=int, default=1, help="min size of clusters to analyze")
 parser.add_argument("--out", type=str, default="N_avg", help="output file name")
 args = parser.parse_args()
@@ -71,6 +72,7 @@ for t in plthelp.getMatchedValues(args.file, "temperature", constraints):
     label = "T="+str(t)
     plt.plot(rho,n_avg, label=label)
 
+plt.plot([0,0.1],[args.opt, args.opt], color="grey",zorder=0, linestyle='--', linewidth=.5)
 plt.legend(loc='best', frameon=False)
 plt.gca().tick_params(axis='both', which='both', direction='in')
 plt.xlim(0.0, float(max(plthelp.getMatchedValues(args.file,"density",constraints))))

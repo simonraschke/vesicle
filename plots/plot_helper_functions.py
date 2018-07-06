@@ -225,6 +225,7 @@ def getHDF5Dataset(filepath, datasetname, column="all"):
         except:
             return []
     else:
+        print("filepath", filepath, "does not exist")
         pass
 
 
@@ -1028,6 +1029,33 @@ def getExchangeTimeEvolution(overviewfilepath, constraints, time_range):
     print("got",len(timepoints),"timepoints and",len(exchange_values),"exchange_values")
     assert(len(timepoints) == len(exchange_values))
     return timepoints, exchange_values
+
+
+
+def __detail_getClusterSizeDistribution_single_simulation_datafile(datafilepath, timepoint, clustergroup):
+    # print(__detail_getClusterSizeDistribution_single_simulation_datafile.__name__, "in", datafilepath )
+    datasetname = str(clustergroup+"/time"+str(int(timepoint)))
+    print("get size distribution from ", datafilepath+":"+datasetname)
+    try:
+        data = getHDF5Dataset(datafilepath, datasetname)[0,:]
+        return data
+    except:
+        return []
+    # print (data)
+
+
+def getClusterSizeDistribution(overviewfilepath, constraints, timepoint, clustergroup="/cluster_self_assembled"):
+    print(getClusterSizeDistribution.__name__,"of time", timepoint, "  with constraints", constraints)
+    dirs = getMatchedDirs(overviewfilepath,constraints)
+    paths = [os.path.join(dir,"data.h5") for dir in dirs]
+    results = []
+    for path in paths:
+        results.append(pool.apply_async(__detail_getClusterSizeDistribution_single_simulation_datafile,(path, timepoint, clustergroup,)))
+    hist_array = []
+    for r in results:
+        hist_array.extend(list(r.get()))
+    # print(np.array(hist_array, dtype=int))
+    return np.array(hist_array, dtype=int)
 
 
 
