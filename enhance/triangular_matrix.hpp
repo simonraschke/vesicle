@@ -25,7 +25,6 @@ namespace enhance
 
         // access thread safe
         tbb::spin_mutex data_mutex;
-        typedef tbb::spin_mutex::scoped_lock lock;
         
     public:
         // construct and resize later
@@ -103,7 +102,7 @@ inline enhance::TriangularMatrix<T>::~TriangularMatrix()
 template<typename T>
 inline T& enhance::TriangularMatrix<T>::operator[](const std::size_t& i)
 {
-    lock(data_mutex);
+    tbb::spin_mutex::scoped_lock lock(data_mutex);
     return data_[i];
 }
 
@@ -120,7 +119,7 @@ inline const T& enhance::TriangularMatrix<T>::operator[](const std::size_t& i) c
 template<typename T>
 inline T& enhance::TriangularMatrix<T>::operator()(const std::size_t& _row, const std::size_t& _col)
 {
-    lock(data_mutex);
+    tbb::spin_mutex::scoped_lock lock(data_mutex);
     return _col < _row ? data_[sums_[_row]+_col] : data_[sums_[_col]+_row];
     // if(! (_col < _row)) return data_[sums_[_col]+_row];
     // else return data_[sums_[_row]+_col];
@@ -141,7 +140,7 @@ inline const T& enhance::TriangularMatrix<T>::operator()(const std::size_t& _row
 template<typename T>
 inline T enhance::TriangularMatrix<T>::minCoeff()
 {
-    lock(data_mutex);
+    tbb::spin_mutex::scoped_lock lock(data_mutex);
     return *std::min_element(begin(), end());
 }
 
@@ -150,7 +149,7 @@ inline T enhance::TriangularMatrix<T>::minCoeff()
 template<typename T>
 inline T enhance::TriangularMatrix<T>::maxCoeff()
 {
-    lock(data_mutex);
+    tbb::spin_mutex::scoped_lock lock(data_mutex);
     return *std::max_element(begin(), end());
 }
 
@@ -159,7 +158,7 @@ inline T enhance::TriangularMatrix<T>::maxCoeff()
 template<typename T>
 inline void enhance::TriangularMatrix<T>::scale(const T& __from, const T& __to)
 {
-    lock(data_mutex);
+    tbb::spin_mutex::scoped_lock lock(data_mutex);
     const T min = minCoeff();
     const T max = maxCoeff();
     const T scaling_factor = (__to - __from)/(max - min);
@@ -175,7 +174,7 @@ inline void enhance::TriangularMatrix<T>::scale(const T& __from, const T& __to)
 template<typename T>
 inline void enhance::TriangularMatrix<T>::resize(const std::size_t& SIZE)
 {
-    lock(data_mutex);
+    tbb::spin_mutex::scoped_lock lock(data_mutex);
     size_ = (SIZE*SIZE)/2;
     sums_.resize(SIZE);
     data_.resize(size_);
@@ -192,7 +191,7 @@ inline void enhance::TriangularMatrix<T>::resize(const std::size_t& SIZE)
 template<typename T>
 inline T enhance::TriangularMatrix<T>::sum() noexcept
 {
-    lock(data_mutex);
+    tbb::spin_mutex::scoped_lock lock(data_mutex);
     return tbb::parallel_reduce 
         (tbb::blocked_range<typename decltype(data_)::const_iterator>( std::cbegin(data_), std::cend(data_) ), 
         (T)0 , [&](auto& r, T i) 

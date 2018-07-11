@@ -1,5 +1,5 @@
-SET(CMAKE_C_COMPILER "gcc-7.3.0")
-SET(CMAKE_CXX_COMPILER "g++-7.3.0")
+SET(CMAKE_C_COMPILER "gcc")
+SET(CMAKE_CXX_COMPILER "g++")
 cmake_minimum_required(VERSION 3.1)
 project(vesicle)
 
