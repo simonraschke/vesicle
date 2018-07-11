@@ -50,9 +50,11 @@ parser.add_argument('--it', type=int, default=1, help="iterations per parameter 
 parser.add_argument('--threads', type=int, default=4, help="[SLURM] number of threads per job")
 parser.add_argument('--memory', type=int, default=4, help="[SLURM] amount of RAM per job in GB")
 parser.add_argument('--hours', type=int, default=48, help="[SLURM] number of hours for submit script")
+parser.add_argument('--minhours', type=int, default=None, help="[SLURM] number of hours for minimum job runtime")
 parser.add_argument('--mail', type=str, help="[SLURM] the mail to send fail news to")
 parser.add_argument('--group', type=str, help="[SLURM] group membership")
 parser.add_argument('--avx', action='store_true', help="[SLURM] set avx flag")
+parser.add_argument('--nice',type=int, default=0, help="[SLURM] nice value of jobs")
 args = parser.parse_args()
 args.origin = os.getcwd() # save this directory
 args.config = os.path.join(args.origin, args.config)

@@ -197,7 +197,7 @@ def fileOverviewHDF5(filepath):
 # if Exception return empty list []
 def getHDF5Dataset(filepath, datasetname, column="all"):
     if os.path.exists(filepath):
-        print("HDF5 file exists:", filepath)
+        # print("HDF5 file exists:", filepath)
 
         # try opening file
         try:
@@ -1034,14 +1034,37 @@ def getExchangeTimeEvolution(overviewfilepath, constraints, time_range):
 
 def __detail_getClusterSizeDistribution_single_simulation_datafile(datafilepath, timepoint, clustergroup):
     # print(__detail_getClusterSizeDistribution_single_simulation_datafile.__name__, "in", datafilepath )
-    datasetname = str(clustergroup+"/time"+str(int(timepoint)))
-    print("get size distribution from ", datafilepath+":"+datasetname)
+    # datasetname = str(clustergroup+"/time"+str(int(timepoint)))
+    d_low = int(round(int(timepoint)/np.sqrt(2), -4))
+    d_upp = int(round(int(timepoint)*np.sqrt(2), -4))
+
+    FILE = None
+    group = None
     try:
-        data = getHDF5Dataset(datafilepath, datasetname)[0,:]
-        return data
+        FILE = h5py.File(datafilepath, 'r')
     except:
+        print("cannot open file", datafilepath)
         return []
-    # print (data)
+    try:
+        group = FILE.get("cluster_self_assembled")
+    except:
+        print("cannot find group /cluster_self_assembled in", datafilepath)
+        return []
+    
+    timepoints = [x for x in np.arange(d_low,d_upp+1,10000, dtype=int) ]
+    datasetnames = [clustergroup+"/time"+str(x) for x in timepoints ]
+    # print(datasetnames)
+
+    data = []
+    for datasetname in datasetnames:
+        try:
+            values = FILE.get(datasetname).value[:,0].transpose()
+            # print(values)
+            data.extend( FILE.get(datasetname).value[:,0].transpose() )
+        except:
+            pass
+    return data
+
 
 
 def getClusterSizeDistribution(overviewfilepath, constraints, timepoint, clustergroup="/cluster_self_assembled"):

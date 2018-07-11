@@ -302,11 +302,16 @@ def createSubmitScripts(args):
             print("#SBATCH --ntasks=1", file=slurmfile)
             print("#SBATCH --nodes=1", file=slurmfile)
             print("#SBATCH --cpus-per-task={}".format(args.threads), file=slurmfile)
+            print("#SBATCH --nice={}".format(args.), file=slurmfile)
             print("#SBATCH --mem={}G".format(args.memory), file=slurmfile)
             hours = args.hours
-            print("#SBATCH -p {}".format("long" if hours>48 else "short"), file=slurmfile)
+            print("#SBATCH --partition={}".format("long" if hours>48 else "short"), file=slurmfile)
             days, hours = divmod(hours, 24)
             print("#SBATCH --time={0:0>1}-{1:0>2}:00:00".format(days,hours), file=slurmfile)
+            if args.minhours != None:
+                minhours = args.minhours
+                mindays, minhours = divmod(minhours, 24)
+                print("#SBATCH --time-min={0:0>1}-{1:0>2}:00:00".format(mindays,minhours), file=slurmfile)
             print("#SBATCH --signal=2@300", file=slurmfile)
             print("", file=slurmfile)
             print("srun $@", file=slurmfile)

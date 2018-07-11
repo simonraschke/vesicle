@@ -33,14 +33,17 @@ pp = pprint.PrettyPrinter(indent=4, compact=False)
 parser = argparse.ArgumentParser()
 parser.add_argument("--origin", type=str, default=os.getcwd(), help="this directory")
 parser.add_argument("--file", type=str, help="path to config_files.json file")
-parser.add_argument("--times", type=float, nargs='*', default=[1e6,1e7,1e8], help="timepoints of csize distributions")
+parser.add_argument("--time", type=float, nargs='*', default=[1e5,1e8], help="time range of cluster size distributions")
 parser.add_argument("--con", type=str, nargs='*', default=[], help="constrain to parameters as {...}")
 # parser.add_argument("--opt", type=float, default=100, help="Add optimum line at N")
-# parser.add_argument("--min", type=int, default=1, help="min size of clusters to analyze")
+parser.add_argument("--max", type=float, default=0.05, help="max possibility on y axis")
 parser.add_argument("--out", type=str, default="hist", help="output file name")
 args = parser.parse_args()
 
 style.setStyle()
+
+args.time = [ round(x,-4) for x in np.logspace(np.log10(min(args.time)), np.log10(max(args.time)), num=10, endpoint=True, base=10.0, dtype=float) ]
+print("timepoints", args.time)
 
 """
 datadict
@@ -65,13 +68,12 @@ for t in plthelp.getMatchedValues(args.file, "temperature", constraints):
     datadict[t].update( {"stds" : []} )
     datadict[t].update( {"variances" : []} )
 
-
     fig = plt.figure(1)
-    gs = mpl.gridspec.GridSpec(len(args.times), 1, wspace=0.0, hspace=0.0, top=0.95, bottom=0.05, left=0.17, right=0.845) 
+    gs = mpl.gridspec.GridSpec(len(args.time), 1, wspace=0.0, hspace=0.0, top=0.95, bottom=0.05, left=0.17, right=0.845) 
 
     subplot_counter = 0
     max_size = 0
-    for timepoint in args.times:
+    for timepoint in args.time:
         timepoint = int(timepoint)
 
         data = plthelp.getClusterSizeDistribution(args.file, {**newconstraints}, timepoint)
@@ -83,24 +85,24 @@ for t in plthelp.getMatchedValues(args.file, "temperature", constraints):
         datadict[t]["stds"].append(np.std(list(filter(lambda x: x > 30, data))))
         datadict[t]["variances"].append(np.var(list(filter(lambda x: x > 30, data))))
 
-        label = "step "+'{0:.0e}'.format(timepoint)
+        label = "step "+'{0:.2e}'.format(timepoint)
         plt.subplot(gs[subplot_counter,0])
 
         plt.gca().tick_params(axis='both', which='both', direction='in')
         plt.xlim(0,200)
-        plt.ylim(0,0.1)
+        plt.ylim(0,args.max)
         plt.gca().locator_params(axis='y', nbins=3)
 
         data, bins, patches = plt.hist( data, bins=bins, weights=data, label=label, density=True)
 
         plt.gca().legend(loc='best', frameon=False, fontsize='xx-small', handlelength=0)
 
-        if subplot_counter+1 < len(args.times): plt.gca().set_xticklabels([])
-        if subplot_counter+1 != len(args.times): plt.gca().set_yticks(plt.gca().get_yticks()[1:])
-        if subplot_counter+1 == int((len(args.times)+1)/2): plt.ylabel(r'\textrm{probability}')
+        if subplot_counter+1 < len(args.time): plt.gca().set_xticklabels([])
+        if subplot_counter+1 != len(args.time): plt.gca().set_yticks(plt.gca().get_yticks()[1:])
+        if subplot_counter+1 == int((len(args.time)+1)/2): plt.ylabel(r'\textrm{probability}')
         
         subplot_counter+=1
-        print()
+        # print()
 
     pp.pprint(datadict[t])
 
@@ -131,15 +133,15 @@ for t,d in datadict.items():
     plt.ylim(60,120)
     plt.gca().locator_params(axis='y', nbins=3)
     plt.gca().set_xscale("log", nonposx='clip')
-    plt.errorbar(x,y,yerr=e, label=label, elinewidth=.5, ecolor="black", capsize=3, linestyle='None', marker=".", markersize=5, capthick=.5)
+    plt.errorbar(x,y,yerr=e, label=label, elinewidth=.5, ecolor="black", capsize=2, linestyle='None', marker=".", markersize=5, capthick=.5)
 
     for i in range(len(x)):
         if i == len(x)-1:
-            plt.gca().text(s=r'$\bar N={}$'.format(str(round(y[i],1))), x=x[i]*0.9, y=y[i], fontsize=3, stretch='extra-condensed', ha='right', va='bottom')
-            plt.gca().text(s=r'$\sigma={}$'.format(str(round(e[i],1))), x=x[i]*0.9, y=y[i], fontsize=3, stretch='extra-condensed', ha='right', va='top')
+            plt.gca().text(s=r'$\bar N={}$'.format(str(round(y[i],1))), x=x[i]*0.98, y=y[i], fontsize=2, stretch='extra-condensed', ha='right', va='bottom')
+            plt.gca().text(s=r'$\sigma={}$'.format(str(round(e[i],1))), x=x[i]*0.98, y=y[i], fontsize=2, stretch='extra-condensed', ha='right', va='top')
         else:
-            plt.gca().text(s=r'$\bar N={}$'.format(str(round(y[i],1))), x=x[i]*1.1, y=y[i], fontsize=3, stretch='extra-condensed', va='bottom')
-            plt.gca().text(s=r'$\sigma={}$'.format(str(round(e[i],1))), x=x[i]*1.1, y=y[i], fontsize=3, stretch='extra-condensed', va='top')
+            plt.gca().text(s=r'$\bar N={}$'.format(str(round(y[i],1))), x=x[i]*1.02, y=y[i], fontsize=2, stretch='extra-condensed', va='bottom')
+            plt.gca().text(s=r'$\sigma={}$'.format(str(round(e[i],1))), x=x[i]*1.02, y=y[i], fontsize=2, stretch='extra-condensed', va='top')
 
     plt.text(1300000, 118, label, ha='center', va='top', fontsize='xx-small')
     # plt.gca().legend(loc='best', frameon=True, fontsize='xx-small', handlelength=0, markerscale=0)

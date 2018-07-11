@@ -56,6 +56,10 @@ for t in plthelp.getMatchedValues(args.file, "temperature", constraints):
 
     for density in rho:
         n_max.append(plthelp.getLargestCluster(args.file, {**newconstraints,**{"density":str(density)}}, args.time, args.min))
+    
+    for i in range(len(n_max)):
+        if n_max[i] < args.min:
+            n_max[i] = np.NaN
 
     rho,n_max = plthelp.removeBadEntries2D(rho,n_max)
     print(max(n_max))

@@ -41,7 +41,7 @@ float AngularLennardJones::potential(const Particle& p1, const Particle& p2) con
 
         const float r6 = r2*r2*r2;
 
-        distance_vec = distance_vec.normalized() * sigma;
+        distance_vec = distance_vec.normalized();
         const cartesian p1_orien_kappa = p1.orientation()*kappa/2.f;
         const cartesian p2_orien_kappa = p2.orientation()*kappa/2.f;
 
