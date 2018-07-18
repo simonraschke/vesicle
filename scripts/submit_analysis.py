@@ -43,6 +43,7 @@ parser.add_argument("--cl_ext", type=float, default=0.7, help="[CONFIG] cluster 
 parser.add_argument('--threads', type=int, default=8, help="[SLURM] number of threads per job")
 parser.add_argument('--memory', type=int, default=20, help="[SLURM] amount of RAM per job in GB")
 parser.add_argument('--hours', type=int, default=24, help="[SLURM] number of hours for submit script")
+parser.add_argument('--minhours', type=int, default=None, help="[SLURM] number of hours for minimum job runtime")
 parser.add_argument('--mail', type=str, help="[SLURM] the mail to send fail news to")
 parser.add_argument('--group', type=str, help="[SLURM] group membership")
 parser.add_argument('--avx', action='store_true', default=True, help="[SLURM] set avx flag")
