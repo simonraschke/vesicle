@@ -43,5 +43,4 @@ inline bool Metropolis::isValid(float energy_difference) const
     #else
         return energy_difference < 0.f ? true : std::exp(-energy_difference/getParameters().temperature) > enhance::random<float>(0.0,1.0);
     #endif
-    
 }

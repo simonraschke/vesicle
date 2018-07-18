@@ -17,7 +17,7 @@ echo "[BASH] cd build"
 cd build
 echo "[BASH] -DCMAKE_BUILD_TYPE=${1}"
 cmake .. -DCMAKE_BUILD_TYPE=$1
-echo "[BASH] make-j"
+echo "[BASH] make -j"
 make -j
 echo "[BASH] ctest"
 ctest

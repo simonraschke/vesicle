@@ -20,6 +20,7 @@ def makesize(width,ratio=None, scale=1):
 
 
 def setStyle():
+    # print(plt.rcParams.keys())
     plt.style.use('seaborn-paper')
     plt.rc('figure', figsize=makesize(246,ratio=0.8))
     plt.rc('figure', titleweight='light')
@@ -27,4 +28,7 @@ def setStyle():
     plt.rc('text', usetex=True)
     plt.rc('text.latex', preamble='\\usepackage[utf8x]{inputenc}, \\usepackage[T1]{fontenc}, \\usepackage[c]{esvect}, \\usepackage{amsfonts}, \\usepackage{amssymb}, \\usepackage{amsmath},')
     plt.rc('font', weight='light', family='serif', size=10)
+    plt.rc('lines', linewidth=1)
+    plt.rc('lines', markersize=3)
+    plt.rc('lines', markeredgewidth=0.5)
     plt.figure().tight_layout(pad=0)

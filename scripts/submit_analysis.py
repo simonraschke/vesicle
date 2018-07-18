@@ -46,6 +46,7 @@ parser.add_argument('--hours', type=int, default=24, help="[SLURM] number of hou
 parser.add_argument('--mail', type=str, help="[SLURM] the mail to send fail news to")
 parser.add_argument('--group', type=str, help="[SLURM] group membership")
 parser.add_argument('--avx', action='store_true', default=True, help="[SLURM] set avx flag")
+parser.add_argument('--nice',type=int, default=0, help="[SLURM] nice value of jobs")
 args = parser.parse_args()
 args.origin = os.getcwd() # save this directory
 if args.config != None:

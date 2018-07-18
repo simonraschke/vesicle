@@ -517,11 +517,11 @@ def getTimeAverageNum_FUNCTOR(datafilepath, size, time_range, functor, time_incr
     # return average if possible, else return zero
     cleaned_data = np.ma.masked_array(values,mask=np.isnan(values))
     if len(values) > 0:
-        print("time_averaged",np.ma.average(cleaned_data))
-        print(cleaned_data.compressed())
+        # print("time_averaged",np.ma.average(cleaned_data))
+        # print(cleaned_data.compressed())
         return np.ma.average(cleaned_data)
     else:
-        print("time_averaged", 0)
+        # print("time_averaged", 0)
         return 0
 
 
@@ -1115,4 +1115,4 @@ class LoggingPool(Pool):
         return Pool.apply_async(self, LogExceptions(func), args, kwds, callback)
 
 multiprocessing.log_to_stderr()
-pool = LoggingPool(processes=10,maxtasksperchild=1)
+pool = LoggingPool(processes=10,maxtasksperchild=5)

@@ -34,6 +34,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--origin", type=str, default=os.getcwd(), help="this directory")
 parser.add_argument("--file", type=str, help="path to config_files.json file")
 parser.add_argument("--time", type=float, nargs='*', default=[1e5,1e8], help="time range of cluster size distributions")
+parser.add_argument("--num", type=int, default=10, help="number of time points")
 parser.add_argument("--con", type=str, nargs='*', default=[], help="constrain to parameters as {...}")
 # parser.add_argument("--opt", type=float, default=100, help="Add optimum line at N")
 parser.add_argument("--max", type=float, default=0.05, help="max possibility on y axis")
@@ -42,7 +43,7 @@ args = parser.parse_args()
 
 style.setStyle()
 
-args.time = [ round(x,-4) for x in np.logspace(np.log10(min(args.time)), np.log10(max(args.time)), num=10, endpoint=True, base=10.0, dtype=float) ]
+args.time = [ round(x,-4) for x in np.logspace(np.log10(min(args.time)), np.log10(max(args.time)), num=args.num, endpoint=True, base=10.0, dtype=float) ]
 print("timepoints", args.time)
 
 """
