@@ -169,7 +169,11 @@ def fileReplaceLineWithKeyword(filepath, keyword, replacement):
 
 def stripParametersFromPath(path):
     T = re.findall(r'T.*?([0-9.-]+)',path)[-1]
-    ge = re.findall(r'ge.*?([0-9.-]+)',path)[-1]
+    ge = 0
+    try:
+        ge = re.findall(r'ge.*?([0-9.-]+)',path)[-1]
+    except:
+        ge = 0
     k = re.findall(r'kappa.*?([0-9.-]+)',path)[-1]
     g = re.findall(r'gamma.*?([0-9.-]+)',path)[-1]
     d = re.findall(r'dens.*?([0-9.-]+)',path)[-1]
@@ -403,8 +407,8 @@ def sbatchAllAnalysis(args):
         dir = os.path.join(args.origin, dir)
         os.chdir(dir)
         program = "./"+args.prog.rsplit("/",maxsplit=1)[1]
-        T,k,g,d,it = stripParametersFromPath(dir)
-        name = "ana_T"+str(T)+"kappa"+str(k)+"gamma"+str(g)+"dens"+str(d)+"it"+str(it)
+        T,ge,k,g,d,it = stripParametersFromPath(dir)
+        name = "T"+str(T)+"ge"+str(ge)+"kappa"+str(k)+"gamma"+str(g)+"dens"+str(d)+"it"+str(it)
         command = "sbatch -J \""+name+"\" submit.sh "+program+" --config config_analysis.ini"
         print(command)
         status, jobnum = None, None
