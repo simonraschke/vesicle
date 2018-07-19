@@ -416,6 +416,8 @@ def sbatchAllAnalysis(args):
         if shutil.which("sbatch") != None:
             status, jobnum = subprocess.getstatusoutput(command)
             jobnum = numbersListFromString(jobnum)[-1]
+            jobnum = sbatchAnalysis(args,dir,name,jobnum,dependency="afternotok")
+            jobnum = sbatchAnalysis(args,dir,name,jobnum,dependency="afternotok")
         else:
             status, jobnum = "DRYRUN", numbersListFromString("DRYRUN 17")[-1]
     print()
