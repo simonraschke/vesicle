@@ -54,6 +54,7 @@ args.origin = os.getcwd() # save this directory
 if args.config != None:
     args.config = os.path.join(args.origin, args.config)
 args.prog = subprocess.getstatusoutput("which "+args.prog)[1]
+args.analysis = subprocess.getstatusoutput("which "+args.analysis)[1]
 
 if __name__ == "__main__":
     # print all args once
