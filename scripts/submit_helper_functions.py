@@ -81,6 +81,23 @@ def askPermissionAnalysis(args):
 
 
 
+def askPermissionRepeat(args):
+    print(askPermissionAnalysis.__name__)
+    assert(args.it)
+    jobs = len(WORKING_DIRECTORIES) * args.it
+    time.sleep(.1)
+    cont = input("About to submit "+str(jobs) + " Jobs (" +str(jobs*args.threads) + " threads), continue? [Y/n]  ")
+    if cont == 'y' or cont == 'Y': 
+        print("continue submitting")
+        print()
+        return True
+    else:
+        print("not submitting")
+        print()
+        sys.exit()
+
+
+
 # hirarchy of directory structure
 # -temperature
 # |-kappa
@@ -284,6 +301,9 @@ def updateConfigFilesAnalysis(args):
         fileReplaceLineWithKeyword(new_config_file, "cpu_threads", "cpu_threads="+str(args.threads))
         print("change cluster_volume_extension to ", args.cl_ext, " in file ", new_config_file)
         fileReplaceLineWithKeyword(new_config_file, "cluster_volume_extension", "cluster_volume_extension="+str(args.cl_ext))
+        for line in fileinput.input(filepath):
+            if "cluster_volume_extension" in line:
+                assert(np.abs(re.findall(r'simulation.*?([0-9.-]+)',path)[-1] - args.cl_ext) < 1e-5)
     print()
 
 
@@ -442,6 +462,20 @@ def walklevel(some_dir, level=0):
 # find all dirs with trajectory file in it
 def makeDirectoryListAnalysis(args):
     print(makeDirectoryListAnalysis.__name__)
+    for root,dirs,files in walklevel(args.dir,args.depth):
+        for dir in dirs:
+            if os.path.exists(os.path.join(root,dir,args.filename)):
+                print("appending WORKING_DIRECTORIES with", os.path.join(root,dir))
+                WORKING_DIRECTORIES.append(os.path.join(root,dir))
+    if "." in WORKING_DIRECTORIES:
+        WORKING_DIRECTORIES.remove(".")
+    print()
+
+
+
+# find all dirs with trajectory file in it
+def makeDirectoryListRepeat(args):
+    print(makeDirectoryListRepeat.__name__)
     for root,dirs,files in walklevel(args.dir,args.depth):
         for dir in dirs:
             if os.path.exists(os.path.join(root,dir,args.filename)):

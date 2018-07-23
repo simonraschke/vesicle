@@ -70,6 +70,7 @@ else:
         newconstraints.update({"temperature":str(t)})
 
         rho = [float(x) for x in plthelp.getMatchedValues(args.file,"density", newconstraints)]
+        print(rho)
         rho_free = []
 
         for density in rho:

@@ -65,7 +65,7 @@ if __name__ == "__main__":
                 parameters.update( {"thermostat":plthelp.fileValueFromKeyword(config_file_path, "thermostat")} )
                 parameters.update( {"temperature":plthelp.fileValueFromKeyword(config_file_path, "temperature")} )
                 parameters.update( {"mobile":plthelp.fileValueFromKeyword(config_file_path, "mobile")} )
-                parameters.update( {"density":plthelp.fileValueFromKeyword(config_file_path, "density")} )
+                parameters.update( {"density":plthelp.fileValueFromKeyword(config_file_path, "density=")} )
                 parameters.update( {"frame_guides_grid_edge":plthelp.fileValueFromKeyword(config_file_path, "frame_guides_grid_edge")} )
                 parameters.update( {"guiding_elements_each":plthelp.fileValueFromKeyword(config_file_path, "guiding_elements_each")} )
                 # parameters.update( {"box.x":plthelp.fileValueFromKeyword(config_file_path, "box.x")} )
