@@ -162,12 +162,14 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
     const float optimum_distance = enhance::nth_root<6>(getParameters().LJsigma*2);
     const float radius = optimum_distance/(2.0*std::sin(getParameters().gamma));
     const float volume = enhance::sphere_volume(radius);
-    const std::size_t osmotic_bulk = std::round( getParameters().density * ((getParameters().x * getParameters().y * getParameters().z) - volume) );
+    std::size_t osmotic_bulk = std::round( getParameters().density * ((getParameters().x * getParameters().y * getParameters().z) - volume) );
     const std::size_t osmotic_inside = std::round( getParameters().osmotic_density_inside * volume);
     // vesLOG(getParameters().density << " " <<  getParameters().x << " " << getParameters().osmotic_density_inside);
     if(osmotic_inside+osmotic_bulk != getParameters().osmotic)
     {
-        vesCRITICAL("osmotic_inside " << osmotic_inside << "  osmotic_bulk " << osmotic_bulk << "PLEASE CHANGE DENSITY SLIGHTLY!")
+        // vesCRITICAL("osmotic_inside " << osmotic_inside << "  osmotic_bulk " << osmotic_bulk << "PLEASE CHANGE DENSITY SLIGHTLY!")
+        vesWARNING("changed osmotic_bulk from " << osmotic_bulk << " to " << getParameters().osmotic - osmotic_inside);
+        osmotic_bulk = getParameters().osmotic - osmotic_inside;
     }
 
     vesLOG("optimum_distance " << optimum_distance)
@@ -253,11 +255,11 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
         }
     }
     
-    std::for_each(range->begin(), range->end(), [&](auto& p) 
-    {
-        if(conflicting_placement(range,p))
-            vesLOG("particle " << p->ID << " (" << p->getType() << ") placement invalid")
-    });
+    // std::for_each(range->begin(), range->end(), [&](auto& p) 
+    // {
+    //     if(conflicting_placement(range,p))
+    //         vesLOG("particle " << p->ID << " (" << p->getType() << ") placement invalid")
+    // });
 }
 
 

@@ -220,7 +220,7 @@ void Parameters::setup()
             x = std::cbrt(static_cast<float>(num_all_particles)/density);
             y = std::cbrt(static_cast<float>(num_all_particles)/density);
             z = std::cbrt(static_cast<float>(num_all_particles)/density);
-            if(osmotic > 0)
+            if(std::abs(osmotic_density_inside) > 1e-6)
             {
                 vesLOG("calculating osmotic particles")
                 // FIXME: this is bullcrap
