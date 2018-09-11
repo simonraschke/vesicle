@@ -35,86 +35,117 @@ void ClusterStructureParser::setTarget(enhance::ConcurrentDeque<ParticleSimple>&
 
 void ClusterStructureParser::parse()
 {
-    static const float extension = getParameters().analysis_cluster_volume_extension;
     check_for_aligned_box_setup();
 
-    if(target_range->size() == 1)
+    // tbb::task_arena limited(1);
+    // limited.execute( [&]
     {
-        volume = enhance::sphere_volume(1.f+extension);
-        surface_area = enhance::sphere_surface(1.f+extension);
-        return;
-    }
-    {
-        // represent and manipulate 3D points
-        vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-
-        assert(target_range);
-        // go over all subcluster members
-        for( const auto& member : *target_range )
+        const float points_per_sigma = 5;
+        const float point_distance = getParameters().LJsigma / points_per_sigma;
+        GridGeometry grid;
         {
-            // generate a points
-            cartesian point;
-            point = member.position;
-
-            // generate a sphere and place it around point
-            vtkSmartPointer<vtkSphereSource> sphereSource = vtkSmartPointer<vtkSphereSource>::New();
-            sphereSource->SetRadius(1.f+extension);
-            sphereSource->SetCenter( point(0), point(1), point(2) );
-            sphereSource->SetThetaResolution(10);
-            sphereSource->SetPhiResolution(6);
-            sphereSource->Update();
-
-            // save the new positioned sphere in vtkPolyData
-            vtkSmartPointer<vtkPolyData> spherePolyData = sphereSource->GetOutput();
-
-            // store all points in vtkPoints
-            for(vtkIdType i = 0; i < spherePolyData->GetNumberOfPoints(); i++)
+            float x_center = 0.0;
+            float y_center = 0.0;
+            float z_center = 0.0;
+            float x_edge = 0.0;
+            float y_edge = 0.0;
+            float z_edge = 0.0;
             {
-                std::array<double,3> p{};
-
-                // store point values in array
-                spherePolyData->GetPoint(i,p.data());
-
-                // insert into points container if inside of box
-                // const Eigen::Vector3d point_to_check(p.data());
-                // const cartesian point_to_check(Eigen::Vector3d(p.data()).cast<float>());
-                // if(contains(point_to_check.template cast<float>()))
-                    points->InsertNextPoint(p.data());
+                auto [min,max] = std::minmax_element(target_range->begin(), target_range->end(), [](const auto& p1, const auto& p2){ return p1.position(0) < p2.position(0); });
+                x_center = (max->position(0) + min->position(0))/2;
+                x_edge = max->position(0)-min->position(0) + getParameters().analysis_cluster_distance_threshold*2;
+                // vesLOG(min->position(0) << " " << max->position(0));
+                grid.x = x_edge * points_per_sigma + 1;
             }
+            {
+                auto [min,max] = std::minmax_element(target_range->begin(), target_range->end(), [](const auto& p1, const auto& p2){ return p1.position(1) < p2.position(1); });
+                y_center = (max->position(1) + min->position(1))/2;
+                y_edge = max->position(1)-min->position(1) + getParameters().analysis_cluster_distance_threshold*2;
+                // vesLOG(min->position(1) << " " << max->position(1));
+                grid.y = y_edge * points_per_sigma + 1;
+            }
+            {
+                auto [min,max] = std::minmax_element(target_range->begin(), target_range->end(), [](const auto& p1, const auto& p2){ return p1.position(2) < p2.position(2); });
+                z_center = (max->position(2) + min->position(2))/2;
+                z_edge = max->position(2)-min->position(2) + getParameters().analysis_cluster_distance_threshold*2;
+                // vesLOG(min->position(2) << " " << max->position(2));
+                grid.z = z_edge * points_per_sigma + 1;
+            }
+            grid.generate();
+            grid.scale(cartesian(point_distance, point_distance, point_distance));
+            grid.shift(cartesian(x_center, y_center, z_center)-cartesian(x_edge, y_edge, z_edge)/2.f);
         }
-        
-        // concrete dataset represents vertices, lines, polygons, and triangle strips
-        vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
-        polydata->SetPoints(points);
 
-        vesDEBUG("vtkDelaunay3D")
-        vtkSmartPointer<vtkDelaunay3D> delaunay = vtkSmartPointer<vtkDelaunay3D>::New();
+
+        vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+        for(const auto& member : *target_range)
+        {
+            points->InsertNextPoint(member.position.data());
+        }
+        auto polydata = vtkSmartPointer<vtkPolyData>::New();
+        polydata->SetPoints(points);
+        auto delaunay = vtkSmartPointer<vtkDelaunay3D>::New();
         delaunay->SetInputData(polydata);
         delaunay->Update();
 
-        // extract outer (polygonal) surface
-        vesDEBUG("vtkDataSetSurfaceFilter")
-        vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
-        surfaceFilter->SetInputConnection(delaunay->GetOutputPort());
-
-        // extract outer (polygonal) surface
-        vesDEBUG("vtkTriangleFilter")
-        vtkSmartPointer<vtkTriangleFilter> triangleFilter = vtkSmartPointer<vtkTriangleFilter>::New();
-        triangleFilter->SetInputConnection(surfaceFilter->GetOutputPort());
-            
         // append to overall mesh
-        result->AddInputConnection(triangleFilter->GetOutputPort());
-        
-        // estimate volume, area, shape index of triangle mesh
-        vesDEBUG("vtkMassProperties")
-        vtkSmartPointer<vtkMassProperties> massProperties = vtkSmartPointer<vtkMassProperties>::New();
-        massProperties->SetInputConnection(surfaceFilter->GetOutputPort());
-        massProperties->Update();
+        {
+            // vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
+            // polydata->SetPoints(points);
+            result->AddInputData(polydata);
+        }
 
-        volume += massProperties->GetVolume();
-        surface_area += massProperties->GetSurfaceArea();
+        const auto squared_threshold = getParameters().analysis_cluster_distance_threshold*getParameters().analysis_cluster_distance_threshold;
+        
+        std::array<double, 3> point {};
+        std::array<double, 3> pcoords {}; 
+        std::array<double, 4> weights {};
+        int subId;
+
+        const auto inside_points = std::accumulate(std::begin(grid.points), std::end(grid.points), (std::size_t)0, [&](auto j, const auto& p)
+        {   
+            point = {p(0), p(1), p(2)};
+            vtkIdType cellId = -1;
+            if(target_range->size() > 6)
+            {
+                cellId = delaunay->GetOutput()->FindCell(point.data(), NULL, 0, .1, subId, pcoords.data(), weights.data());
+            }
+
+            if(cellId >= 0) 
+                return j+1;
+            else if(std::find_if(std::cbegin(*target_range), std::cend(*target_range), [&](const auto& mem){ return squared_distance(mem.position, p) <= squared_threshold; }) !=  std::end(*target_range))
+                return j+1;
+            else
+                return j;
+        });
+
+        // const auto inside_points = tbb::parallel_reduce(tbb::blocked_range<typename decltype(grid.points)::const_iterator>( std::begin(grid.points), std::end(grid.points) ), (std::size_t)0 , [&](auto& r, std::size_t i) 
+        // {
+
+        //     return i + std::accumulate(std::begin(r), std::end(r), (std::size_t)0, [&](auto j, const auto& p)
+        //     {   
+        //         vtkIdType cellId = -1;
+        //         if(target_range->size() > 6)
+        //         {
+        //             std::array<double, 3> point {p(0), p(1), p(2)};
+        //             std::array<double, 3> pcoords {}; 
+        //             std::array<double, 4> weights {};
+        //             int subId;
+        //             cellId = delaunay->GetOutput()->FindCell(point.data(), NULL, 0, .1, subId, pcoords.data(), weights.data());
+        //         }
+        //         // else
+
+        //         if(cellId >= 0) 
+        //             return j+1;
+        //         else if(std::find_if(std::cbegin(*target_range), std::cend(*target_range), [&](const auto& mem){ return squared_distance(mem.position, p) <= squared_threshold; }) !=  std::end(*target_range))
+        //             return j+1;
+        //         else
+        //             return j;
+        //     });
+        // }, std::plus<std::size_t>(), tbb::static_partitioner());
+
+        volume += (float(inside_points) * std::pow(point_distance,3) );
     }
-    result->Update();
 }
 
 
@@ -139,7 +170,7 @@ float ClusterStructureParser::getSurfaceArea() const
 
 
 
-void ClusterStructureParser::printXML(PATH system_complete_path) const
+void ClusterStructureParser::printXML(PATH __attribute__((unused)) system_complete_path) const
 {
     vesDEBUG(__PRETTY_FUNCTION__)
 

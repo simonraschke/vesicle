@@ -18,8 +18,11 @@
 
 #include "parser.hpp"
 #include "enhance/concurrent_container.hpp"
+#include "enhance/random.hpp"
 #include "particles/particle_simple.hpp"
+#include "geometries/grid.hpp"
 #include <boost/filesystem.hpp>
+#include <tbb/parallel_for_each.h>
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
 #include <vtkMassProperties.h>
@@ -32,6 +35,7 @@
 #include <vtkAppendFilter.h>
 #include <vtkXMLPolyDataWriter.h>
 #include <vtkXMLUnstructuredGridWriter.h>
+#include <vtkUnstructuredGrid.h>
 
 
 // template<PERIODIC P>
