@@ -101,6 +101,7 @@ void DataCollector::collect()
 {
     while(!reader->isEOF() && Controller::SIGNAL == 0)
     {
+        auto start = std::chrono::high_resolution_clock::now();
         reader->readNextFrame(getParameters().analysis_frames);
         try
         {
@@ -120,7 +121,9 @@ void DataCollector::collect()
         {
             vesCRITICAL(e.what())
         }
-        vesLOG( "EOF: " << std::boolalpha << reader->isEOF() )
+        auto end = std::chrono::high_resolution_clock::now();   
+        vesLOG( "step took " << std::chrono::duration<double>(end-start).count() << " s" );
+        vesLOG( "EOF: " << std::boolalpha << reader->isEOF() );
     }
 }
 

@@ -36,13 +36,16 @@ void ClusterStructureParser::setTarget(enhance::ConcurrentDeque<ParticleSimple>&
 void ClusterStructureParser::parse()
 {
     check_for_aligned_box_setup();
-
-    // tbb::task_arena limited(1);
-    // limited.execute( [&]
+    
+    if(target_range->size() == 1)
     {
-        const float points_per_sigma = 5;
+        volume = enhance::sphere_volume(getParameters().analysis_cluster_distance_threshold);
+    }
+    else
+    {
+        const std::uint16_t points_per_sigma = 3;
         const float point_distance = getParameters().LJsigma / points_per_sigma;
-        GridGeometry grid;
+        
         {
             float x_center = 0.0;
             float y_center = 0.0;
@@ -54,21 +57,18 @@ void ClusterStructureParser::parse()
                 auto [min,max] = std::minmax_element(target_range->begin(), target_range->end(), [](const auto& p1, const auto& p2){ return p1.position(0) < p2.position(0); });
                 x_center = (max->position(0) + min->position(0))/2;
                 x_edge = max->position(0)-min->position(0) + getParameters().analysis_cluster_distance_threshold*2;
-                // vesLOG(min->position(0) << " " << max->position(0));
                 grid.x = x_edge * points_per_sigma + 1;
             }
             {
                 auto [min,max] = std::minmax_element(target_range->begin(), target_range->end(), [](const auto& p1, const auto& p2){ return p1.position(1) < p2.position(1); });
                 y_center = (max->position(1) + min->position(1))/2;
                 y_edge = max->position(1)-min->position(1) + getParameters().analysis_cluster_distance_threshold*2;
-                // vesLOG(min->position(1) << " " << max->position(1));
                 grid.y = y_edge * points_per_sigma + 1;
             }
             {
                 auto [min,max] = std::minmax_element(target_range->begin(), target_range->end(), [](const auto& p1, const auto& p2){ return p1.position(2) < p2.position(2); });
                 z_center = (max->position(2) + min->position(2))/2;
                 z_edge = max->position(2)-min->position(2) + getParameters().analysis_cluster_distance_threshold*2;
-                // vesLOG(min->position(2) << " " << max->position(2));
                 grid.z = z_edge * points_per_sigma + 1;
             }
             grid.generate();
@@ -76,75 +76,58 @@ void ClusterStructureParser::parse()
             grid.shift(cartesian(x_center, y_center, z_center)-cartesian(x_edge, y_edge, z_edge)/2.f);
         }
 
-
-        vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-        for(const auto& member : *target_range)
-        {
-            points->InsertNextPoint(member.position.data());
-        }
-        auto polydata = vtkSmartPointer<vtkPolyData>::New();
-        polydata->SetPoints(points);
-        auto delaunay = vtkSmartPointer<vtkDelaunay3D>::New();
-        delaunay->SetInputData(polydata);
-        delaunay->Update();
-
-        // append to overall mesh
-        {
-            // vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
-            // polydata->SetPoints(points);
-            result->AddInputData(polydata);
-        }
-
-        const auto squared_threshold = getParameters().analysis_cluster_distance_threshold*getParameters().analysis_cluster_distance_threshold;
+        inside_flags.assign(grid.points.size(), false);
         
-        std::array<double, 3> point {};
-        std::array<double, 3> pcoords {}; 
-        std::array<double, 4> weights {};
-        int subId;
+        // check for points inside trigonal mesh
+        {
+            auto points = vtkSmartPointer<vtkPoints>::New();
+            for(const auto& member : *target_range)
+            {
+                points->InsertNextPoint(member.position.data());
+            }
+            auto polydata = vtkSmartPointer<vtkPolyData>::New();
+            polydata->SetPoints(points);
+            auto delaunay = vtkSmartPointer<vtkDelaunay3D>::New();
+            delaunay->SetInputData(polydata);
+            delaunay->Update();
 
-        const auto inside_points = std::accumulate(std::begin(grid.points), std::end(grid.points), (std::size_t)0, [&](auto j, const auto& p)
-        {   
-            point = {p(0), p(1), p(2)};
-            vtkIdType cellId = -1;
+            // append to overall mesh
+
+            std::array<double, 3> point {};
+            std::array<double, 3> pcoords {}; 
+            std::array<double, 4> weights {};
+            int subId;
+
             if(target_range->size() > 6)
             {
-                cellId = delaunay->GetOutput()->FindCell(point.data(), NULL, 0, .1, subId, pcoords.data(), weights.data());
+                for(std::size_t i = 0; i < grid.points.size(); ++i)
+                {
+                    const auto p = grid.points[i];
+                    point = {p(0), p(1), p(2)};
+                    vtkIdType cellId = -1;
+                    cellId = delaunay->GetOutput()->FindCell(point.data(), NULL, 0, .1, subId, pcoords.data(), weights.data());
+                    if(cellId >= 0) 
+                        inside_flags[i] = true;
+                }
             }
+        }
 
-            if(cellId >= 0) 
-                return j+1;
-            else if(std::find_if(std::cbegin(*target_range), std::cend(*target_range), [&](const auto& mem){ return squared_distance(mem.position, p) <= squared_threshold; }) !=  std::end(*target_range))
-                return j+1;
-            else
-                return j;
-        });
+        // check for points in proximity to cluster particles
+        {
+            const auto squared_threshold = getParameters().analysis_cluster_distance_threshold*getParameters().analysis_cluster_distance_threshold;
+            tbb::parallel_for(std::size_t(0), grid.points.size(), [&](auto i)
+            {   
+                if(inside_flags[i]) 
+                    return;
 
-        // const auto inside_points = tbb::parallel_reduce(tbb::blocked_range<typename decltype(grid.points)::const_iterator>( std::begin(grid.points), std::end(grid.points) ), (std::size_t)0 , [&](auto& r, std::size_t i) 
-        // {
+                const auto p = grid.points[i];
+                if(std::find_if(std::cbegin(*target_range), std::cend(*target_range), [&](const auto& mem){ return squared_distance(mem.position, p) <= squared_threshold; }) !=  std::end(*target_range))
+                    inside_flags[i] = true;
+            });
+        }
 
-        //     return i + std::accumulate(std::begin(r), std::end(r), (std::size_t)0, [&](auto j, const auto& p)
-        //     {   
-        //         vtkIdType cellId = -1;
-        //         if(target_range->size() > 6)
-        //         {
-        //             std::array<double, 3> point {p(0), p(1), p(2)};
-        //             std::array<double, 3> pcoords {}; 
-        //             std::array<double, 4> weights {};
-        //             int subId;
-        //             cellId = delaunay->GetOutput()->FindCell(point.data(), NULL, 0, .1, subId, pcoords.data(), weights.data());
-        //         }
-        //         // else
+        volume = (float(std::count(std::begin(inside_flags), std::end(inside_flags), true)) * std::pow(point_distance,3) );
 
-        //         if(cellId >= 0) 
-        //             return j+1;
-        //         else if(std::find_if(std::cbegin(*target_range), std::cend(*target_range), [&](const auto& mem){ return squared_distance(mem.position, p) <= squared_threshold; }) !=  std::end(*target_range))
-        //             return j+1;
-        //         else
-        //             return j;
-        //     });
-        // }, std::plus<std::size_t>(), tbb::static_partitioner());
-
-        volume += (float(inside_points) * std::pow(point_distance,3) );
     }
 }
 
@@ -177,7 +160,30 @@ void ClusterStructureParser::printXML(PATH __attribute__((unused)) system_comple
     if(!result)
         throw std::logic_error("ClusterStructureParser::result is nullptr. No structure");
 
-    vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
+    auto points = vtkSmartPointer<vtkPoints>::New();
+    std::for_each(std::begin(grid.points), std::end(grid.points), 
+        [&](const auto& p){ points->InsertNextPoint(p.data()); });
+
+    auto points_polydata = vtkSmartPointer<vtkPolyData>::New();
+    points_polydata->SetPoints(points);
+
+    auto vertexFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
+    vertexFilter->SetInputData(points_polydata);
+    vertexFilter->Update();    
+
+    auto polydata = vtkSmartPointer<vtkPolyData>::New();
+    polydata->ShallowCopy(vertexFilter->GetOutput());
+
+    auto colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
+    colors->SetNumberOfComponents(3);
+    colors->SetName("Colors");
+    std::for_each(std::begin(inside_flags), std::end(inside_flags), 
+        [&](auto f){ colors->InsertNextTypedTuple(f ? inside.data() : outside.data()); });
+
+    polydata->GetPointData()->SetScalars(colors);
+    result->AddInputData(polydata);
+
+    auto writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
     writer->SetInputConnection(result->GetOutputPort());
     writer->SetFileName(system_complete_path.c_str());
     writer->Write();

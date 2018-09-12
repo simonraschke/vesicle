@@ -24,6 +24,7 @@
 #include <boost/filesystem.hpp>
 #include <tbb/parallel_for_each.h>
 #include <vtkPoints.h>
+#include <vtkPointData.h>
 #include <vtkPolyData.h>
 #include <vtkMassProperties.h>
 #include <vtkSmartPointer.h>
@@ -36,6 +37,7 @@
 #include <vtkXMLPolyDataWriter.h>
 #include <vtkXMLUnstructuredGridWriter.h>
 #include <vtkUnstructuredGrid.h>
+#include <vtkVertexGlyphFilter.h>
 
 
 // template<PERIODIC P>
@@ -72,8 +74,16 @@ public:
     float getSurfaceArea() const;
 
 protected:
+    GridGeometry grid {};
+    std::deque<bool> inside_flags {};
     float volume = 0;
     float surface_area = 0;
 private:
     enhance::observer_ptr<enhance::ConcurrentDeque<ParticleSimple>> target_range {nullptr};
+
+    // std::array<unsigned char,3> red = {255, 0, 0};
+    // std::array<unsigned char,3> green = {0, 255, 0};
+    // std::array<unsigned char,3> blue = {0, 0, 255};
+    std::array<unsigned char,3> outside = {0, 0, 0};
+    std::array<unsigned char,3> inside = {255, 153, 51};
 };
