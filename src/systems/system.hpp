@@ -149,6 +149,19 @@ void System::distributeParticles()
     dist.setParameters(getParameters());
     dist.check_for_aligned_box_setup();
     dist(&particles);
+    tbb::parallel_for_each(particles.begin(), particles.end(), [](const auto& p)
+    {   
+        const auto coords = p->coords();
+        const auto orientation = p->orientation();
+
+        if(std::isnan(coords(0))) { throw std::logic_error("particle coord has nan"); }
+        if(std::isnan(coords(1))) { throw std::logic_error("particle coord has nan"); }
+        if(std::isnan(coords(2))) { throw std::logic_error("particle coord has nan"); }
+
+        if(std::isnan(orientation(0))) { throw std::logic_error("particle orientation has nan"); }
+        if(std::isnan(orientation(1))) { throw std::logic_error("particle orientation has nan"); }
+        if(std::isnan(orientation(2))) { throw std::logic_error("particle orientation has nan"); }
+    });
 }
 
 

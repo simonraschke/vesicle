@@ -97,6 +97,7 @@ void TrajectoryWriterGro::write(const float& time_elapsed, bool FORCE)
         const auto& target = target_range->operator[](residue);
         // const cartesian& coords = scaleDownForVMD(target->coords());
         const cartesian& coords = scaleDown( target->coords());
+
         std::string color_up;
         std::string color_down;
         switch(target->getType())
@@ -140,9 +141,19 @@ void TrajectoryWriterGro::write(const float& time_elapsed, bool FORCE)
         }
         else
         {
-            const cartesian orientation = target->orientation().normalized();
+            const cartesian orientation = target->getType() == OSMOTIC ? cartesian(0,0,0) : target->orientation().normalized();
             const cartesian displacement = target->orientation() - target->orientationOld();
-            
+            #ifndef NDEBUG
+            if(std::isnan(coords(0))) { throw std::logic_error("particle coord has nan"); }
+            if(std::isnan(coords(1))) { throw std::logic_error("particle coord has nan"); }
+            if(std::isnan(coords(2))) { throw std::logic_error("particle coord has nan"); }
+            if(std::isnan(orientation(0))) { throw std::logic_error("particle orientation has nan"); }
+            if(std::isnan(orientation(1))) { throw std::logic_error("particle orientation has nan"); }
+            if(std::isnan(orientation(2))) { throw std::logic_error("particle orientation has nan"); }
+            if(std::isnan(displacement(0))) { throw std::logic_error("particle displacement has nan"); }
+            if(std::isnan(displacement(1))) { throw std::logic_error("particle displacement has nan"); }
+            if(std::isnan(displacement(2))) { throw std::logic_error("particle displacement has nan"); }
+            #endif
             FILE << std::setw(5) <<  residue+1;
             FILE << std::setw(5) <<  target->name();
             FILE << std::setw(5) <<  color_up;
