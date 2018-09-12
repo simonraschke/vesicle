@@ -12,11 +12,10 @@ add_executable(vesicle_analysis ${vesicle_analysis_source_files})
 
 set_target_properties(vesicle_analysis PROPERTIES RUNTIME_OUTPUT_DIRECTORY "~/bin/")
 set_target_properties(vesicle_analysis PROPERTIES CXX_STANDARD 17)
-target_compile_options(vesicle_analysis PRIVATE -Wall -Wextra -Wpedantic -fmax-errors=3 -Weffc++ -march=nocona -std=c++17)
+target_compile_options(vesicle_analysis PRIVATE -Wall -Wextra -Wpedantic -fmax-errors=3 -Weffc++ -march=nocona -std=c++1z)
 target_compile_definitions(vesicle_analysis PUBLIC 
     USE_MATH_DEFINES
     EIGEN_FAST_MATH=1 
-    EIGEN_MAX_CPP_VER=14
     EIGEN_DONT_PARALLELIZE
 )
 

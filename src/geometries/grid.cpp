@@ -38,12 +38,23 @@ void GridGeometry::generate()
 {
     points.reserve(x*y*z);
 
-    for(std::size_t i = 0; i<x; ++i)
-        for(std::size_t j = 0; j<y; ++j)
-            for(std::size_t k = 0; k<z; ++k)    
-            {
-                points.emplace_back(cartesian(i,j,k));
+    tbb::parallel_for( tbb::blocked_range3d<std::size_t>(0, x, 0, y, 0, z),
+    [&]( const tbb::blocked_range3d<std::size_t> &r ) {
+        for(std::size_t i=r.pages().begin(), i_end=r.pages().end(); i<i_end; i++){
+            for(std::size_t j=r.rows().begin(), j_end=r.rows().end(); j<j_end; j++){
+                for(std::size_t k=r.cols().begin(), k_end=r.cols().end(); k<k_end; k++){
+                    points.emplace_back(cartesian(i,j,k));
+                }
             }
+        }
+    });
+
+    // for(std::size_t i = 0; i<x; ++i)
+    //     for(std::size_t j = 0; j<y; ++j)
+    //         for(std::size_t k = 0; k<z; ++k)    
+    //         {
+    //             points.emplace_back(cartesian(i,j,k));
+    //         }
 }
 
 

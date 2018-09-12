@@ -71,6 +71,9 @@ namespace enhance
         const member_t& back() const;
         member_t& front();
         const member_t& front() const;
+        container_t& data();
+        const container_t& data() const;
+
         
         // information
         std::size_t size() const;
@@ -263,6 +266,22 @@ namespace enhance
     inline const typename ConcurrentContainer<T,Container>::member_t& ConcurrentContainer<T,Container>::front() const
     {
         return members.front();
+    }
+
+
+
+    template<typename T,template <typename, typename> class Container>
+    inline typename ConcurrentContainer<T,Container>::container_t& ConcurrentContainer<T,Container>::data()
+    {
+        return members;
+    }
+
+
+
+    template<typename T,template <typename, typename> class Container>
+    inline const typename ConcurrentContainer<T,Container>::container_t& ConcurrentContainer<T,Container>::data() const
+    {
+        return members;
     }
 
 

@@ -19,6 +19,7 @@
 #include "definitions.hpp"
 #include "enhance/math_utility.hpp"
 #include <cmath>
+#include <tbb/tbb.h>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
 
@@ -33,7 +34,7 @@ struct Geometry
     virtual void scale(const cartesian&) = 0;
     virtual void shift(const cartesian&) = 0;
 
-    std::vector<cartesian> points {};
+    tbb::concurrent_vector<cartesian> points {};
 
 protected:
     Geometry() = default;
