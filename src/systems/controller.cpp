@@ -139,6 +139,7 @@ void SimulationControl::setup()
             system.distributeParticles<TrajectoryDistributorGro>();
         }
 
+
         if(GLOBAL::getInstance().mode == GLOBAL::RESTART)
         {
             TrajectoryReaderGro reader;

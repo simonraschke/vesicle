@@ -236,6 +236,7 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
                     while((particle.coords() - getCenter()).norm() < radius-getParameters().kappa*1.1 || conflicting_placement(range,range->at(i)))
                     {
                         particle.setCoords(randomCoords());
+                        // vesLOG(particle.coords().format(ROWFORMAT));
                         if( ++try_counter > 1e6 )
                         {
                             vesWARNING("placing particle exceeded 1M tries")
@@ -249,17 +250,20 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
                     // particle.setCoords(vector); 
                 }
                 ++osmotic_counter;
+                particle.setOrientation(cartesian(0,0,0));
                 break;
             default :
                 throw std::logic_error("encountered default in switch statement");
         }
     }
     
-    // std::for_each(range->begin(), range->end(), [&](auto& p) 
-    // {
-    //     if(conflicting_placement(range,p))
-    //         vesLOG("particle " << p->ID << " (" << p->getType() << ") placement invalid")
-    // });
+    tbb::parallel_for_each(range->begin(), range->end(), [](const auto& p)
+    {   
+        const auto coords = p->coords();
+        if(std::isnan(coords(0))) { throw std::logic_error("particle coord has nan"); }
+        if(std::isnan(coords(1))) { throw std::logic_error("particle coord has nan"); }
+        if(std::isnan(coords(2))) { throw std::logic_error("particle coord has nan"); }
+    });
 }
 
 
