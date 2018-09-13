@@ -3,7 +3,7 @@ message(${CMAKE_CURRENT_SOURCE_DIR})
 find_package(Boost COMPONENTS program_options system filesystem REQUIRED)
 
 find_package( PkgConfig )
-pkg_check_modules( EIGEN3 REQUIRED eigen3 )
+pkg_check_modules( EIGEN3 REQUIRED )
 include_directories( ${EIGEN3_INCLUDE_DIRS} )
 
 file(GLOB vesicle_source_files
@@ -20,7 +20,7 @@ target_compile_definitions(vesicle_lib PRIVATE
     EIGEN_MAX_CPP_VER=17
     EIGEN_DONT_PARALLELIZE
 )
-target_compile_options(vesicle_lib PRIVATE -Wall -Wextra -Wpedantic -fmax-errors=3 -Weffc++ -march=nocona -std=c++17)
+target_compile_options(vesicle_lib PRIVATE -Wall -Wextra -Wpedantic -Weffc++ -march=nocona -std=c++17)
 
 target_link_libraries(vesicle_lib enhance tbb pthread tbbmalloc boost_system boost_filesystem boost_program_options)
 target_include_directories(vesicle_lib PUBLIC ${PROJECT_SOURCE_DIR})

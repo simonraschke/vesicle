@@ -63,7 +63,13 @@ void ClusterParser::setTarget(iterator_t _begin, iterator_t _end)
     particles.clear();
     tbb::parallel_for_each(_begin, _end, [&](const auto& particle)
     {
+        #ifdef __clang_major__
+        particles.push_back(particle.get());
+        #elif  __GNUC__
         particles.emplace_back(particle.get());
+        #else
+            #error no valid compiler
+        #endif
     });
     assert(particles.size() == (std::size_t)std::abs(std::distance(_begin,_end)));
 

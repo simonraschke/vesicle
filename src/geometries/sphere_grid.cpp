@@ -54,12 +54,29 @@ SphereGridGeometry::SphereGridGeometry(std::size_t _x, std::size_t _y, std::size
 
 void SphereGridGeometry::generate()
 {
+    tbb::parallel_for( tbb::blocked_range3d<std::size_t>(0, x, 0, y, 0, z),
+    [&]( const tbb::blocked_range3d<std::size_t> &r ) {
+        for(std::size_t i=r.pages().begin(), i_end=r.pages().end(); i<i_end; i++){
+            for(std::size_t j=r.rows().begin(), j_end=r.rows().end(); j<j_end; j++){
+                for(std::size_t k=r.cols().begin(), k_end=r.cols().end(); k<k_end; k++){
+                    #ifdef __clang_major__
+                    points.push_back(cartesian(i,j,k));
+                    #elif  __GNUC__
+                    points.emplace_back(cartesian(i,j,k));
+                    #else
+                        #error no valid compiler
+                    #endif
+                }
+            }
+        }
+    });
+
     // make the grid
-    points.reserve(x*y*z);
-    for(std::size_t i = 0; i<x; ++i)
-        for(std::size_t j = 0; j<y; ++j)
-            for(std::size_t k = 0; k<z; ++k) 
-                points.emplace_back(cartesian(i,j,k));
+    // points.reserve(x*y*z);
+    // for(std::size_t i = 0; i<x; ++i)
+    //     for(std::size_t j = 0; j<y; ++j)
+    //         for(std::size_t k = 0; k<z; ++k)
+            
 
     set_sphere_points_new();
 }

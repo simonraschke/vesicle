@@ -19,7 +19,6 @@ import pprint
 import itertools
 import time
 import multiprocessing
-# import tbb
 
 from sklearn.cluster import DBSCAN
 

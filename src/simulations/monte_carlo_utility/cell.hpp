@@ -59,10 +59,20 @@ public:
     bool try_add(particle_type&);
     std::vector<std::reference_wrapper<particle_type>> getLeavers();
     std::size_t size() const { return particles.size(); }
+
+    #ifdef __clang_major__
+    auto begin() const {return std::begin(particles); }
+    auto end() const {return std::end(particles); }
+    auto cbegin() const {return std::cbegin(particles); }
+    auto cend() const {return std::cend(particles); }
+    #elif  __GNUC__
     constexpr auto begin() const {return std::begin(particles); }
     constexpr auto end() const {return std::end(particles); }
     constexpr auto cbegin() const {return std::cbegin(particles); }
     constexpr auto cend() const {return std::cend(particles); }
+    #else
+        #error no valid compiler
+    #endif
 
     //state
     CellState state {};

@@ -43,7 +43,13 @@ namespace enhance
 
 
     template <typename... Args>
+    #ifdef __clang_major__
+    inline std::string toStringViaStream(Args&&... args)
+    #elif  __GNUC__
     constexpr inline std::string toStringViaStream(Args&&... args)
+    #else
+        #error no valid compiler
+    #endif
     {
         std::stringstream stream;
         using expander = int[];

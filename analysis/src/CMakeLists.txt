@@ -19,7 +19,7 @@ file(GLOB vesicle_analysis_lib_source_files
 
 add_library(vesicle_analysis_lib STATIC ${vesicle_analysis_lib_source_files})
 set_target_properties(vesicle_analysis_lib PROPERTIES CXX_STANDARD 17)
-target_compile_options(vesicle_analysis_lib PRIVATE -Wall -Wextra -Wpedantic -fmax-errors=3 -Weffc++ -march=nocona  -std=c++17)
+target_compile_options(vesicle_analysis_lib PRIVATE -Wall -Wextra -Wpedantic -Weffc++ -march=nocona  -std=c++17)
 
 target_link_libraries(vesicle_analysis_lib vesicle_lib enhance tbb pthread tbbmalloc ${VTK_LIBRARIES} ${_hdf5_libs})
 target_include_directories(vesicle_analysis_lib PUBLIC ${PROJECT_SOURCE_DIR})

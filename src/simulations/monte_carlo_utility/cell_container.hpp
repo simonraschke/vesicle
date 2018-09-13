@@ -44,8 +44,15 @@ public:
     template<typename CONTAINER>
     void deployParticles(const CONTAINER&);
 
+    #ifdef __clang_major__
+    auto begin() {return std::begin(cells); }
+    auto end() {return std::end(cells); }
+    #elif  __GNUC__
     constexpr auto begin() {return std::begin(cells); }
     constexpr auto end() {return std::end(cells); }
+    #else
+        #error no valid compiler
+    #endif
 
     std::size_t membersContained() const;
 

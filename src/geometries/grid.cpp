@@ -43,7 +43,13 @@ void GridGeometry::generate()
         for(std::size_t i=r.pages().begin(), i_end=r.pages().end(); i<i_end; i++){
             for(std::size_t j=r.rows().begin(), j_end=r.rows().end(); j<j_end; j++){
                 for(std::size_t k=r.cols().begin(), k_end=r.cols().end(); k<k_end; k++){
+                    #ifdef __clang_major__
+                    points.push_back(cartesian(i,j,k));
+                    #elif  __GNUC__
                     points.emplace_back(cartesian(i,j,k));
+                    #else
+                        #error no valid compiler
+                    #endif
                 }
             }
         }
