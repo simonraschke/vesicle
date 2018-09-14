@@ -46,7 +46,7 @@ int main(int argc, const char *argv[])
     tbb::task_scheduler_init init(1);
     tbb::task_arena limited(1);
 #else
-    tbb::task_scheduler_init init();
+    tbb::task_scheduler_init init(tbb::task_scheduler_init::automatic);
     tbb::task_arena limited(prms.cpu_threads);
 #endif
     

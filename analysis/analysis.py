@@ -211,15 +211,15 @@ if args.rdf:
 
 pool = multiprocessing.Pool(maxtasksperchild=1000)
 
-for snapshot in universe.trajectory[-5:]:
+for snapshot in universe.trajectory[:]:
     print("\n",snapshot)
-    t_start = time.time()
     dimensions = universe.dimensions[:3]
 
     # first general DBSCAN
     all_com = [ res.atoms.center_of_geometry() for res in nonsolvent.residues ]
-    dbscan = DBSCAN(min_samples=1,eps=args.clstr_eps, metric=PBC_distance, n_jobs=-1, algorithm='brute').fit(all_com)
-    t_dbscan = time.time()-t_start
+    t_start = time.perf_counter()
+    dbscan = DBSCAN(min_samples=1,eps=args.clstr_eps, metric=PBC_distance, n_jobs=-1).fit(all_com)
+    t_dbscan = time.perf_counter()-t_start
     print("DBSCAN took", t_dbscan, "seconds")
     core_samples_mask = np.zeros_like(dbscan.labels_, dtype=bool)
     core_samples_mask[dbscan.core_sample_indices_] = True
@@ -239,7 +239,7 @@ for snapshot in universe.trajectory[-5:]:
 
     DSET_clusters = CLUSTERGROUP.create_dataset("time"+str(int(snapshot.time)), (len(clusters.keys()),len(clusters[max(clusters, key= lambda x: len(set(clusters[x])))])+5), dtype=np.float16, fillvalue=-1)
     
-    t_basic = time.time()-t_start
+    t_basic = time.perf_counter()-t_start
     print("basic analysis took", t_basic, "seconds")
 
     results = {}
