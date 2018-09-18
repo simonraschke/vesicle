@@ -11,6 +11,7 @@ mpl.use('qt5agg')
 import matplotlib.pyplot as plt
 import h5py
 import pprint
+import shutil
 import time
 import analysis_helper_functions as helper
 
