@@ -84,7 +84,7 @@ datafile["attributes"] = attributes
 
 t_start = time.perf_counter()
 for snapshot in universe.trajectory[:100]:
-    print("\n",snapshot)
+    # print("\n",snapshot)
     dimensions = universe.dimensions[:3]
 
     t_prep = time.perf_counter()
