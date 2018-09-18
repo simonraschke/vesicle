@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import h5py
 import pprint
 import shutil
+import subprocess
 import time
 import analysis_helper_functions as helper
 
@@ -54,7 +55,7 @@ else:
         print("found gmx")
         trajectory = "trajectory.xtc"
         cmd = "gmx trjconv -f "+topology+" -o "+trajectory
-        pprint.pprint(subprocess.getstatusoutput(cmd))
+        print(subprocess.getstatusoutput(cmd))
     else:
         raise Exception("gmx not found")
 
