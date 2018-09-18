@@ -1,0 +1,160 @@
+#!/usr/bin/python3
+
+import sys
+import os
+import argparse
+import numpy as np
+import pandas as pd
+import MDAnalysis as mda
+import matplotlib as mpl
+mpl.use('qt5agg')
+import matplotlib.pyplot as plt
+import h5py
+import pprint
+import time
+import analysis_helper_functions as helper
+
+from mpl_toolkits.mplot3d import Axes3D
+from sklearn.cluster import DBSCAN
+from sklearn.preprocessing import normalize
+from MDAnalysis.lib.distances import distance_array
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--top", type=str, default="trajectory.gro", help="path to topology file")
+parser.add_argument("--traj", type=str, default=None, help="path to trajectory file")
+parser.add_argument("--config", type=str, default="config_analysis.ini", help="path to config file")
+parser.add_argument("--solvent", type=str, nargs='*', default=["resname OSMOT"], help="solvent selection rule")
+parser.add_argument("--nonsolvent", type=str, nargs='*', default=["resname MOBIL","resname FRAME"], help="nonsolvent selection rule")
+parser.add_argument("--clstr_eps", type=float, default=14, help="max distance for cluster algorithm")
+parser.add_argument("--forcenew", action='store_true', help="force new hdf5 file")
+args = parser.parse_args()
+
+
+
+topology = args.top
+trajectory = args.traj
+
+
+
+# prepare input files
+if os.path.exists(topology):
+    print("found topology:", topology)
+else:
+    raise Exception("unable to find topology "+str(topology))
+
+if trajectory != None:
+    if os.path.exists(trajectory):
+        print("found trajectory:", trajectory)
+    else:
+        raise Exception("unable to find trajectory "+str(trajectory))
+else:
+    print("try to convert topology to .xtc trajectory")
+    if shutil.which("gmx") != None:
+        print("found gmx")
+        trajectory = "trajectory.xtc"
+        cmd = "gmx trjconv -f "+topology+" -o "+trajectory
+        pprint.pprint(subprocess.getstatusoutput(cmd))
+    else:
+        raise Exception("gmx not found")
+
+
+
+# loading the universe
+universe = mda.Universe(topology, trajectory)
+print("\n\nloaded universe", universe)
+#split into residue groups
+solvent = sum(universe.select_atoms(x) for x in args.solvent)
+nonsolvent = sum(universe.select_atoms(x) for x in args.nonsolvent)
+print("got", len(solvent.residues), "solvent residues and", len(nonsolvent.residues), "nonsolvent residues")
+
+
+
+# creating the storage file object
+if args.forcenew and os.path.exists("data.h5"):
+    os.remove("data.h5")
+datafile = pd.HDFStore("data.h5")
+
+
+# saving attributes from args.config file
+attributes = pd.DataFrame(helper.getAttributeDict(args.config))
+print(attributes)
+datafile["attributes"] = attributes
+
+
+
+t_start = time.perf_counter()
+for snapshot in universe.trajectory[:100]:
+    print("\n",snapshot)
+    dimensions = universe.dimensions[:3]
+
+    t_prep = time.perf_counter()
+    #get all positions
+    df = pd.DataFrame(snapshot.positions, columns=['x','y','z'])
+    # calculate center_of_geometries
+    coms = df.groupby(np.arange(len(df))//2).mean()
+    # calculate orientations (upper atom minus com)
+    orientations = pd.DataFrame(normalize(df[0::2].reset_index(drop=True).sub(coms)), columns=['ux','uy','uz'])
+    # concatenate both
+    particledata = pd.concat([coms,orientations], axis=1).reset_index()
+
+    # scan for clusters
+    distances_array = distance_array(coms.values, coms.values, box=dimensions)
+    dbscan = DBSCAN(min_samples=2, eps=args.clstr_eps, metric="precomputed", n_jobs=-1).fit(distances_array)
+    labels = pd.DataFrame(dbscan.labels_, columns=['cluster'])
+
+    # add to data and sort for cluster id
+    particledata["cluster"] = labels
+    particledata.sort_values('cluster', inplace=True)
+
+    # create cluster dataframe
+    # clusterdata = particledata.groupby(["cluster"]).size().reset_index(name='particles').drop('cluster', axis=1)
+    # print(f"prep took     {time.perf_counter()-t_prep:.4f} seconds")
+
+    t_sub = time.perf_counter()
+    # subcluster identification
+    subcluster_labels = []
+    for ID, group in particledata.groupby(["cluster"], as_index=False):
+        subcluster_labels.extend(helper.getSubclusterLabels(ID, group, args.clstr_eps))
+        
+    # add the subcluster IDs
+    particledata["subcluster"] = subcluster_labels
+    # print(f"subclstr took {time.perf_counter()-t_sub:.4f} seconds")
+
+    t_shift = time.perf_counter()
+    particledata["shiftx"] = particledata["x"]
+    particledata["shifty"] = particledata["y"]
+    particledata["shiftz"] = particledata["z"]
+    # shift subclusters towards largest subcluster
+    for ID, group in particledata.groupby("cluster"):
+        newx, newy, newz = helper.getShiftedCoordinates(ID, group, args.clstr_eps, dimensions)
+        particledata.loc[newx.index, "shiftx"] = newx.values
+        particledata.loc[newy.index, "shifty"] = newy.values
+        particledata.loc[newz.index, "shiftz"] = newz.values
+    # print(f"shift took    {time.perf_counter()-t_shift:.4f} seconds")
+
+    t_volume = time.perf_counter()
+    particledata["volume"] = 0.0
+    # get the volume per cluster
+    for ID, group in particledata.groupby(["cluster"]):
+        volume = helper.getClusterVolume(ID, group, args.clstr_eps, 4)
+        particledata.loc[group.index, "volume"] = volume
+        if volume / np.cumprod(dimensions)[-1] > 0.5:
+            raise Exception(f"volume of cluster {ID} is {volume / np.cumprod(dimensions)[-1]} of box volume")
+
+    # plt.show()
+    # plt.savefig("cluster.png", dpi=600)
+    # print(f"volume took   {time.perf_counter()-t_volume:.4f} seconds")
+
+    t_write = time.perf_counter()
+    # print(particledata)
+    # df = particledata.groupby("cluster").agg({'index':'count', 'volume':'mean'})
+    # print(df)
+    # print(df.loc[df['index']< 30].corr())
+    # print(df.loc[].corr())
+    datafile[f"time{int(snapshot.time)}"] = particledata
+    # datafile["time"+str(int(snapshot.time))+"/cluster"] = clusterdata
+    # print(f"write took    {time.perf_counter()-t_write:.4f} seconds")
+    
+    t_end = time.perf_counter()
+    print(f"time {snapshot.time} took {t_end-t_start:.4f} seconds")
+    t_start = time.perf_counter()
