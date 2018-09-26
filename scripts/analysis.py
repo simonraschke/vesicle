@@ -33,6 +33,9 @@ parser.add_argument("--forcenew", action='store_true', help="force new hdf5 file
 args = parser.parse_args()
 
 
+pp = pprint.PrettyPrinter(indent=4, compact=False)
+np.set_printoptions(suppress=True)
+
 
 topology = args.top
 trajectory = args.traj
