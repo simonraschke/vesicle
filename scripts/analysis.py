@@ -27,7 +27,8 @@ parser.add_argument("--traj", type=str, default=None, help="path to trajectory f
 parser.add_argument("--config", type=str, default="config_analysis.ini", help="path to config file")
 parser.add_argument("--solvent", type=str, nargs='*', default=["resname OSMOT"], help="solvent selection rule")
 parser.add_argument("--nonsolvent", type=str, nargs='*', default=["resname MOBIL","resname FRAME"], help="nonsolvent selection rule")
-parser.add_argument("--clstr_eps", type=float, default=14, help="max distance for cluster algorithm")
+parser.add_argument("--clstr_eps", type=float, default=12, help="max distance for cluster algorithm")
+parser.add_argument("--start", type=float, default=-1, help="starting time of analysis")
 parser.add_argument("--forcenew", action='store_true', help="force new hdf5 file")
 args = parser.parse_args()
 
@@ -55,7 +56,7 @@ else:
         print("found gmx")
         trajectory = "trajectory.xtc"
         cmd = "gmx trjconv -f "+topology+" -o "+trajectory
-        print(subprocess.getstatusoutput(cmd))
+        pp.pprint(subprocess.getstatusoutput(cmd))
     else:
         raise Exception("gmx not found")
 
@@ -77,8 +78,9 @@ if args.forcenew and os.path.exists("data.h5"):
 datafile = pd.HDFStore("data.h5")
 
 
+
 # saving attributes from args.config file
-attributes = pd.DataFrame(helper.getAttributeDict(args.config))
+attributes = pd.DataFrame(helper.getAttributeDict(args.config, universe.trajectory[0].dimensions))
 print(attributes)
 datafile["attributes"] = attributes
 
@@ -87,6 +89,8 @@ datafile["attributes"] = attributes
 t_start = time.perf_counter()
 for snapshot in universe.trajectory:
     # print("\n",snapshot)
+    if snapshot.time < args.start:
+        continue
     dimensions = universe.dimensions[:3]
 
     t_prep = time.perf_counter()
@@ -99,6 +103,10 @@ for snapshot in universe.trajectory:
     # concatenate both
     particledata = pd.concat([coms,orientations], axis=1).reset_index()
 
+    # add particle (residue) names
+    particledata["resname"] = universe.atoms.residues.resnames
+    particledata["resid"] = universe.atoms.residues.resids
+
     # scan for clusters
     distances_array = distance_array(coms.values, coms.values, box=dimensions)
     dbscan = DBSCAN(min_samples=2, eps=args.clstr_eps, metric="precomputed", n_jobs=-1).fit(distances_array)
@@ -107,6 +115,8 @@ for snapshot in universe.trajectory:
     # add to data and sort for cluster id
     particledata["cluster"] = labels
     particledata.sort_values('cluster', inplace=True)
+    unique, counts = np.unique(labels, return_counts=True)
+    particledata["clustersize"] = particledata["cluster"].apply( lambda x: counts[np.where(unique == x)][0] )
 
     # create cluster dataframe
     # clusterdata = particledata.groupby(["cluster"]).size().reset_index(name='particles').drop('cluster', axis=1)
@@ -133,6 +143,15 @@ for snapshot in universe.trajectory:
         particledata.loc[newy.index, "shifty"] = newy.values
         particledata.loc[newz.index, "shiftz"] = newz.values
     # print(f"shift took    {time.perf_counter()-t_shift:.4f} seconds")
+
+    # t_order = time.perf_counter()
+    # get the order of particle in cluster
+    particledata["order"] = 0.0
+    for ID, group in particledata.groupby("cluster"):
+        orders = helper.getOrder(ID, group)
+        particledata.loc[group.index, "order"] = orders
+    # print(particledata.groupby("clustersize")["order"].mean())
+    # print(f"shift took    {time.perf_counter()-t_order:.4f} seconds")
 
     t_volume = time.perf_counter()
     particledata["volume"] = 0.0

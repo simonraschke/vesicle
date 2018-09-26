@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import pandas as pd
 import scipy
@@ -7,6 +8,7 @@ from MDAnalysis.analysis.rdf import InterRDF
 from MDAnalysis.lib.distances import distance_array
 from sklearn.cluster import DBSCAN
 from scipy import ndimage
+from sklearn.preprocessing import normalize
 
 
 # iterate a file linewise
@@ -34,10 +36,13 @@ def fileValueFromKeyword(filepath, keyword, seperator='='):
 
 
 
-def getAttributeDict(filename):
+def getAttributeDict(filename, dimensions):
     return {
         'mobile': fileValueFromKeyword(filename, 'mobile', '='),
         'density': fileValueFromKeyword(filename, 'density', '='),
+        'boxx': dimensions[0],
+        'boxy': dimensions[1],
+        'boxz': dimensions[2],
         'temperature': fileValueFromKeyword(filename, 'temperature', '='),
         'time_max': fileValueFromKeyword(filename, 'time_max', '='),
         'kappa': fileValueFromKeyword(filename, 'kappa', '='),
@@ -91,7 +96,7 @@ def getShiftedCoordinates(ID, group, eps, dimensions):
 
 
 def getClusterVolume(ID, group, eps, pps):
-    volume = 0
+    # volume = 0
     if ID == -1:
         # single particles as spheres
         return np.pi * (eps**3) * 4/3
@@ -116,3 +121,13 @@ def getClusterVolume(ID, group, eps, pps):
 
         # z,x,y = isclose.nonzero()
         # ax.scatter(x+,y,z, s=2)
+
+
+
+def getOrder(ID, group):
+    if ID == -1:
+        return group["order"].values
+    else:
+        shifted_coms = pd.concat([group['shiftx'], group['shifty'], group['shiftz']], axis=1)
+        normalized_orientations = pd.concat([group['ux'], group['uy'], group['uz']], axis=1)
+        return (normalized_orientations.values*normalize(shifted_coms.sub(shifted_coms.mean().values))).sum(axis=1)
