@@ -12,7 +12,7 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 # Building the libraries
 add_subdirectory(enhance)
 add_subdirectory(src)
-add_subdirectory(analysis)
+# add_subdirectory(analysis)
 
 # specific flags
 set(CMAKE_CXX_FLAGS_DEBUG "-Og -g3 -ggdb -D_DEBUG -DDEBUG -frounding-math -fsignaling-nans")
