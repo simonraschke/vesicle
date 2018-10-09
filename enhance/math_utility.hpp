@@ -20,7 +20,11 @@
 #include <cstdint>
 #include <sstream>
 #include <exception>
+#if __has_include(<Eigen/Core>)
+#include <Eigen/Core>
+#elif __has_include(<eigen3/Eigen/Core>)
 #include <eigen3/Eigen/Core>
+#endif
     
 
 
