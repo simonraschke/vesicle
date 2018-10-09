@@ -19,7 +19,7 @@
 #include <tbb/tbb.h>
 #include <memory>
 
-#pragma GCC diagnostic ignored "" // hurts, but is necessary
+#pragma GCC diagnostic ignored "-Weffc++" // hurts, but is necessary
 
 namespace enhance
 {
