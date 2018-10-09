@@ -211,8 +211,9 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
                 ++sphere_counter;
                 break;
             case OSMOTIC :
-                if(Eigen::Vector3f vector; osmotic_counter < osmotic_inside)
+                if(osmotic_counter < osmotic_inside)
                 {
+                    Eigen::Vector3f vector(0,0,0);
                     std::size_t try_counter = 0;
                     while((particle.coords() - getCenter()).norm() > radius-getParameters().kappa*1.1 || conflicting_placement(range,range->at(i)))
                     {
@@ -232,6 +233,7 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
                 }
                 else
                 {
+                    Eigen::Vector3f vector(0,0,0);
                     std::size_t try_counter = 0;
                     while((particle.coords() - getCenter()).norm() < radius-getParameters().kappa*1.1 || conflicting_placement(range,range->at(i)))
                     {
