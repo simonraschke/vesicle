@@ -78,12 +78,17 @@ print("got", len(solvent.residues), "solvent residues and", len(nonsolvent.resid
 # creating the storage file object
 if args.forcenew and os.path.exists("data.h5"):
     os.remove("data.h5")
-datafile = pd.HDFStore("data.h5")
+# datafile = pd.HDFStore("data.h5", "a")
+try:
+    datafile = pd.HDFStore('data.h5', 'a', complevel=9, complib='blosc')
+except Exception as e:
+    print(e)
+    sys.exit()
 
 
 
 # saving attributes from args.config file
-attributes = pd.DataFrame(helper.getAttributeDict(args.config, universe.trajectory[0].dimensions))
+attributes = pd.DataFrame(helper.getAttributeDict(args.config, universe.trajectory[0].dimensions[:3]))
 print(attributes)
 datafile["attributes"] = attributes
 
@@ -94,7 +99,7 @@ for snapshot in universe.trajectory:
     # print("\n",snapshot)
     if snapshot.time < args.start:
         continue
-    dimensions = universe.dimensions[:3]
+    dimensions = universe.dimensions
 
     t_prep = time.perf_counter()
     #get all positions
@@ -141,7 +146,7 @@ for snapshot in universe.trajectory:
     particledata["shiftz"] = particledata["z"]
     # shift subclusters towards largest subcluster
     for ID, group in particledata.groupby("cluster"):
-        newx, newy, newz = helper.getShiftedCoordinates(ID, group, args.clstr_eps, dimensions)
+        newx, newy, newz = helper.getShiftedCoordinates(ID, group, args.clstr_eps, dimensions[:3])
         particledata.loc[newx.index, "shiftx"] = newx.values
         particledata.loc[newy.index, "shifty"] = newy.values
         particledata.loc[newz.index, "shiftz"] = newz.values
@@ -162,8 +167,8 @@ for snapshot in universe.trajectory:
     for ID, group in particledata.groupby(["cluster"]):
         volume = helper.getClusterVolume(ID, group, args.clstr_eps, 4)
         particledata.loc[group.index, "volume"] = volume
-        if volume / np.cumprod(dimensions)[-1] > 0.5:
-            raise Exception(f"volume of cluster {ID} is {volume / np.cumprod(dimensions)[-1]} of box volume")
+        if volume / np.cumprod(dimensions[:3])[-1] > 0.5:
+            raise Exception(f"volume of cluster {ID} is {volume / np.cumprod(dimensions[:3])[-1]} of box volume")
 
     # plt.show()
     # plt.savefig("cluster.png", dpi=600)
@@ -182,3 +187,5 @@ for snapshot in universe.trajectory:
     t_end = time.perf_counter()
     print(f"time {snapshot.time} took {t_end-t_start:.4f} seconds")
     t_start = time.perf_counter()
+
+datafile.close()

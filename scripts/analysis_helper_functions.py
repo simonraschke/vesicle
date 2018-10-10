@@ -85,8 +85,8 @@ def getShiftedCoordinates(ID, group, eps, dimensions):
     max_subclusterID = unique[counts == np.max(counts)][0]
     # calculate shifts per subcluster
     centers = group.groupby("subcluster")['x','y','z'].mean()
-    shifts = np.round(( -centers + centers.loc[max_subclusterID] )/dimensions).astype(int)
-    shifts *= dimensions
+    shifts = np.round(( -centers + centers.loc[max_subclusterID] )/dimensions[:3]).astype(int)
+    shifts *= dimensions[:3]
     # calculate new coordinates based on shift
     newx = np.add(group["x"], shifts.loc[group["subcluster"]]["x"])
     newy = np.add(group["y"], shifts.loc[group["subcluster"]]["y"])
