@@ -29,7 +29,9 @@ parser.add_argument("--solvent", type=str, nargs='*', default=["resname OSMOT"],
 parser.add_argument("--nonsolvent", type=str, nargs='*', default=["resname MOBIL","resname FRAME"], help="nonsolvent selection rule")
 parser.add_argument("--clstr_eps", type=float, default=12, help="max distance for cluster algorithm")
 parser.add_argument("--start", type=float, default=-1, help="starting time of analysis")
+parser.add_argument("--stop", type=float, default=10e20, help="starting time of analysis")
 parser.add_argument("--forcenew", action='store_true', help="force new hdf5 file")
+parser.add_argument("--lowmem", action='store_true', help="dont save resname, saves memory BIG TIME")
 args = parser.parse_args()
 
 
@@ -78,9 +80,9 @@ print("got", len(solvent.residues), "solvent residues and", len(nonsolvent.resid
 # creating the storage file object
 if args.forcenew and os.path.exists("data.h5"):
     os.remove("data.h5")
-# datafile = pd.HDFStore("data.h5", "a")
 try:
-    datafile = pd.HDFStore('data.h5', 'a', complevel=9, complib='blosc')
+    # datafile = pd.HDFStore("data.h5", "a")
+    datafile = pd.HDFStore('data.h5', 'a', complevel=9, complib='zlib')
 except Exception as e:
     print(e)
     sys.exit()
@@ -92,12 +94,15 @@ attributes = pd.DataFrame(helper.getAttributeDict(args.config, universe.trajecto
 print(attributes)
 datafile["attributes"] = attributes
 
+epot = helper.EpotCalculator(attributes)
 
 
 t_start = time.perf_counter()
 for snapshot in universe.trajectory:
     # print("\n",snapshot)
     if snapshot.time < args.start:
+        continue
+    elif snapshot.time > args.stop:
         continue
     dimensions = universe.dimensions
 
@@ -122,9 +127,10 @@ for snapshot in universe.trajectory:
 
     # add to data and sort for cluster id
     particledata["cluster"] = labels
-    particledata.sort_values('cluster', inplace=True)
+    # particledata.sort_values('cluster', inplace=True)
     unique, counts = np.unique(labels, return_counts=True)
     particledata["clustersize"] = particledata["cluster"].apply( lambda x: counts[np.where(unique == x)][0] )
+    particledata.loc[particledata["cluster"] == -1, "clustersize"] = 1
 
     # create cluster dataframe
     # clusterdata = particledata.groupby(["cluster"]).size().reset_index(name='particles').drop('cluster', axis=1)
@@ -170,19 +176,22 @@ for snapshot in universe.trajectory:
         if volume / np.cumprod(dimensions[:3])[-1] > 0.5:
             raise Exception(f"volume of cluster {ID} is {volume / np.cumprod(dimensions[:3])[-1]} of box volume")
 
+    # calculate the potential energy per particle
+    particledata["epot"] = epot.get(coms, orientations, dimensions, particledata)
+
     # plt.show()
     # plt.savefig("cluster.png", dpi=600)
     # print(f"volume took   {time.perf_counter()-t_volume:.4f} seconds")
 
+    if args.lowmem:
+        particledata = particledata.drop(columns=["x","y","z","ux","uy","uz","shiftx","shifty","shiftz","resname"])
+    else:
+        particledata = particledata.drop(columns=["resname"])
+
     t_write = time.perf_counter()
-    # print(particledata)
-    # df = particledata.groupby("cluster").agg({'index':'count', 'volume':'mean'})
-    # print(df)
-    # print(df.loc[df['index']< 30].corr())
-    # print(df.loc[].corr())
     datafile[f"time{int(snapshot.time)}"] = particledata
-    # datafile["time"+str(int(snapshot.time))+"/cluster"] = clusterdata
-    # print(f"write took    {time.perf_counter()-t_write:.4f} seconds")
+    print(datafile[f"time{int(snapshot.time)}"])
+    print(particledata.groupby("clustersize")["epot","volume"].sum())
     
     t_end = time.perf_counter()
     print(f"time {snapshot.time} took {t_end-t_start:.4f} seconds")

@@ -347,11 +347,13 @@ def createSubmitScripts(args):
 def sbatchAnalysis(args,dir,jobname,jobnum,dependency="afterany"):
     old_config_file = os.path.join(dir,"config.ini")
     assert(os.path.exists(old_config_file))
-    new_config_file = os.path.join(dir,"config_analysis.ini")
-    shutil.copy2(old_config_file, new_config_file)
-    assert(os.path.exists(new_config_file))
+    # new_config_file = os.path.join(dir,"config_analysis.ini")
+    # shutil.copy2(old_config_file, new_config_file)
+    # assert(os.path.exists(new_config_file))
     program = "./"+args.analysis.rsplit("/",maxsplit=1)[1]
-    command = "sbatch --dependency="+dependency+":"+jobnum+" -J \"ana_"+jobname+"\" submit.sh "+program+" --config config_analysis.ini"
+    command = "sbatch --dependency="+dependency+":"+jobnum+" -J \"ana_"+jobname+"\" submit.sh python3 "+program+" --config config.ini --top trajectory.gro "
+    if args.forcenew:
+        command += "--traj trajectory.xtc --forcenew"
     if shutil.which("sbatch") != None:
         status, jobnum = subprocess.getstatusoutput(command)
         jobnum = numbersListFromString(jobnum)[-1]
