@@ -135,11 +135,6 @@ def getOrder(ID, group):
 
 
 
-# def getChi(distances_array, df=pd.DataFrame(), ):
-#     values = np.zeros(orien)
-#     return
-
-
 def getPairs(distances_array, max_cutoff, same=False):
     valid = distances_array < max_cutoff
     np.fill_diagonal(valid, same)
@@ -188,7 +183,6 @@ class EpotCalculator(object):
 
         distances_array = distance_array(coms.values, coms.values, box=dimensions)
         pairs = getPairs(distances_array, 30)
-        # df = pd.DataFrame({"i":pairs[:,0], "j":pairs[:,1]})
         normed_dist_vecs, dist_norms = getNormedPairDistanceVectors(coms, pairs, dimensions)
         res1_u = np.multiply(np.take(orientations.values, pairs[:,0], axis=0), self.kappa/2)
         res2_u = np.multiply(np.take(orientations.values, pairs[:,1], axis=0), self.kappa/2)
@@ -197,7 +191,6 @@ class EpotCalculator(object):
         chi += np.power((np.linalg.norm(-res1_u + normed_dist_vecs - res2_u, axis=1) - self.c), 2)
         chi += np.power((np.linalg.norm( res1_u + normed_dist_vecs + res2_u, axis=1) - self.c), 2)
         epot = 4.0 * self.epsilon * ( np.power(self.sigma/dist_norms, 12) - (1.0 - chi)*np.power(self.sigma/dist_norms, 6) )
-        # df["epot"] = epot
         epot_array = np.zeros_like(distances_array)
         pairs_t = pairs.T
         epot_array[tuple(pairs_t)] = epot

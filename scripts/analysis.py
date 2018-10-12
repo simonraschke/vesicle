@@ -32,6 +32,7 @@ parser.add_argument("--start", type=float, default=-1, help="starting time of an
 parser.add_argument("--stop", type=float, default=10e20, help="starting time of analysis")
 parser.add_argument("--forcenew", action='store_true', help="force new hdf5 file")
 parser.add_argument("--lowmem", action='store_true', help="dont save resname, saves memory BIG TIME")
+parser.add_argument("--timestats", action='store_true', help="show timer statistics")
 args = parser.parse_args()
 
 
@@ -117,7 +118,7 @@ for snapshot in universe.trajectory:
     particledata = pd.concat([coms,orientations], axis=1).reset_index()
 
     # add particle (residue) names
-    particledata["resname"] = universe.atoms.residues.resnames
+    # particledata["resname"] = universe.atoms.residues.resnames
     particledata["resid"] = universe.atoms.residues.resids
 
     # scan for clusters
@@ -134,17 +135,16 @@ for snapshot in universe.trajectory:
 
     # create cluster dataframe
     # clusterdata = particledata.groupby(["cluster"]).size().reset_index(name='particles').drop('cluster', axis=1)
-    # print(f"prep took     {time.perf_counter()-t_prep:.4f} seconds")
+    if args.timestats: print(f"prep took     {time.perf_counter()-t_prep:.4f} seconds")
 
     t_sub = time.perf_counter()
     # subcluster identification
     subcluster_labels = []
     for ID, group in particledata.groupby(["cluster"], as_index=False):
         subcluster_labels.extend(helper.getSubclusterLabels(ID, group, args.clstr_eps))
-        
     # add the subcluster IDs
     particledata["subcluster"] = subcluster_labels
-    # print(f"subclstr took {time.perf_counter()-t_sub:.4f} seconds")
+    if args.timestats: print(f"subclstr took {time.perf_counter()-t_sub:.4f} seconds")
 
     t_shift = time.perf_counter()
     particledata["shiftx"] = particledata["x"]
@@ -156,16 +156,16 @@ for snapshot in universe.trajectory:
         particledata.loc[newx.index, "shiftx"] = newx.values
         particledata.loc[newy.index, "shifty"] = newy.values
         particledata.loc[newz.index, "shiftz"] = newz.values
-    # print(f"shift took    {time.perf_counter()-t_shift:.4f} seconds")
+    if args.timestats: print(f"shift took    {time.perf_counter()-t_shift:.4f} seconds")
 
-    # t_order = time.perf_counter()
+    t_order = time.perf_counter()
     # get the order of particle in cluster
     particledata["order"] = 0.0
     for ID, group in particledata.groupby("cluster"):
         orders = helper.getOrder(ID, group)
         particledata.loc[group.index, "order"] = orders
     # print(particledata.groupby("clustersize")["order"].mean())
-    # print(f"shift took    {time.perf_counter()-t_order:.4f} seconds")
+    if args.timestats: print(f"shift took    {time.perf_counter()-t_order:.4f} seconds")
 
     t_volume = time.perf_counter()
     particledata["volume"] = 0.0
@@ -175,23 +175,19 @@ for snapshot in universe.trajectory:
         particledata.loc[group.index, "volume"] = volume
         if volume / np.cumprod(dimensions[:3])[-1] > 0.5:
             raise Exception(f"volume of cluster {ID} is {volume / np.cumprod(dimensions[:3])[-1]} of box volume")
+    if args.timestats: print(f"volume took   {time.perf_counter()-t_volume:.4f} seconds")
 
     # calculate the potential energy per particle
+    t_epot = time.perf_counter()
     particledata["epot"] = epot.get(coms, orientations, dimensions, particledata)
-
-    # plt.show()
-    # plt.savefig("cluster.png", dpi=600)
-    # print(f"volume took   {time.perf_counter()-t_volume:.4f} seconds")
+    if args.timestats: print(f"epot took     {time.perf_counter()-t_epot:.4f} seconds")
 
     if args.lowmem:
-        particledata = particledata.drop(columns=["x","y","z","ux","uy","uz","shiftx","shifty","shiftz","resname"])
-    else:
-        particledata = particledata.drop(columns=["resname"])
+        particledata = particledata.drop(columns=["x","y","z","ux","uy","uz","shiftx","shifty","shiftz"])
 
     t_write = time.perf_counter()
     datafile[f"time{int(snapshot.time)}"] = particledata
-    print(datafile[f"time{int(snapshot.time)}"])
-    print(particledata.groupby("clustersize")["epot","volume"].sum())
+    if args.timestats: print(f"write took    {time.perf_counter()-t_epot:.4f} seconds")
     
     t_end = time.perf_counter()
     print(f"time {snapshot.time} took {t_end-t_start:.4f} seconds")
