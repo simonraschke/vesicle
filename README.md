@@ -8,7 +8,6 @@ A fast, concurrent, shared memory MC simulator
 
 - Intel Threading Building Blocks
 - Eigen3
-- HDF5
 - Boost Filesystem
 - Boost Program Options
 - Boost Unit Tests
