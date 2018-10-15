@@ -39,7 +39,11 @@
 #define PARTICLERANGE std::vector<std::unique_ptr<Particle>>
 
 
+#if __has_include(<Eigen/Core>)
+#include <Eigen/Core>
+#elif __has_include(<eigen3/Eigen/Core>)
 #include <eigen3/Eigen/Core>
+#endif
 //-------------------Eigen::IOFormat( prec, flag,                 coeffSep, rowSep, rowPre, rowSuf, matPre, matSuf )
 #define ROWFORMAT    Eigen::IOFormat( 3,    Eigen::DontAlignCols, ", ",     " ",    " ",    "",     " ",    " " )
 #define PYTHONFORMAT Eigen::IOFormat( 4,    0,                    ", ",     "\n",   "[",    "]",    "[",    "]" )

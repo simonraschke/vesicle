@@ -16,7 +16,12 @@
 
 #pragma once
 
+#if __has_include(<Eigen/Core>)
+#include <Eigen/Geometry>
+#elif __has_include(<eigen3/Eigen/Core>)
 #include <eigen3/Eigen/Geometry>
+#endif
+
 #include <memory>
 #include "particles/particle.hpp"
 #include "vesicleIO/parameters.hpp"

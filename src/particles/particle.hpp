@@ -21,7 +21,12 @@
 #include <memory>
 #include <string>
 #include <type_traits>
+#if __has_include(<Eigen/Core>)
+#include <Eigen/Core>
+#elif __has_include(<eigen3/Eigen/Core>)
 #include <eigen3/Eigen/Core>
+#endif
+
 #include <tbb/spin_mutex.h>
 
 

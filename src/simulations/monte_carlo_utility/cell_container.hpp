@@ -155,7 +155,7 @@ inline void CellContainer<CELL_MEM_T>::setup()
     vesLOG("setup cells proximity and region")
     tbb::parallel_for_each(std::begin(cells), std::end(cells), [&](Cell<CELL_MEM_T> & cell)
     {
-        cell.setupProximityAndRegion(cells, [&](const auto& a, const auto& b) { return areNeighbourCells(a,b); } );
+        cell.setupProximityAndRegion(cells, [&](const auto& a, const auto& b) { return this->areNeighbourCells(a,b); } );
         vesDEBUG(cell.getProximity().size());
         cell.state = CellState::IDLE;
     });

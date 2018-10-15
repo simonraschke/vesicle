@@ -26,7 +26,7 @@ bool Distributor::conflicting_placement(PARTICLERANGE* range, const PARTICLERANG
     {
         assert(p1 && p2);
         if(p1==p2 || conflict.load()) return;
-        if(squared_distance(*p1,*p2) <= std::pow(getParameters().LJsigma*1.122f,2)) conflict.store(true);
+        if(this->squared_distance(*p1,*p2) <= std::pow(this->getParameters().LJsigma*1.122f,2)) conflict.store(true);
     });
     return conflict.load();
 }
@@ -59,8 +59,8 @@ void RandomDistributor::operator()(PARTICLERANGE* range)
     tbb::parallel_for_each(range->begin(), range->end(), [&](auto& p) 
     {
         assert(p);
-        p->setCoords(randomCoords());
-        p->setOrientation(randomOrientation());
+        p->setCoords(this->randomCoords());
+        p->setOrientation(this->randomOrientation());
     });
 
     struct IncHelper {};
@@ -180,8 +180,8 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
     tbb::parallel_for_each(range->begin(), range->end(), [&](auto& p) 
     {
         assert(p);
-        p->setCoords(randomCoords());
-        p->setOrientation(randomOrientation());
+        p->setCoords(this->randomCoords());
+        p->setOrientation(this->randomOrientation());
     });
 
     SphereGeometry sphere(getCenter(), radius, num_frame+num_mobile+2);
@@ -211,8 +211,9 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
                 ++sphere_counter;
                 break;
             case OSMOTIC :
-                if(Eigen::Vector3f vector; osmotic_counter < osmotic_inside)
+                if(osmotic_counter < osmotic_inside)
                 {
+                    Eigen::Vector3f vector(0,0,0);
                     std::size_t try_counter = 0;
                     while((particle.coords() - getCenter()).norm() > radius-getParameters().kappa*1.1 || conflicting_placement(range,range->at(i)))
                     {
@@ -232,6 +233,7 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
                 }
                 else
                 {
+                    Eigen::Vector3f vector(0,0,0);
                     std::size_t try_counter = 0;
                     while((particle.coords() - getCenter()).norm() < radius-getParameters().kappa*1.1 || conflicting_placement(range,range->at(i)))
                     {
