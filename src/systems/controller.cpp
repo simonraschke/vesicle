@@ -129,6 +129,10 @@ void SimulationControl::setup()
             {
                 system.distributeParticles<FrameGuidedGridDistributor>();
             }
+            else if (getParameters().guiding_elements_plane > 0)
+            {
+                system.distributeParticles<FrameGuidedPlaneDistributor>();
+            }
             else
             {
                 system.distributeParticles<RandomDistributor>();

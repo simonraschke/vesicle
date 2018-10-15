@@ -25,6 +25,7 @@
 #include "geometries/grid.hpp"
 #include "geometries/sphere.hpp"
 #include "geometries/sphere_grid.hpp"
+#include "geometries/plane.hpp"
 #include "enhance/incremental_number_gen.hpp"
 #include <tbb/parallel_for_each.h>
 #include <atomic>
@@ -99,6 +100,15 @@ protected:
 
 
 struct FrameGuidedGridDistributor
+    : public Distributor
+{
+    virtual void operator()(PARTICLERANGE*) override;
+protected:
+};
+
+
+
+struct FrameGuidedPlaneDistributor
     : public Distributor
 {
     virtual void operator()(PARTICLERANGE*) override;

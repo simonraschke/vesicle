@@ -428,3 +428,56 @@ void FrameGuidedGridDistributor::operator()(PARTICLERANGE* range)
         }
     }
 }
+
+
+
+void FrameGuidedPlaneDistributor::operator()(PARTICLERANGE* range)
+{
+    PlaneGeometry plane(getParameters().guiding_elements_plane, getParameters().guiding_elements_plane);
+    const float scaling_factor = getParameters().LJsigma*20 / getParameters().guiding_elements_plane;
+    plane.scale(cartesian(scaling_factor, scaling_factor, 0));
+    plane.shift(cartesian(getParameters().x/2-getParameters().LJsigma*10, getParameters().y/2-getParameters().LJsigma*10, getParameters().z/2));
+
+    auto it = range->begin();
+
+    for(const auto& point : plane.points)
+    {
+        Particle& particle = *(it->get());
+        if(particle.getType() != FRAME)
+        {
+            particle.setCoords(point); 
+            particle.setOrientation(cartesian::UnitZ());
+        }
+
+        // next particle
+        std::advance(it,1);
+    }
+
+    RandomDistributor random_dist;
+    random_dist.setParameters(getParameters());
+
+    tbb::parallel_for_each(it, range->end(), [&](auto& p) 
+    {
+        assert(p);
+        p->setCoords(random_dist.randomCoords());
+        p->setOrientation(random_dist.randomOrientation());
+    });
+
+    for(auto mobile_it = it; mobile_it != range->end(); ++mobile_it)
+    {
+
+        std::unique_ptr<Particle>& particle = *mobile_it;
+        assert(particle);
+        std::size_t try_counter = 0;
+        while(conflicting_placement(range,particle))
+        {
+            assert(particle);
+            particle->setCoords(random_dist.randomCoords());
+            if( ++try_counter > 1e6 )
+            {
+                vesWARNING("placing particle exceeded 1M tries")
+                throw std::runtime_error("particle placement not possible");
+            }
+        }
+    }
+}
