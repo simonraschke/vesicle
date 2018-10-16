@@ -107,7 +107,7 @@ void SimulationControl::setup()
     // MUST
     {
         // add particles via factory class 
-        std::size_t guiding_elements_all = std::pow(getParameters().frame_guides_grid_edge, 3) * getParameters().guiding_elements_each + getParameters().guiding_elements_plane;
+        std::size_t guiding_elements_all = getParameters().guiding_elements_plane ?  getParameters().guiding_elements_each : std::pow(getParameters().frame_guides_grid_edge, 3) * getParameters().guiding_elements_each;
         system.addParticles(ParticleFactory<ParticleFrame>(guiding_elements_all));
         system.addParticles(ParticleFactory<ParticleMobile>(getParameters().mobile));
         system.addParticles(ParticleFactory<ParticleOsmotic>(getParameters().osmotic));
@@ -125,13 +125,13 @@ void SimulationControl::setup()
             {
                 system.distributeParticles<OsmoticSystemDistributor>();
             }
+            else if (getParameters().guiding_elements_plane)
+            {
+                system.distributeParticles<FrameGuidedPlaneDistributor>();
+            }
             else if (getParameters().frame_guides_grid_edge > 0 && getParameters().guiding_elements_each > 0)
             {
                 system.distributeParticles<FrameGuidedGridDistributor>();
-            }
-            else if (getParameters().guiding_elements_plane > 0)
-            {
-                system.distributeParticles<FrameGuidedPlaneDistributor>();
             }
             else
             {

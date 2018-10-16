@@ -50,7 +50,7 @@ struct Parameters
     std::size_t mobile {};
     std::size_t guiding_elements_each {};
     std::size_t frame_guides_grid_edge {};
-    std::size_t guiding_elements_plane {};
+    bool guiding_elements_plane {};
     float plane_edge {};
     std::size_t osmotic {};
     std::size_t num_all_particles {};

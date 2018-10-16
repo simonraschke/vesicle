@@ -441,16 +441,16 @@ void FrameGuidedGridDistributor::operator()(PARTICLERANGE* range)
 void FrameGuidedPlaneDistributor::operator()(PARTICLERANGE* range)
 {
     vesLOG(__PRETTY_FUNCTION__);
-    PlaneGeometry plane(std::sqrt(getParameters().guiding_elements_plane), std::sqrt(getParameters().guiding_elements_plane));
+    PlaneGeometry plane(std::sqrt(getParameters().guiding_elements_each), std::sqrt(getParameters().guiding_elements_each));
     // const float edge_width = getParameters().LJsigma*10;
-    const float scaling_factor = getParameters().plane_edge / (std::sqrt(getParameters().guiding_elements_plane)-1);
+    const float scaling_factor = getParameters().plane_edge / (std::sqrt(getParameters().guiding_elements_each)-1);
     vesLOG("scaling factor  " << scaling_factor);
     plane.scale(cartesian(scaling_factor, scaling_factor, 0));
-    // plane.shift(cartesian(getParameters().x/2-getParameters().LJsigma*10, getParameters().y/2-getParameters().LJsigma*10, getParameters().z/2));
-    plane.shift(cartesian(getParameters().x/4, getParameters().y/4, getParameters().z/2));
+    plane.shift(cartesian(getParameters().x/2-getParameters().plane_edge/2, getParameters().y/2-getParameters().plane_edge/2, getParameters().z/2));
+    // plane.shift(cartesian(getParameters().x/2, getParameters().y/2, getParameters().z/2));
 
-    vesLOG(plane.points.size() << " points for " << getParameters().guiding_elements_plane << " guiding elements");
-    assert(plane.points.size() == getParameters().guiding_elements_plane);
+    vesLOG(plane.points.size() << " points for " << getParameters().guiding_elements_each << " guiding elements");
+    assert(plane.points.size() == getParameters().guiding_elements_each);
 
     auto it = range->begin();
     
@@ -462,7 +462,8 @@ void FrameGuidedPlaneDistributor::operator()(PARTICLERANGE* range)
             throw std::logic_error("Didn't get PARTICLETYPE::FRAME, where it should have been");
         }
         else
-        {
+        {   
+            vesLOG(point.format(ROWFORMAT));
             particle.setCoords(point);
             particle.setOffset(getParameters().LJsigma, getParameters().LJsigma, 0.3);
             particle.setOrientation(cartesian::UnitZ());
@@ -488,7 +489,10 @@ void FrameGuidedPlaneDistributor::operator()(PARTICLERANGE* range)
         assert(particle);
         std::size_t try_counter = 0;
         while(conflicting_placement(range,particle))
-        {
+        {   
+            if( try_counter == 100000)
+                vesLOG(particle->ID << " " << particle->coords().format(ROWFORMAT));
+
             assert(particle);
             particle->setCoords(random_dist.randomCoords());
             if( ++try_counter > 1e6 )

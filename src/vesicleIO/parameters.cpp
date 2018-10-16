@@ -41,7 +41,7 @@ void Parameters::read(int argc, const char* argv[])
         ("system.mobile,m", po::value<std::size_t>(), "number of mobile particles")
         ("system.guiding_elements_each", po::value<std::size_t>(), "number of guiding elements per frame guide")
         ("system.frame_guides_grid_edge", po::value<std::size_t>(), "number of frame guides per dimension")
-        ("system.guiding_elements_plane", po::value<std::size_t>(), "number of guiding elements in plane")
+        ("system.guiding_elements_plane", po::value<bool>(&guiding_elements_plane)->default_value(false), "number of guiding elements in plane")
         ("system.plane_edge", po::value<float>(), "number of guiding elements in plane")
         // ("system.osmotic", po::value<std::size_t>(), "number of osmotic particles")
         ("system.osmotic_density_inside", po::value<float>(&osmotic_density_inside), "density of osmotic particles in bulk")
@@ -183,15 +183,11 @@ void Parameters::setup()
 
         guiding_elements_each = optionsMap.count("system.guiding_elements_each") ? optionsMap["system.guiding_elements_each"].as<std::size_t>() : 0;
         frame_guides_grid_edge = optionsMap.count("system.frame_guides_grid_edge") ? optionsMap["system.frame_guides_grid_edge"].as<std::size_t>() : 0;
-        guiding_elements_plane = optionsMap.count("system.guiding_elements_plane") ? optionsMap["system.guiding_elements_plane"].as<std::size_t>() : 0;
+        guiding_elements_each = optionsMap.count("system.guiding_elements_plane") ? optionsMap["system.guiding_elements_each"].as<std::size_t>() : 0;
         osmotic = optionsMap.count("system.osmotic") ? optionsMap["system.osmotic"].as<std::size_t>() : 0;
         if( std::abs(osmotic_density_inside) < 1e-6 )
         {
             osmotic = 0;
-        }
-        else
-        {
-            guiding_elements_plane = 0;
         }
 
         if(counter != 2)
@@ -204,7 +200,7 @@ void Parameters::setup()
             mobile = optionsMap["system.mobile"].as<std::size_t>();
             density = optionsMap["system.density"].as<float>();
             // calc first time without osmotic particles
-            num_all_particles = mobile + guiding_elements_each * std::pow(frame_guides_grid_edge,3) + guiding_elements_plane;
+            num_all_particles = guiding_elements_plane ? guiding_elements_each + mobile : mobile + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
             x = std::cbrt(static_cast<float>(num_all_particles)/density);
             y = std::cbrt(static_cast<float>(num_all_particles)/density);
             z = std::cbrt(static_cast<float>(num_all_particles)/density);
@@ -218,7 +214,7 @@ void Parameters::setup()
                 const float volume = enhance::sphere_volume(radius);
                 osmotic = std::round( density * ((x * y * z) - volume) ) + std::round( osmotic_density_inside * volume); 
                 // calc first time with osmotic particles
-                num_all_particles = mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3) + guiding_elements_plane;
+                num_all_particles = guiding_elements_plane ? guiding_elements_each + mobile + osmotic : mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
             }
         }
         else if(optionsMap.count("system.box.x") && optionsMap.count("system.density"))
@@ -227,13 +223,13 @@ void Parameters::setup()
             y = optionsMap["system.box.y"].as<float>();
             z = optionsMap["system.box.z"].as<float>();
             density = optionsMap["system.density"].as<float>();
-            std::size_t num_all_particles_minus_mobile = osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3) + guiding_elements_plane;
+            std::size_t num_all_particles_minus_mobile = guiding_elements_plane ? osmotic + guiding_elements_each : osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3) + guiding_elements_plane;
             mobile = std::round( density * x * y * z) - num_all_particles_minus_mobile;
             const float optimum_distance = enhance::nth_root<6>(LJsigma*2);
             const float radius = optimum_distance/(2.0*std::sin(enhance::deg_to_rad(gamma)));
             const float volume = enhance::sphere_volume(radius);
             osmotic = std::round( density * ((x * y * z) - volume) ) + std::round( osmotic_density_inside * volume); 
-            num_all_particles = mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3) + guiding_elements_plane;
+            num_all_particles = guiding_elements_plane ? guiding_elements_each + mobile + osmotic: mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);;
         }
         else if(optionsMap.count("system.box.x") && optionsMap.count("system.box.y") && optionsMap.count("system.box.z")  && optionsMap.count("system.mobile"))
         {
@@ -245,7 +241,7 @@ void Parameters::setup()
             const float radius = optimum_distance/(2.0*std::sin(enhance::deg_to_rad(gamma)));
             const float volume = enhance::sphere_volume(radius);
             osmotic = std::round( density * ((x * y * z) - volume) ) + std::round( osmotic_density_inside * volume); 
-            num_all_particles = mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3) + guiding_elements_plane;
+            num_all_particles = guiding_elements_plane ? guiding_elements_each + mobile + osmotic: mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
             density = num_all_particles/(x*y*z);
         }
         else 
@@ -337,8 +333,8 @@ void Parameters::setup()
         vesLOG("system.mobile                       " << mobile )
         vesLOG("system.frame_guides_grid_edge       " << frame_guides_grid_edge )
         vesLOG("system.guiding_elements_each        " << guiding_elements_each )
-        vesLOG("system.guiding_elements_plane       " << guiding_elements_each )
-        vesLOG("system.plane_edge                   " << guiding_elements_each )
+        vesLOG("system.guiding_elements_plane       " << guiding_elements_plane )
+        vesLOG("system.plane_edge                   " << plane_edge )
         vesLOG("system.osmotic                      " << osmotic )
         vesLOG("system.osmotic_density_inside       " << osmotic_density_inside )
         vesLOG("system.num_all_particles            " << num_all_particles )
