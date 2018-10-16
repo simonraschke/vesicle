@@ -100,14 +100,14 @@ void SimulationControl::setup()
     GLOBAL::getInstance().status.store(GLOBAL::PREPARATION);
 
     {
-        // syytem is ParameterDependentComponent
+        // system is ParameterDependentComponent
         system.setParameters(getParameters());
     }
 
     // MUST
     {
         // add particles via factory class 
-        std::size_t guiding_elements_all = std::pow(getParameters().frame_guides_grid_edge, 3) * getParameters().guiding_elements_each;
+        std::size_t guiding_elements_all = std::pow(getParameters().frame_guides_grid_edge, 3) * getParameters().guiding_elements_each + getParameters().guiding_elements_plane;
         system.addParticles(ParticleFactory<ParticleFrame>(guiding_elements_all));
         system.addParticles(ParticleFactory<ParticleMobile>(getParameters().mobile));
         system.addParticles(ParticleFactory<ParticleOsmotic>(getParameters().osmotic));
@@ -216,7 +216,7 @@ void SimulationControl::setup()
         }
     }
     
-    // gernerate the node pointers
+    // generate the node pointers
     make_nodes();
 
     // design of flow graph

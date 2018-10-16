@@ -111,6 +111,9 @@ public:
     void setMass(float);
     real getMass() const;
 
+    // virtual function for guiding elements to overwrite constraints
+    virtual void setOffset(float, float, float);
+
     // id will be set automatically
     // id is only necessary to generate useful energy matrices
     // for MonteCarlo simulation routine

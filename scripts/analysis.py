@@ -92,7 +92,10 @@ except Exception as e:
 
 # saving attributes from args.config file
 attributes = pd.DataFrame(helper.getAttributeDict(args.config, universe.trajectory[0].dimensions[:3]))
-print(attributes)
+print()
+for column in attributes:
+    print(f"{column:<25} {attributes[column].values[0]}")
+print()
 datafile["attributes"] = attributes
 
 epot = helper.EpotCalculator(attributes)

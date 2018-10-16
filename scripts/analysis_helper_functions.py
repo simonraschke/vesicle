@@ -50,6 +50,7 @@ def getAttributeDict(filename, dimensions):
         'gamma': fileValueFromKeyword(filename, 'gamma', '='),
         'guiding_elements_each': fileValueFromKeyword(filename, 'guiding_elements_each', '='),
         'frame_guides_grid_edge': fileValueFromKeyword(filename, 'frame_guides_grid_edge', '='),
+        'plane_edge': fileValueFromKeyword(filename, 'plane_edge', '='),
         'osmotic_density_inside': fileValueFromKeyword(filename, 'osmotic_density_inside', '='),
         'sw_position_min': fileValueFromKeyword(filename, 'sw_position_min', '='),
         'sw_position_max': fileValueFromKeyword(filename, 'sw_position_max', '='),
@@ -59,8 +60,7 @@ def getAttributeDict(filename, dimensions):
         'sw_orientation_target': fileValueFromKeyword(filename, 'sw_orientation_target', '='),
         'cell_min_edge': fileValueFromKeyword(filename, 'cell_min_edge', '='),
         'max_cells_dim': fileValueFromKeyword(filename, 'max_cells_dim', '='),
-        'skip': fileValueFromKeyword(filename, 'skip', '='),
-        'cluster_distance_threshold': fileValueFromKeyword(filename, 'cluster_distance_threshold', '=')
+        'skip': fileValueFromKeyword(filename, 'skip', '=')
     }
 
 

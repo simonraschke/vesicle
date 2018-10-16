@@ -42,6 +42,7 @@ void Parameters::read(int argc, const char* argv[])
         ("system.guiding_elements_each", po::value<std::size_t>(), "number of guiding elements per frame guide")
         ("system.frame_guides_grid_edge", po::value<std::size_t>(), "number of frame guides per dimension")
         ("system.guiding_elements_plane", po::value<std::size_t>(), "number of guiding elements in plane")
+        ("system.plane_edge", po::value<float>(), "number of guiding elements in plane")
         // ("system.osmotic", po::value<std::size_t>(), "number of osmotic particles")
         ("system.osmotic_density_inside", po::value<float>(&osmotic_density_inside), "density of osmotic particles in bulk")
         ("system.density,c", po::value<float>(), "particle density")
@@ -252,6 +253,9 @@ void Parameters::setup()
             vesCRITICAL("UNKNOWN ERROR: maybe box not fully defined")
         }
 
+        if(optionsMap.count("system.plane_edge"))
+            plane_edge = optionsMap["system.plane_edge"].as<float>();
+
         // again set osmotic to 0 if no density inside micelle is 0
         if( std::abs(osmotic_density_inside) < 1e-6 )
         {
@@ -331,8 +335,10 @@ void Parameters::setup()
         vesLOG("general.interaction                 " << interaction )
         vesLOG("general.thermostat                  " << thermostat )
         vesLOG("system.mobile                       " << mobile )
-        vesLOG("system.guiding_elements_each        " << guiding_elements_each )
         vesLOG("system.frame_guides_grid_edge       " << frame_guides_grid_edge )
+        vesLOG("system.guiding_elements_each        " << guiding_elements_each )
+        vesLOG("system.guiding_elements_plane       " << guiding_elements_each )
+        vesLOG("system.plane_edge                   " << guiding_elements_each )
         vesLOG("system.osmotic                      " << osmotic )
         vesLOG("system.osmotic_density_inside       " << osmotic_density_inside )
         vesLOG("system.num_all_particles            " << num_all_particles )

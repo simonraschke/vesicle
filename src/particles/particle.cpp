@@ -209,3 +209,10 @@ float Particle::getMass() const
     assert(!std::isnan(mass));
     return mass;
 }
+
+
+
+void Particle::setOffset(float, float, float)
+{
+    throw std::logic_error(std::string(__PRETTY_FUNCTION__)+" not implemented for Particle");
+}

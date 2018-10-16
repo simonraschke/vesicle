@@ -24,7 +24,11 @@ void ParticleFrame::setCoords(const cartesian& newCoords)
     if(coordsSetupDone && GLOBAL::getInstance().status == GLOBAL::RUNNING)
     {
         assert(currentCoords);
-        if( (newCoords-(*originCoords)).squaredNorm() < 0.3f*0.3f )
+        // if( (newCoords-(*originCoords)).squaredNorm() < 0.3f*0.3f )
+        // {
+        //     *currentCoords = newCoords;
+        // }
+        if( std::abs(newCoords(0) - (*originCoords)(0)) < offsetX && std::abs(newCoords(1) - (*originCoords)(1)) < offsetY && std::abs(newCoords(2) - (*originCoords)(2)) < offsetZ )
         {
             *currentCoords = newCoords;
         }
@@ -99,6 +103,15 @@ void ParticleFrame::setOriginOrientation(const cartesian& origin)
     originOrientation = std::make_unique<cartesian>(origin);
     assert(originOrientation->squaredNorm()-1.f < 1e-3);
     orientationSetupDone = true;
+}
+
+
+
+void ParticleFrame::setOffset(float x, float y, float z)
+{
+    offsetX = x;
+    offsetY = y;
+    offsetZ = z;
 }
 
 

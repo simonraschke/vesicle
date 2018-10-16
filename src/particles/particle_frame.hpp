@@ -32,12 +32,17 @@ public:
     void setOriginCoords(const cartesian&);
     void setOriginOrientation(const cartesian&);
 
+    virtual void setOffset(float, float, float) override;
+
     virtual std::string name() const override;
     virtual PARTICLETYPE getType() const override;
 
 protected:
     bool coordsSetupDone = false;
     bool orientationSetupDone = false;
+    float offsetX = 0.3;
+    float offsetY = 0.3;
+    float offsetZ = 0.3;
     std::unique_ptr<cartesian> originCoords {nullptr};
     std::unique_ptr<cartesian> originOrientation {nullptr};
 };
