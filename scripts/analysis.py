@@ -20,6 +20,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import normalize
 from MDAnalysis.lib.distances import distance_array
+from collections import defaultdict
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--top", type=str, default="trajectory.gro", help="path to topology file")
@@ -99,6 +100,11 @@ print()
 datafile["attributes"] = attributes
 
 epot = helper.EpotCalculator(attributes)
+resname_map = defaultdict(lambda : -1, {
+    "MOBIL" : 0,
+    "FRAME" : 1,
+    "OSMOT" : 2
+})
 
 
 t_start = time.perf_counter()
@@ -121,7 +127,7 @@ for snapshot in universe.trajectory:
     particledata = pd.concat([coms,orientations], axis=1).reset_index()
 
     # add particle (residue) names
-    # particledata["resname"] = universe.atoms.residues.resnames
+    particledata["resname"] = pd.Series(universe.atoms.residues.resnames).map(resname_map).astype(np.int16)
     particledata["resid"] = universe.atoms.residues.resids
 
     # scan for clusters

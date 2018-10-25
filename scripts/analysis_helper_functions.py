@@ -5,7 +5,7 @@ import scipy
 import MDAnalysis as mda 
 
 from MDAnalysis.analysis.rdf import InterRDF
-from MDAnalysis.lib.distances import distance_array, capped_distance, apply_PBC
+from MDAnalysis.lib.distances import distance_array
 from sklearn.cluster import DBSCAN
 from scipy import ndimage
 from sklearn.preprocessing import normalize
