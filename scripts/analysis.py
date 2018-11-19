@@ -34,6 +34,7 @@ parser.add_argument("--stop", type=float, default=10e20, help="starting time of 
 parser.add_argument("--forcenew", action='store_true', help="force new hdf5 file")
 parser.add_argument("--lowmem", action='store_true', help="dont save resname, saves memory BIG TIME")
 parser.add_argument("--timestats", action='store_true', help="show timer statistics")
+parser.add_argument("--reanalyze", action='store_true', help="reanalze from data.h5 file instead of trajectory")
 args = parser.parse_args()
 
 
@@ -43,7 +44,6 @@ np.set_printoptions(suppress=True)
 
 topology = args.top
 trajectory = args.traj
-
 
 
 # prepare input files
@@ -149,23 +149,26 @@ for snapshot in universe.trajectory:
     t_sub = time.perf_counter()
     # subcluster identification
     subcluster_labels = []
+    particledata["subcluster"] = -1
     for ID, group in particledata.groupby(["cluster"], as_index=False):
-        subcluster_labels.extend(helper.getSubclusterLabels(ID, group, args.clstr_eps))
+        subclusters = helper.getSubclusterLabels(ID, group, args.clstr_eps)
+        particledata.loc[group.index, "subcluster"] = subclusters
+        # subcluster_labels.extend(helper.getSubclusterLabels(ID, group, args.clstr_eps))
     # add the subcluster IDs
-    particledata["subcluster"] = subcluster_labels
+    # particledata["subcluster"] = subcluster_labels
     if args.timestats: print(f"subclstr took {time.perf_counter()-t_sub:.4f} seconds")
 
     t_shift = time.perf_counter()
     particledata["shiftx"] = particledata["x"]
     particledata["shifty"] = particledata["y"]
     particledata["shiftz"] = particledata["z"]
-    # shift subclusters towards largest subcluster
+    # shift subclusters towards largest subclusterr
     for ID, group in particledata.groupby("cluster"):
         newx, newy, newz = helper.getShiftedCoordinates(ID, group, args.clstr_eps, dimensions[:3])
         particledata.loc[newx.index, "shiftx"] = newx.values
         particledata.loc[newy.index, "shifty"] = newy.values
         particledata.loc[newz.index, "shiftz"] = newz.values
-    if args.timestats: print(f"shift took    {time.perf_counter()-t_shift:.4f} seconds")
+    if args.timestats: print(f"shift took    {time.perf_counte()-t_shift:.4f} seconds")
 
     t_order = time.perf_counter()
     # get the order of particle in cluster
@@ -201,5 +204,16 @@ for snapshot in universe.trajectory:
     t_end = time.perf_counter()
     print(f"time {snapshot.time} took {t_end-t_start:.4f} seconds")
     t_start = time.perf_counter()
+
+    # print(particledata)
+    print(particledata.groupby("clustersize")["order","epot"].mean())
+    # for size, group in particledata.groupby("clustersize"):
+    #     print(size, group["order"].mean())
+    #     if size > 30 and group["order"].mean() < 0 or size == 34:
+    #         print(group)
+    #         print(pd.concat([group['shiftx'], group['shifty'], group['shiftz']], axis=1).mean().values)
+    #         sys.exit()
+    # print(particledata[particledata["clustersize"] >= 30]["order"].mean())
+    # print(particledata[["clustersize","volume","epot","order"]].corr())
 
 datafile.close()
