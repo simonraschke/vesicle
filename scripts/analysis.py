@@ -13,11 +13,14 @@ import h5py
 import pprint
 import shutil
 import subprocess
+import sklearn
 import time
 import analysis_helper_functions as helper
 
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.cluster import DBSCAN
+from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 from sklearn.preprocessing import normalize
 from MDAnalysis.lib.distances import distance_array
 from collections import defaultdict
@@ -33,6 +36,7 @@ parser.add_argument("--start", type=float, default=-1, help="starting time of an
 parser.add_argument("--stop", type=float, default=10e20, help="starting time of analysis")
 parser.add_argument("--forcenew", action='store_true', help="force new hdf5 file")
 parser.add_argument("--lowmem", action='store_true', help="dont save resname, saves memory BIG TIME")
+parser.add_argument("--hdbscan", action='store_true', help="additionaly perform alternative clustering by HDBSCAN")
 parser.add_argument("--timestats", action='store_true', help="show timer statistics")
 parser.add_argument("--reanalyze", action='store_true', help="reanalze from data.h5 file instead of trajectory")
 args = parser.parse_args()
@@ -106,6 +110,7 @@ resname_map = defaultdict(lambda : -1, {
     "OSMOT" : 2
 })
 
+complete_data = pd.DataFrame()
 
 t_start = time.perf_counter()
 for snapshot in universe.trajectory:
@@ -130,33 +135,34 @@ for snapshot in universe.trajectory:
     particledata["resname"] = pd.Series(universe.atoms.residues.resnames).map(resname_map).astype(np.int16)
     particledata["resid"] = universe.atoms.residues.resids
 
+
+
     # scan for clusters
     distances_array = distance_array(coms.values, coms.values, box=dimensions)
     dbscan = DBSCAN(min_samples=2, eps=args.clstr_eps, metric="precomputed", n_jobs=-1).fit(distances_array)
     labels = pd.DataFrame(dbscan.labels_, columns=['cluster'])
-
     # add to data and sort for cluster id
     particledata["cluster"] = labels
-    # particledata.sort_values('cluster', inplace=True)
+
     unique, counts = np.unique(labels, return_counts=True)
     particledata["clustersize"] = particledata["cluster"].apply( lambda x: counts[np.where(unique == x)][0] )
     particledata.loc[particledata["cluster"] == -1, "clustersize"] = 1
 
-    # create cluster dataframe
-    # clusterdata = particledata.groupby(["cluster"]).size().reset_index(name='particles').drop('cluster', axis=1)
     if args.timestats: print(f"prep took     {time.perf_counter()-t_prep:.4f} seconds")
+
+
 
     t_sub = time.perf_counter()
     # subcluster identification
-    subcluster_labels = []
+    # subcluster_labels = []
     particledata["subcluster"] = -1
     for ID, group in particledata.groupby(["cluster"], as_index=False):
         subclusters = helper.getSubclusterLabels(ID, group, args.clstr_eps)
         particledata.loc[group.index, "subcluster"] = subclusters
-        # subcluster_labels.extend(helper.getSubclusterLabels(ID, group, args.clstr_eps))
-    # add the subcluster IDs
-    # particledata["subcluster"] = subcluster_labels
+
     if args.timestats: print(f"subclstr took {time.perf_counter()-t_sub:.4f} seconds")
+
+
 
     t_shift = time.perf_counter()
     particledata["shiftx"] = particledata["x"]
@@ -168,34 +174,52 @@ for snapshot in universe.trajectory:
         particledata.loc[newx.index, "shiftx"] = newx.values
         particledata.loc[newy.index, "shifty"] = newy.values
         particledata.loc[newz.index, "shiftz"] = newz.values
+    
     if args.timestats: print(f"shift took    {time.perf_counte()-t_shift:.4f} seconds")
 
-    t_order = time.perf_counter()
+
+
     # get the order of particle in cluster
+    t_order = time.perf_counter()
     particledata["order"] = 0.0
     for ID, group in particledata.groupby("cluster"):
         orders = helper.getOrder(ID, group)
         particledata.loc[group.index, "order"] = orders
-    # print(particledata.groupby("clustersize")["order"].mean())
+    
     if args.timestats: print(f"shift took    {time.perf_counter()-t_order:.4f} seconds")
+
+
 
     t_volume = time.perf_counter()
     particledata["volume"] = 0.0
-    # get the volume per cluster
+    # get the volume per cluster DBSCAN
     for ID, group in particledata.groupby(["cluster"]):
         volume = helper.getClusterVolume(ID, group, args.clstr_eps, 4)
         particledata.loc[group.index, "volume"] = volume
         if volume / np.cumprod(dimensions[:3])[-1] > 0.5:
             raise Exception(f"volume of cluster {ID} is {volume / np.cumprod(dimensions[:3])[-1]} of box volume")
+    
     if args.timestats: print(f"volume took   {time.perf_counter()-t_volume:.4f} seconds")
+
+
 
     # calculate the potential energy per particle
     t_epot = time.perf_counter()
-    particledata["epot"] = epot.get(coms, orientations, dimensions, particledata)
-    if args.timestats: print(f"epot took     {time.perf_counter()-t_epot:.4f} seconds")
+    particledata["epot"], particledata["chi"] = epot.get(coms, orientations, dimensions, ret="epot+chi")
+    if args.timestats: print(f"epot and chi took     {time.perf_counter()-t_epot:.4f} seconds")
+
+
+
+    # calculate the curvature of the structure for every particle
+    t_curvature = time.perf_counter()
+    particledata["curvature"] = helper.getCurvature(particledata, orientations, dimensions, cutoff=13)
+    # particledata["curvature"] = np.where(particledata["clustersize"] <= 30, np.nan, particledata["curvature"])
+    if args.timestats: print(f"curvature took        {time.perf_counter()-t_curvature:.4f} seconds")
+
+
 
     if args.lowmem:
-        particledata = particledata.drop(columns=["x","y","z","ux","uy","uz","shiftx","shifty","shiftz"])
+        particledata = particledata.drop(columns=["shiftx","shifty","shiftz"])
 
     t_write = time.perf_counter()
     datafile[f"time{int(snapshot.time)}"] = particledata
@@ -206,14 +230,5 @@ for snapshot in universe.trajectory:
     t_start = time.perf_counter()
 
     # print(particledata)
-    print(particledata.groupby("clustersize")["order","epot"].mean())
-    # for size, group in particledata.groupby("clustersize"):
-    #     print(size, group["order"].mean())
-    #     if size > 30 and group["order"].mean() < 0 or size == 34:
-    #         print(group)
-    #         print(pd.concat([group['shiftx'], group['shifty'], group['shiftz']], axis=1).mean().values)
-    #         sys.exit()
-    # print(particledata[particledata["clustersize"] >= 30]["order"].mean())
-    # print(particledata[["clustersize","volume","epot","order"]].corr())
 
 datafile.close()

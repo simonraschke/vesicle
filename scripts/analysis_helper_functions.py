@@ -73,19 +73,25 @@ def getSubclusterLabels(ID, group, eps):
         # arange a DBSCAN without PBC to get subclusters
         coms_subcluster = pd.concat([group['x'], group['y'], group['z']], axis=1)
         distances_array_subcluster = distance_array(coms_subcluster.values, coms_subcluster.values, box=None)
-        dbscan_subcluster = DBSCAN(min_samples=1, eps=eps, metric="precomputed", n_jobs=-1).fit(distances_array_subcluster)
-        return dbscan_subcluster.labels_
+        subclusterd = DBSCAN(min_samples=1, eps=eps, metric="precomputed", n_jobs=-1).fit(distances_array_subcluster)
+        return subclusterd.labels_
 
 
 
-def getShiftedCoordinates(ID, group, eps, dimensions):
+def getShiftedCoordinates(ID, group, eps, dimensions, alg="dbscan"):
     # get largest subcluster
-    unique, counts = np.unique(group["subcluster"], return_counts=True)
+    if alg == "dbscan":
+        unique, counts = np.unique(group["subcluster"], return_counts=True)
+    elif alg == "hdbscan":
+        unique, counts = np.unique(group["h_subcluster"], return_counts=True)
     if len(unique) == 1:
         return group["x"], group["y"], group["z"]
     max_subclusterID = unique[counts == np.max(counts)][0]
     # calculate shifts per subcluster
-    centers = group.groupby("subcluster")['x','y','z'].mean()
+    if alg == "dbscan":
+        centers = group.groupby("subcluster")['x','y','z'].mean()
+    elif alg == "hdbscan":
+        centers = group.groupby("h_subcluster")['x','y','z'].mean()
     shifts = np.round(( -centers + centers.loc[max_subclusterID] )/dimensions[:3]).astype(int)
     shifts *= dimensions[:3]
 
@@ -94,11 +100,17 @@ def getShiftedCoordinates(ID, group, eps, dimensions):
     dbscan_subcluster = DBSCAN(min_samples=1, eps=eps, metric="precomputed", n_jobs=-1).fit(distances_array_subcluster)
     np.set_printoptions(threshold=np.nan, linewidth=np.nan, precision=1)
     # calculate new coordinates based on shift
-    newx = np.add(group["x"], shifts.loc[group["subcluster"]]["x"])
-    newy = np.add(group["y"], shifts.loc[group["subcluster"]]["y"])
-    newz = np.add(group["z"], shifts.loc[group["subcluster"]]["z"])
+    if alg == "dbscan":
+        newx = np.add(group["x"], shifts.loc[group["subcluster"]]["x"])
+        newy = np.add(group["y"], shifts.loc[group["subcluster"]]["y"])
+        newz = np.add(group["z"], shifts.loc[group["subcluster"]]["z"])
+    elif alg == "hdbscan":
+        newx = np.add(group["x"], shifts.loc[group["h_subcluster"]]["x"])
+        newy = np.add(group["y"], shifts.loc[group["h_subcluster"]]["y"])
+        newz = np.add(group["z"], shifts.loc[group["h_subcluster"]]["z"])
     # assign to main data
     return newx, newy, newz
+
 
 
 def getClusterVolume(ID, group, eps, pps):
@@ -125,16 +137,23 @@ def getClusterVolume(ID, group, eps, pps):
         # calc volum from all points inside cluster
         return np.count_nonzero(isclose)*((10/pps)**3)
 
+
         # z,x,y = isclose.nonzero()
         # ax.scatter(x+,y,z, s=2)
 
 
 
-def getOrder(ID, group):
+def getOrder(ID, group, alg="dbscan"):
     if ID == -1:
-        return group["order"].values
+        if alg == "dbscan":
+            return group["order"].values
+        elif alg == "hdbscan":
+            return group["h_order"].values
     else:
-        shifted_coms = pd.concat([group['shiftx'], group['shifty'], group['shiftz']], axis=1)
+        if alg == "dbscan":
+            shifted_coms = pd.concat([group['shiftx'], group['shifty'], group['shiftz']], axis=1)
+        elif alg == "hdbscan":
+            shifted_coms = group.filter(['h_shiftx','h_shifty','h_shiftz'])
         normalized_orientations = pd.concat([group['ux'], group['uy'], group['uz']], axis=1)
         return (normalized_orientations.values*normalize(shifted_coms.sub(shifted_coms.mean().values))).sum(axis=1)
 
@@ -174,7 +193,8 @@ class EpotCalculator(object):
         self.c = np.linalg.norm(np.array([self.a,0,0]) + np.array([self.a-1.0, self.kappa*np.cos(self.gamma*np.pi/180),0]))
 
 
-    def get(self, coms, orientations, dimensions, df=pd.DataFrame(), cutoff=30):
+
+    def getChi(self, coms, orientations, dimensions, cutoff=30):
         try:
             assert(len(coms) == len(orientations))
             assert(len(dimensions) == 6)
@@ -183,7 +203,6 @@ class EpotCalculator(object):
             print(f"{len(coms)} coms")
             print(f"{len(orientations)} orientations")
             print(f"{len(dimensions)} dimensions")
-            print(f"{len(df)} df")
             return
 
         distances_array = distance_array(coms.values, coms.values, box=dimensions)
@@ -201,3 +220,105 @@ class EpotCalculator(object):
         epot_array[tuple(pairs_t)] = epot
         epot_array[tuple([pairs_t[1], pairs_t[0]])] = epot
         return np.sum(epot_array, axis=1)
+        
+
+
+    
+    def get(self, coms, orientations, dimensions, cutoff=30, ret="epot", distances_array=None):
+        try:
+            assert(len(coms) == len(orientations))
+            assert(len(dimensions) == 6)
+        except:
+            print(f"{len(coms)} coms")
+            print(f"{len(orientations)} orientations")
+            print(f"{len(dimensions)} dimensions")
+            return
+
+        if isinstance(distances_array, type(None)):
+            distances_array = distance_array(coms.values, coms.values, box=dimensions)
+
+        if ret == "chi":
+            pairs = getPairs(distances_array, 1.3*self.sigma)
+            normed_dist_vecs, dist_norms = getNormedPairDistanceVectors(coms, pairs, dimensions)
+            res1_u = np.multiply(np.take(orientations.values, pairs[:,0], axis=0), self.kappa/2)
+            res2_u = np.multiply(np.take(orientations.values, pairs[:,1], axis=0), self.kappa/2)
+            chi =  np.power((np.linalg.norm(-res1_u + normed_dist_vecs + res2_u, axis=1) - self.a), 2)
+            chi += np.power((np.linalg.norm( res1_u + normed_dist_vecs - res2_u, axis=1) - self.b), 2)
+            chi += np.power((np.linalg.norm(-res1_u + normed_dist_vecs - res2_u, axis=1) - self.c), 2)
+            chi += np.power((np.linalg.norm( res1_u + normed_dist_vecs + res2_u, axis=1) - self.c), 2)
+            chi_array = np.zeros_like(distances_array)
+            pairs_t = pairs.T
+            chi_array[tuple(pairs_t)] = chi
+            chi_array[tuple([pairs_t[1], pairs_t[0]])] = chi
+            return np.sum(chi_array, axis=1)
+        elif ret == "epot":
+            pairs = getPairs(distances_array, cutoff)
+            normed_dist_vecs, dist_norms = getNormedPairDistanceVectors(coms, pairs, dimensions)
+            res1_u = np.multiply(np.take(orientations.values, pairs[:,0], axis=0), self.kappa/2)
+            res2_u = np.multiply(np.take(orientations.values, pairs[:,1], axis=0), self.kappa/2)
+            chi =  np.power((np.linalg.norm(-res1_u + normed_dist_vecs + res2_u, axis=1) - self.a), 2)
+            chi += np.power((np.linalg.norm( res1_u + normed_dist_vecs - res2_u, axis=1) - self.b), 2)
+            chi += np.power((np.linalg.norm(-res1_u + normed_dist_vecs - res2_u, axis=1) - self.c), 2)
+            chi += np.power((np.linalg.norm( res1_u + normed_dist_vecs + res2_u, axis=1) - self.c), 2)
+            epot = 4.0 * self.epsilon * ( np.power(self.sigma/dist_norms, 12) - (1.0 - chi)*np.power(self.sigma/dist_norms, 6) )
+            epot_array = np.zeros_like(distances_array)
+            pairs_t = pairs.T
+            epot_array[tuple(pairs_t)] = epot
+            epot_array[tuple([pairs_t[1], pairs_t[0]])] = epot
+            return np.sum(epot_array, axis=1)
+
+        elif ret == "epot+chi":
+            return self.get(coms, orientations, dimensions, cutoff=30, ret="epot", distances_array=distances_array), \
+                   self.get(coms, orientations, dimensions, ret="chi",  distances_array=distances_array)
+
+        elif ret == "chi+epot":
+            return self.get(coms, orientations, dimensions, ret="chi",  distances_array=distances_array), \
+                   self.get(coms, orientations, dimensions, cutoff=30, ret="epot", distances_array=distances_array)
+
+
+
+def getCurvature(particledata, orientations, dimensions, cutoff=13):
+    # np.set_printoptions(threshold=np.nan, linewidth=np.nan, precision=4)
+    # b = np.array([1,0,0])
+    # a = np.array([-0.2,1,0])
+    # a1 = np.dot(a, b) / np.linalg.norm(b)
+    # print(a1)
+    coms = particledata.filter(['shiftx','shifty','shiftz'])
+    distances_array = distance_array(coms.values, coms.values, box=dimensions)
+    pairs = getPairs(distances_array, cutoff)
+    origin_orientations = orientations.values[pairs[:,0]]
+    origin_connections = np.subtract(coms.values[pairs[:,1]], coms.values[pairs[:,0]])
+    origin_connections = np.divide(origin_connections, 10)
+    projections = np.einsum('ij,ij->i', origin_connections, origin_orientations) # same as (origin_connections * origin_orientations).sum(axis=1) BUT FASTER
+    projections_array = np.zeros_like(distances_array)
+    pairs_t = pairs.T
+    projections_array[tuple(pairs_t)] = projections
+    projections_array[tuple([pairs_t[1], pairs_t[0]])] = projections
+    sums = np.sum(projections_array, axis=1)
+    nums = np.count_nonzero(projections_array, axis=1)
+    averages = np.zeros_like(sums)
+    averages[np.where(nums>0)] = sums[np.where(nums>0)]/nums[np.where(nums>0)]
+
+    coms = particledata.filter(['x','y','z'])
+    distances_array = distance_array(coms.values, coms.values, box=None)
+    pairs = getPairs(distances_array, cutoff)
+    origin_orientations = orientations.values[pairs[:,0]]
+    origin_connections = np.subtract(coms.values[pairs[:,1]], coms.values[pairs[:,0]])
+    origin_connections = np.divide(origin_connections, 10)
+    projections = np.einsum('ij,ij->i', origin_connections, origin_orientations) # same as (origin_connections * origin_orientations).sum(axis=1) BUT FASTER
+    projections_array = np.zeros_like(distances_array)
+    pairs_t = pairs.T
+    projections_array[tuple(pairs_t)] = projections
+    projections_array[tuple([pairs_t[1], pairs_t[0]])] = projections
+    _sums = np.sum(projections_array, axis=1)
+    _nums = np.count_nonzero(projections_array, axis=1)
+    _averages = np.zeros_like(_sums)
+    _averages[np.where(_nums>0)] = _sums[np.where(_nums>0)]/nums[np.where(_nums>0)]
+
+    condition = np.where(np.logical_or(averages<-1, averages>1))
+    # df = pd.DataFrame({"old":averages[condition]})
+    averages[condition] = _averages[condition]
+    # df["new"] = averages[condition]
+    # print(df)
+
+    return np.nan_to_num(averages)
