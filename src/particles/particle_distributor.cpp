@@ -227,7 +227,7 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
                             throw std::runtime_error("particle placement not possible");
                         }
                     }
-                    vesLOG("placed particle after " << try_counter << " tries")
+                    // vesLOG("placed particle after " << try_counter << " tries")
                     // do
                     // {
                     //     vector = decltype(vector)(enhance::random<float>(0,getParameters().x) , enhance::random<float>(0,getParameters().y) , enhance::random<float>(0,getParameters().z));

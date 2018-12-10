@@ -211,6 +211,9 @@ void Parameters::setup()
                 const float optimum_distance = enhance::nth_root<6>(LJsigma*2);
                 // const float radius = optimum_distance/(2.0*std::sin(enhance::deg_to_rad(gamma)));
                 const float radius = optimum_distance*std::sqrt(1.1027*num_all_particles)/4;
+                x = 2.0*radius + 6.0*LJsigma;
+                y = 2.0*radius + 6.0*LJsigma;
+                z = 2.0*radius + 6.0*LJsigma;
                 const float volume = enhance::sphere_volume(radius);
                 osmotic = std::round( density * ((x * y * z) - volume) ) + std::round( osmotic_density_inside * volume); 
                 // calc first time with osmotic particles

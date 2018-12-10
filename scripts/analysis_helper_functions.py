@@ -277,13 +277,14 @@ class EpotCalculator(object):
 
 
 
-def getCurvature(particledata, orientations, dimensions, cutoff=13):
+def getCurvature(particledata, dimensions, cutoff=13):
     # np.set_printoptions(threshold=np.nan, linewidth=np.nan, precision=4)
     # b = np.array([1,0,0])
     # a = np.array([-0.2,1,0])
     # a1 = np.dot(a, b) / np.linalg.norm(b)
     # print(a1)
     coms = particledata.filter(['shiftx','shifty','shiftz'])
+    orientations = particledata.filter(['ux','uy','uz'])
     distances_array = distance_array(coms.values, coms.values, box=dimensions)
     pairs = getPairs(distances_array, cutoff)
     origin_orientations = orientations.values[pairs[:,0]]

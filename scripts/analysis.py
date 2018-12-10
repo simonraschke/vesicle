@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import sklearn
 import time
+import psutil
 import analysis_helper_functions as helper
 
 from mpl_toolkits.mplot3d import Axes3D
@@ -103,7 +104,7 @@ for column in attributes:
 print()
 datafile["attributes"] = attributes
 
-epot = helper.EpotCalculator(attributes)
+epot_calc = helper.EpotCalculator(attributes)
 resname_map = defaultdict(lambda : -1, {
     "MOBIL" : 0,
     "FRAME" : 1,
@@ -114,7 +115,6 @@ complete_data = pd.DataFrame()
 
 t_start = time.perf_counter()
 for snapshot in universe.trajectory:
-    # print("\n",snapshot)
     if snapshot.time < args.start:
         continue
     elif snapshot.time > args.stop:
@@ -123,7 +123,7 @@ for snapshot in universe.trajectory:
 
     t_prep = time.perf_counter()
     #get all positions
-    df = pd.DataFrame(snapshot.positions, columns=['x','y','z'])
+    df = pd.DataFrame(universe.atoms.positions, columns=['x','y','z'])
     # calculate center_of_geometries
     coms = df.groupby(np.arange(len(df))//2).mean()
     # calculate orientations (upper atom minus com)
@@ -131,58 +131,72 @@ for snapshot in universe.trajectory:
     # concatenate both
     particledata = pd.concat([coms,orientations], axis=1).reset_index()
 
-    # add particle (residue) names
+    """
+    add particle (residue) names
+    """
     particledata["resname"] = pd.Series(universe.atoms.residues.resnames).map(resname_map).astype(np.int16)
     particledata["resid"] = universe.atoms.residues.resids
 
+    relevant_cond = particledata["resname"] != 2
+    coms = particledata[relevant_cond].filter(["x","y","z"])
+    orientations = particledata[relevant_cond].filter(["ux","uy","uz"])
+    particledata["ux"] = np.where(relevant_cond, particledata["ux"], np.nan)
+    particledata["uy"] = np.where(relevant_cond, particledata["uy"], np.nan)
+    particledata["uz"] = np.where(relevant_cond, particledata["uz"], np.nan)
 
 
-    # scan for clusters
+    """
+    scan for clusters
+    """
     distances_array = distance_array(coms.values, coms.values, box=dimensions)
     dbscan = DBSCAN(min_samples=2, eps=args.clstr_eps, metric="precomputed", n_jobs=-1).fit(distances_array)
-    labels = pd.DataFrame(dbscan.labels_, columns=['cluster'])
+    labels = pd.DataFrame(np.append(dbscan.labels_, np.full(np.count_nonzero(~relevant_cond), -2)), columns=['cluster'])
     # add to data and sort for cluster id
     particledata["cluster"] = labels
 
     unique, counts = np.unique(labels, return_counts=True)
-    particledata["clustersize"] = particledata["cluster"].apply( lambda x: counts[np.where(unique == x)][0] )
+    particledata["clustersize"] = particledata["cluster"].apply( lambda x: counts[np.where(unique == x)][0] if x >= 0 else 1 )
     particledata.loc[particledata["cluster"] == -1, "clustersize"] = 1
 
     if args.timestats: print(f"prep took     {time.perf_counter()-t_prep:.4f} seconds")
 
 
 
+    """
+    subcluster identification
+    """
     t_sub = time.perf_counter()
-    # subcluster identification
-    # subcluster_labels = []
     particledata["subcluster"] = -1
-    for ID, group in particledata.groupby(["cluster"], as_index=False):
+    for ID, group in particledata[relevant_cond].groupby(["cluster"], as_index=False):
         subclusters = helper.getSubclusterLabels(ID, group, args.clstr_eps)
         particledata.loc[group.index, "subcluster"] = subclusters
 
     if args.timestats: print(f"subclstr took {time.perf_counter()-t_sub:.4f} seconds")
 
 
-
+    """
+    shift subclusters towards largest subcluster
+    """
     t_shift = time.perf_counter()
-    particledata["shiftx"] = particledata["x"]
-    particledata["shifty"] = particledata["y"]
-    particledata["shiftz"] = particledata["z"]
-    # shift subclusters towards largest subclusterr
-    for ID, group in particledata.groupby("cluster"):
+    particledata["shiftx"] = np.where(relevant_cond, particledata["x"], np.nan)
+    particledata["shifty"] = np.where(relevant_cond, particledata["y"], np.nan)
+    particledata["shiftz"] = np.where(relevant_cond, particledata["z"], np.nan)
+    for ID, group in particledata[relevant_cond].groupby("cluster"):
         newx, newy, newz = helper.getShiftedCoordinates(ID, group, args.clstr_eps, dimensions[:3])
         particledata.loc[newx.index, "shiftx"] = newx.values
         particledata.loc[newy.index, "shifty"] = newy.values
         particledata.loc[newz.index, "shiftz"] = newz.values
     
-    if args.timestats: print(f"shift took    {time.perf_counte()-t_shift:.4f} seconds")
+    if args.timestats: print(f"shift took    {time.perf_counter()-t_shift:.4f} seconds")
 
 
 
-    # get the order of particle in cluster
+    """
+    get the order of particle in cluster
+    """
     t_order = time.perf_counter()
-    particledata["order"] = 0.0
-    for ID, group in particledata.groupby("cluster"):
+    particledata["order"] = np.nan
+    for ID, group in particledata[relevant_cond].groupby("cluster"):
         orders = helper.getOrder(ID, group)
         particledata.loc[group.index, "order"] = orders
     
@@ -190,10 +204,12 @@ for snapshot in universe.trajectory:
 
 
 
+    """
+    get the volume per cluster DBSCAN
+    """
     t_volume = time.perf_counter()
-    particledata["volume"] = 0.0
-    # get the volume per cluster DBSCAN
-    for ID, group in particledata.groupby(["cluster"]):
+    particledata["volume"] = np.nan
+    for ID, group in particledata[relevant_cond].groupby(["cluster"]):
         volume = helper.getClusterVolume(ID, group, args.clstr_eps, 4)
         particledata.loc[group.index, "volume"] = volume
         if volume / np.cumprod(dimensions[:3])[-1] > 0.5:
@@ -202,18 +218,23 @@ for snapshot in universe.trajectory:
     if args.timestats: print(f"volume took   {time.perf_counter()-t_volume:.4f} seconds")
 
 
-
-    # calculate the potential energy per particle
+    
+    """
+    calculate the potential energy per particle
+    """
     t_epot = time.perf_counter()
-    particledata["epot"], particledata["chi"] = epot.get(coms, orientations, dimensions, ret="epot+chi")
+    epot, chi = epot_calc.get(coms, orientations, dimensions, ret="epot+chi")
+    particledata["epot"] = np.append(epot, np.full(np.count_nonzero(~relevant_cond), np.nan))
+    particledata["chi"] = np.append(chi, np.full(np.count_nonzero(~relevant_cond), np.nan))
     if args.timestats: print(f"epot and chi took     {time.perf_counter()-t_epot:.4f} seconds")
 
 
 
-    # calculate the curvature of the structure for every particle
+    """
+    calculate the curvature of the structure for every particle
+    """
     t_curvature = time.perf_counter()
-    particledata["curvature"] = helper.getCurvature(particledata, orientations, dimensions, cutoff=13)
-    # particledata["curvature"] = np.where(particledata["clustersize"] <= 30, np.nan, particledata["curvature"])
+    particledata["curvature"] = np.append(helper.getCurvature(particledata[relevant_cond], dimensions, cutoff=13), np.full(np.count_nonzero(~relevant_cond), np.nan))
     if args.timestats: print(f"curvature took        {time.perf_counter()-t_curvature:.4f} seconds")
 
 
@@ -229,6 +250,6 @@ for snapshot in universe.trajectory:
     print(f"time {snapshot.time} took {t_end-t_start:.4f} seconds")
     t_start = time.perf_counter()
 
-    # print(particledata)
+    # print(datafile[f"time{int(snapshot.time)}"])
 
 datafile.close()
