@@ -318,6 +318,7 @@ void Parameters::setup()
         {
             vesWARNING("input.path=" << in_traj_path << " input trajectory not found, setting to \"none\"")
             in_traj_path = "none";
+            GLOBAL::getInstance().mode.store(GLOBAL::NEWRUN);
         }
 
 
