@@ -209,3 +209,18 @@ float Particle::getMass() const
     assert(!std::isnan(mass));
     return mass;
 }
+
+
+
+void Particle::setOffset(float, float, float)
+{
+    throw std::logic_error(std::string(__PRETTY_FUNCTION__)+" not implemented for Particle");
+}
+
+
+
+void Particle::setBoundingBox(Eigen::AlignedBox<Particle::real,3> _box)
+{
+    bounding_box = std::make_unique<Eigen::AlignedBox<Particle::real,3>>(std::move(_box));
+    boundingBox_was_set = true;
+}

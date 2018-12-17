@@ -41,6 +41,8 @@ void Parameters::read(int argc, const char* argv[])
         ("system.mobile,m", po::value<std::size_t>(), "number of mobile particles")
         ("system.guiding_elements_each", po::value<std::size_t>(), "number of guiding elements per frame guide")
         ("system.frame_guides_grid_edge", po::value<std::size_t>(), "number of frame guides per dimension")
+        ("system.guiding_elements_plane", po::value<bool>(&guiding_elements_plane)->default_value(false), "number of guiding elements in plane")
+        ("system.plane_edge", po::value<float>(), "number of guiding elements in plane")
         // ("system.osmotic", po::value<std::size_t>(), "number of osmotic particles")
         ("system.osmotic_density_inside", po::value<float>(&osmotic_density_inside), "density of osmotic particles in bulk")
         ("system.density,c", po::value<float>(), "particle density")
@@ -76,27 +78,9 @@ void Parameters::read(int argc, const char* argv[])
         ("input.path",  po::value<boost::filesystem::path>(&in_traj_path)->default_value("trajectory.gro"), "full or rel path to trajectory file")
         ("input.frames",  po::value<std::string>()->default_value("-1"), "regular expression for frames to read")
     ;
-
-    po::options_description analysisOptions("Analysis Options");
-    analysisOptions.add_options()
-        ("analysis.input", po::value<boost::filesystem::path>(&analysis_input)->default_value("trajectory.gro"), "trajectory file to analyse")
-        ("analysis.path", po::value<boost::filesystem::path>(&analysis_path)->default_value("data.h5"), "HDF5 file to store all information")
-        ("analysis.overwrite", po::bool_switch(&analysis_overwrite)->default_value(false), "overwrite existing file")
-        ("analysis.frames", po::value<std::string>()->default_value("^[0-9]*$"), "regular expression for frames to analyse")
-        ("analysis.full", po::bool_switch(&analysis_full)->default_value(true), "enable full analysis")
-        ("analysis.epot", po::bool_switch(&analysis_epot)->default_value(false), "enable potential energy analysis")
-        ("analysis.cluster", po::bool_switch(&analysis_cluster)->default_value(false), "enable full cluster analysis")
-        ("analysis.cluster_algorithm", po::value<std::string>(&analysis_cluster_algorithm)->default_value("DBSCAN"), "[DBSCAN]")
-        ("analysis.cluster_minimum_size", po::value<std::size_t>(&analysis_cluster_minimum_size)->default_value(1), "minimum size of cluster to be recognized")
-        ("analysis.cluster_significant_size", po::value<std::size_t>(&analysis_cluster_significant_size)->default_value(20), "minimum size of cluster for analysis")
-        ("analysis.cluster_distance_threshold", po::value<float>(&analysis_cluster_distance_threshold)->default_value(1.4), "max distance to be neighbours (*SigmaLJ)")
-        ("analysis.cluster_volume", po::bool_switch(&analysis_cluster_volume)->default_value(false), "enable cluster volume analysis")
-        ("analysis.cluster_volume_extension", po::value<float>(&analysis_cluster_volume_extension)->default_value(1.4), "cluster volume outer extension radius")
-        ("analysis.cluster_histogram", po::bool_switch(&analysis_cluster_histogram)->default_value(false), "enable cluster size histograms")
-    ;
     
     po::options_description allOptions;
-    allOptions.add(generalOptions).add(systemOptions).add(outputOptions).add(inputOptions).add(analysisOptions);
+    allOptions.add(generalOptions).add(systemOptions).add(outputOptions).add(inputOptions);
 
     po::store(po::command_line_parser(argc,argv).options(allOptions).run(),optionsMap);
     po::notify(optionsMap);
@@ -109,7 +93,6 @@ void Parameters::read(int argc, const char* argv[])
         std::clog << '\n' << systemOptions;
         std::clog << '\n' << outputOptions;
         std::clog << '\n' << inputOptions;
-        std::clog << '\n' << analysisOptions;
         std::exit(EXIT_SUCCESS);
     }
     else if(boost::filesystem::exists(config_file_full_path) && !config_file_name.empty())
@@ -200,6 +183,7 @@ void Parameters::setup()
 
         guiding_elements_each = optionsMap.count("system.guiding_elements_each") ? optionsMap["system.guiding_elements_each"].as<std::size_t>() : 0;
         frame_guides_grid_edge = optionsMap.count("system.frame_guides_grid_edge") ? optionsMap["system.frame_guides_grid_edge"].as<std::size_t>() : 0;
+        guiding_elements_each = optionsMap.count("system.guiding_elements_plane") ? optionsMap["system.guiding_elements_each"].as<std::size_t>() : 0;
         osmotic = optionsMap.count("system.osmotic") ? optionsMap["system.osmotic"].as<std::size_t>() : 0;
         if( std::abs(osmotic_density_inside) < 1e-6 )
         {
@@ -216,7 +200,7 @@ void Parameters::setup()
             mobile = optionsMap["system.mobile"].as<std::size_t>();
             density = optionsMap["system.density"].as<float>();
             // calc first time without osmotic particles
-            num_all_particles = mobile + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
+            num_all_particles = guiding_elements_plane ? guiding_elements_each + mobile : mobile + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
             x = std::cbrt(static_cast<float>(num_all_particles)/density);
             y = std::cbrt(static_cast<float>(num_all_particles)/density);
             z = std::cbrt(static_cast<float>(num_all_particles)/density);
@@ -227,10 +211,13 @@ void Parameters::setup()
                 const float optimum_distance = enhance::nth_root<6>(LJsigma*2);
                 // const float radius = optimum_distance/(2.0*std::sin(enhance::deg_to_rad(gamma)));
                 const float radius = optimum_distance*std::sqrt(1.1027*num_all_particles)/4;
+                x = 2.0*radius + 6.0*LJsigma;
+                y = 2.0*radius + 6.0*LJsigma;
+                z = 2.0*radius + 6.0*LJsigma;
                 const float volume = enhance::sphere_volume(radius);
                 osmotic = std::round( density * ((x * y * z) - volume) ) + std::round( osmotic_density_inside * volume); 
                 // calc first time with osmotic particles
-                num_all_particles = mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
+                num_all_particles = guiding_elements_plane ? guiding_elements_each + mobile + osmotic : mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
             }
         }
         else if(optionsMap.count("system.box.x") && optionsMap.count("system.density"))
@@ -239,13 +226,13 @@ void Parameters::setup()
             y = optionsMap["system.box.y"].as<float>();
             z = optionsMap["system.box.z"].as<float>();
             density = optionsMap["system.density"].as<float>();
-            std::size_t num_all_particles_minus_mobile = osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
+            std::size_t num_all_particles_minus_mobile = guiding_elements_plane ? osmotic + guiding_elements_each : osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3) + guiding_elements_plane;
             mobile = std::round( density * x * y * z) - num_all_particles_minus_mobile;
             const float optimum_distance = enhance::nth_root<6>(LJsigma*2);
             const float radius = optimum_distance/(2.0*std::sin(enhance::deg_to_rad(gamma)));
             const float volume = enhance::sphere_volume(radius);
             osmotic = std::round( density * ((x * y * z) - volume) ) + std::round( osmotic_density_inside * volume); 
-            num_all_particles = mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
+            num_all_particles = guiding_elements_plane ? guiding_elements_each + mobile + osmotic: mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);;
         }
         else if(optionsMap.count("system.box.x") && optionsMap.count("system.box.y") && optionsMap.count("system.box.z")  && optionsMap.count("system.mobile"))
         {
@@ -257,13 +244,16 @@ void Parameters::setup()
             const float radius = optimum_distance/(2.0*std::sin(enhance::deg_to_rad(gamma)));
             const float volume = enhance::sphere_volume(radius);
             osmotic = std::round( density * ((x * y * z) - volume) ) + std::round( osmotic_density_inside * volume); 
-            num_all_particles = mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
+            num_all_particles = guiding_elements_plane ? guiding_elements_each + mobile + osmotic: mobile + osmotic + guiding_elements_each * std::pow(frame_guides_grid_edge,3);
             density = num_all_particles/(x*y*z);
         }
         else 
         {
             vesCRITICAL("UNKNOWN ERROR: maybe box not fully defined")
         }
+
+        if(optionsMap.count("system.plane_edge"))
+            plane_edge = optionsMap["system.plane_edge"].as<float>();
 
         // again set osmotic to 0 if no density inside micelle is 0
         if( std::abs(osmotic_density_inside) < 1e-6 )
@@ -328,42 +318,11 @@ void Parameters::setup()
         {
             vesWARNING("input.path=" << in_traj_path << " input trajectory not found, setting to \"none\"")
             in_traj_path = "none";
+            GLOBAL::getInstance().mode.store(GLOBAL::NEWRUN);
         }
 
 
         in_frames = optionsMap["input.frames"].as<std::string>();
-    }
-
-    // analysis configuration
-    {
-        // if trajectory type set to none (expecting to be valid trajectory)
-        // and path not existing
-        // and path not none
-        if(enhance::splitAtDelimiter(analysis_input.string(),".").back() != "gro" )
-        {
-            vesCRITICAL("analysis.input=" << analysis_path << "  not a valid trajectory file format")
-        }
-        
-        if(enhance::splitAtDelimiter(analysis_path.string(),".").back() != "h5" )
-        {
-            vesCRITICAL("analysis.path=" << analysis_path << "  not a .h5 file format")
-        }
-        
-        analysis_frames = optionsMap["analysis.frames"].as<std::string>();
-        
-        if(analysis_full)
-        {
-            analysis_epot = true;
-            analysis_cluster = true;
-            analysis_cluster_volume = true;
-            analysis_cluster_histogram = true;
-        }
-
-        if(!analysis_cluster)
-        {
-            analysis_cluster_volume = false;
-            analysis_cluster_histogram = false;
-        }
     }
 
     {
@@ -376,8 +335,10 @@ void Parameters::setup()
         vesLOG("general.interaction                 " << interaction )
         vesLOG("general.thermostat                  " << thermostat )
         vesLOG("system.mobile                       " << mobile )
-        vesLOG("system.guiding_elements_each        " << guiding_elements_each )
         vesLOG("system.frame_guides_grid_edge       " << frame_guides_grid_edge )
+        vesLOG("system.guiding_elements_each        " << guiding_elements_each )
+        vesLOG("system.guiding_elements_plane       " << guiding_elements_plane )
+        vesLOG("system.plane_edge                   " << plane_edge )
         vesLOG("system.osmotic                      " << osmotic )
         vesLOG("system.osmotic_density_inside       " << osmotic_density_inside )
         vesLOG("system.num_all_particles            " << num_all_particles )
@@ -405,18 +366,6 @@ void Parameters::setup()
         vesLOG("input.traj                          " << in_traj )
         vesLOG("input.path                          " << in_traj_path )
         vesLOG("input.frames                        " << optionsMap["input.frames"].as<std::string>() )
-        vesLOG("analysis.input                      " << analysis_input )
-        vesLOG("analysis.path                       " << analysis_path )
-        vesLOG("analysis.frames                     " << optionsMap["analysis.frames"].as<std::string>() )
-        vesLOG("analysis.full                       " << std::boolalpha << analysis_full )
-        vesLOG("analysis.cluster                    " << std::boolalpha << analysis_cluster )
-        vesLOG("analysis.cluster_algorithm          " << analysis_cluster_algorithm )
-        vesLOG("analysis.cluster_minimum_size       " << analysis_cluster_minimum_size )
-        vesLOG("analysis.cluster_significant_size   " << analysis_cluster_significant_size )
-        vesLOG("analysis.cluster_distance_threshold " << analysis_cluster_distance_threshold )
-        vesLOG("analysis.cluster_volume             " << std::boolalpha << analysis_cluster_volume )
-        vesLOG("analysis.cluster_volume_extension   " << analysis_cluster_volume_extension )
-        vesLOG("analysis.cluster_histogram          " << std::boolalpha << analysis_cluster_histogram )
     }
 }
 

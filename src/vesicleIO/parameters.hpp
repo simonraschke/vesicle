@@ -50,6 +50,8 @@ struct Parameters
     std::size_t mobile {};
     std::size_t guiding_elements_each {};
     std::size_t frame_guides_grid_edge {};
+    bool guiding_elements_plane {};
+    float plane_edge {};
     std::size_t osmotic {};
     std::size_t num_all_particles {};
     float osmotic_density_inside {};
@@ -81,22 +83,6 @@ struct Parameters
     std::string in_traj {};
     boost::filesystem::path in_traj_path {};
     std::regex in_frames {};
-
-    // ANALYSIS
-    boost::filesystem::path analysis_input {};
-    boost::filesystem::path analysis_path {};
-    bool analysis_overwrite {};
-    std::regex analysis_frames {};
-    bool analysis_full {};
-    bool analysis_epot {};
-    bool analysis_cluster {};
-    std::string analysis_cluster_algorithm {};
-    std::size_t analysis_cluster_minimum_size {};
-    std::size_t analysis_cluster_significant_size {};
-    float analysis_cluster_distance_threshold {};
-    float analysis_cluster_volume_extension {};
-    bool analysis_cluster_volume {};
-    bool analysis_cluster_histogram {};
 
     // local memberfunctions 
     void setup();

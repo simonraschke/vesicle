@@ -32,5 +32,5 @@ target_link_libraries(vesicle vesicle_lib)
 
 install( TARGETS vesicle RUNTIME DESTINATION bin )
 
-enable_testing()
-add_subdirectory(tests)
+# enable_testing()
+# add_subdirectory(tests)

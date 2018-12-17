@@ -54,6 +54,7 @@ Distributor::cartesian Distributor::randomOrientation() const
 
 void RandomDistributor::operator()(PARTICLERANGE* range)
 {
+    vesLOG(__PRETTY_FUNCTION__);
     vesLOG("distributing particles randomly")
     assert(range);
     tbb::parallel_for_each(range->begin(), range->end(), [&](auto& p) 
@@ -99,6 +100,7 @@ void RandomDistributor::operator()(PARTICLERANGE* range)
 
 void GridDistributor::operator()(PARTICLERANGE* range)
 {   
+    vesLOG(__PRETTY_FUNCTION__);
     vesLOG("distributing particles on grid")
     std::size_t maxX = std::floor(getLengthX()/1.122f);
     std::size_t maxY = std::floor(getLengthY()/1.122f);
@@ -154,6 +156,7 @@ void GridDistributor::operator()(PARTICLERANGE* range)
 
 void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
 {
+    vesLOG(__PRETTY_FUNCTION__);
     const std::size_t num_frame = std::count_if(std::begin(*range), std::end(*range), [](const auto& particle){ return particle->getType() == PARTICLETYPE::FRAME;});
     const std::size_t num_mobile = std::count_if(std::begin(*range), std::end(*range), [](const auto& particle){ return particle->getType() == PARTICLETYPE::MOBILE;});
     const std::size_t num_osmotic = std::count_if(std::begin(*range), std::end(*range), [](const auto& particle){ return particle->getType() == PARTICLETYPE::OSMOTIC;});
@@ -224,7 +227,7 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
                             throw std::runtime_error("particle placement not possible");
                         }
                     }
-                    vesLOG("placed particle after " << try_counter << " tries")
+                    // vesLOG("placed particle after " << try_counter << " tries")
                     // do
                     // {
                     //     vector = decltype(vector)(enhance::random<float>(0,getParameters().x) , enhance::random<float>(0,getParameters().y) , enhance::random<float>(0,getParameters().z));
@@ -272,6 +275,7 @@ void OsmoticSystemDistributor::operator()(PARTICLERANGE* range)
 
 void TrajectoryDistributorGro::operator()(PARTICLERANGE* range)
 {   
+    vesLOG(__PRETTY_FUNCTION__);
     vesLOG("distributing particles from " << getParameters().in_traj_path)
     assert(range);
     if(getParameters().in_traj == std::string("gro"))
@@ -369,6 +373,7 @@ void TrajectoryDistributorGro::setupIsotropicParticle(const tokens_type& tokens,
 
 void FrameGuidedGridDistributor::operator()(PARTICLERANGE* range)
 {
+    vesLOG(__PRETTY_FUNCTION__);
     // const float radius = std::sqrt(1.1027)*getParameters().LJsigma/(std::sin(getParameters().gamma)*2);
     const float radius = std::pow(getParameters().LJsigma,1.0/6.0)/(2.0*std::sin(getParameters().gamma));
     const float dist_x = getLengthX()/getParameters().frame_guides_grid_edge;
@@ -420,6 +425,79 @@ void FrameGuidedGridDistributor::operator()(PARTICLERANGE* range)
         std::size_t try_counter = 0;
         while(conflicting_placement(range,particle))
         {
+            assert(particle);
+            particle->setCoords(random_dist.randomCoords());
+            if( ++try_counter > 1e6 )
+            {
+                vesWARNING("placing particle exceeded 1M tries")
+                throw std::runtime_error("particle placement not possible");
+            }
+        }
+    }
+}
+
+
+
+void FrameGuidedPlaneDistributor::operator()(PARTICLERANGE* range)
+{
+    vesLOG(__PRETTY_FUNCTION__);
+    PlaneGeometry plane(std::sqrt(getParameters().guiding_elements_each), std::sqrt(getParameters().guiding_elements_each));
+    // const float edge_width = getParameters().LJsigma*10;
+    const float scaling_factor = getParameters().plane_edge / (std::sqrt(getParameters().guiding_elements_each)-1);
+    vesLOG("scaling factor  " << scaling_factor);
+    plane.scale(cartesian(scaling_factor, scaling_factor, 0));
+    auto shift_vec = cartesian(getParameters().x/2-getParameters().plane_edge/2, getParameters().y/2-getParameters().plane_edge/2, getParameters().z/2);
+    plane.shift(shift_vec);
+    // plane.shift(cartesian(getParameters().x/2, getParameters().y/2, getParameters().z/2));
+
+    vesLOG(plane.points.size() << " points for " << getParameters().guiding_elements_each << " guiding elements");
+    assert(plane.points.size() == getParameters().guiding_elements_each);
+
+    const auto box_min = cartesian(getParameters().x/2-getParameters().plane_edge/2, getParameters().y/2-getParameters().plane_edge/2, getParameters().z/2-getParameters().LJsigma/2);
+    const auto box_max = cartesian(getParameters().x/2+getParameters().plane_edge/2, getParameters().y/2+getParameters().plane_edge/2, getParameters().z/2+getParameters().LJsigma/2);
+    Eigen::AlignedBox<Particle::real, 3> box(box_min, box_max);
+
+    auto it = range->begin();
+    for(const auto& point : plane.points)
+    {
+        Particle& particle = *(it->get());
+        if(particle.getType() != FRAME)
+        {
+            throw std::logic_error("Didn't get PARTICLETYPE::FRAME, where it should have been");
+        }
+        else
+        {   
+            vesLOG(point.format(ROWFORMAT));
+            particle.setCoords(point);
+            // particle.setOffset(getParameters().LJsigma, getParameters().LJsigma, 0.3);
+            particle.setBoundingBox(box);
+            particle.setOrientation(cartesian::UnitZ());
+        }
+
+        // next particle
+        std::advance(it,1);
+    }
+
+    RandomDistributor random_dist;
+    random_dist.setParameters(getParameters());
+
+    tbb::parallel_for_each(it, range->end(), [&](auto& p) 
+    {
+        assert(p);
+        p->setCoords(random_dist.randomCoords());
+        p->setOrientation(random_dist.randomOrientation());
+    });
+
+    for(auto mobile_it = it; mobile_it != range->end(); ++mobile_it)
+    {
+        std::unique_ptr<Particle>& particle = *mobile_it;
+        assert(particle);
+        std::size_t try_counter = 0;
+        while(conflicting_placement(range,particle))
+        {   
+            if( try_counter == 100000)
+                vesLOG(particle->ID << " " << particle->coords().format(ROWFORMAT));
+
             assert(particle);
             particle->setCoords(random_dist.randomCoords());
             if( ++try_counter > 1e6 )
