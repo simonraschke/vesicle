@@ -86,6 +86,7 @@ void MonteCarlo::doMCmove(const cell_type& cell)
             float delta_energy = 0.f;
             for(const auto& region_cell : cell.getRegion())
             {
+                #pragma clang loop vectorize(enable) interleave(enable)
                 for(const Particle& other : region_cell.get())
                 {
                     if( particle == other ) continue;
@@ -101,6 +102,7 @@ void MonteCarlo::doMCmove(const cell_type& cell)
                 particle.setCoords(particle.coordsOld());
                 for(const auto& region_cell : cell.getRegion())
                 {
+                    #pragma clang loop vectorize(enable) interleave(enable)
                     for(const Particle& other : region_cell.get())
                     {
                         if( particle == other ) continue;
@@ -129,6 +131,7 @@ void MonteCarlo::doMCmove(const cell_type& cell)
             float delta_energy = 0.f;
             for(const auto& region_cell : cell.getRegion())
             {
+                #pragma clang loop vectorize(enable) interleave(enable)
                 for(const Particle& other : region_cell.get())
                 {
                     if( particle == other ) continue;
@@ -144,6 +147,7 @@ void MonteCarlo::doMCmove(const cell_type& cell)
                 particle.setOrientation(particle.orientationOld());
                 for(const auto& region_cell : cell.getRegion())
                 {
+                    #pragma clang loop vectorize(enable) interleave(enable)
                     for(const Particle& other : region_cell.get())
                     {
                         if( particle == other ) continue;
