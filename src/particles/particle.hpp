@@ -23,8 +23,10 @@
 #include <type_traits>
 #if __has_include(<Eigen/Core>)
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 #elif __has_include(<eigen3/Eigen/Core>)
 #include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
 #endif
 
 #include <tbb/spin_mutex.h>
@@ -114,6 +116,9 @@ public:
     // virtual function for guiding elements to overwrite constraints
     virtual void setOffset(float, float, float);
 
+    // virtual function for particle types to use
+    void setBoundingBox(Eigen::AlignedBox<Particle::real,3>);
+
     // id will be set automatically
     // id is only necessary to generate useful energy matrices
     // for MonteCarlo simulation routine
@@ -127,15 +132,19 @@ protected:
     Particle() = default;
 
     // members
-    float mass = {1.0};
+    real mass = {1.0};
     std::unique_ptr<cartesian> currentCoords {std::make_unique<cartesian>(cartesian::Zero())};
     std::unique_ptr<cartesian> oldCoords {std::make_unique<cartesian>(cartesian::Zero())};
+    std::unique_ptr<cartesian> currentOrientation {std::make_unique<cartesian>(cartesian::Zero())};
+    std::unique_ptr<cartesian> oldOrientation {std::make_unique<cartesian>(cartesian::Zero())};
+
+    std::unique_ptr<Eigen::AlignedBox<Particle::real,3>> bounding_box {nullptr};
+    bool boundingBox_was_set = false;
+
     std::unique_ptr<cartesian> currentForce {std::make_unique<cartesian>(cartesian::Zero())};
     std::unique_ptr<cartesian> oldForce {std::make_unique<cartesian>(cartesian::Zero())};
     std::unique_ptr<cartesian> currentVelocity {std::make_unique<cartesian>(cartesian::Zero())};
     std::unique_ptr<cartesian> oldVelocity {std::make_unique<cartesian>(cartesian::Zero())};
-    std::unique_ptr<cartesian> currentOrientation {std::make_unique<cartesian>(cartesian::Zero())};
-    std::unique_ptr<cartesian> oldOrientation {std::make_unique<cartesian>(cartesian::Zero())};
 
     // lock non const member access.
     // TO BE QUESTIONED

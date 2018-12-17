@@ -24,14 +24,25 @@ void ParticleFrame::setCoords(const cartesian& newCoords)
     if(coordsSetupDone && GLOBAL::getInstance().status == GLOBAL::RUNNING)
     {
         assert(currentCoords);
+        if( boundingBox_was_set )
+        {
+            assert(bounding_box);
+            if(bounding_box->contains(newCoords))
+            {
+                *currentCoords = newCoords;
+            }
+        }
+        else
+        {
+            if( std::abs(newCoords(0) - (*originCoords)(0)) < offsetX && std::abs(newCoords(1) - (*originCoords)(1)) < offsetY && std::abs(newCoords(2) - (*originCoords)(2)) < offsetZ )
+            {
+                *currentCoords = newCoords;
+            }
+        }
         // if( (newCoords-(*originCoords)).squaredNorm() < 0.3f*0.3f )
         // {
         //     *currentCoords = newCoords;
         // }
-        if( std::abs(newCoords(0) - (*originCoords)(0)) < offsetX && std::abs(newCoords(1) - (*originCoords)(1)) < offsetY && std::abs(newCoords(2) - (*originCoords)(2)) < offsetZ )
-        {
-            *currentCoords = newCoords;
-        }
     }
     else
     {

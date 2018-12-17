@@ -446,14 +446,18 @@ void FrameGuidedPlaneDistributor::operator()(PARTICLERANGE* range)
     const float scaling_factor = getParameters().plane_edge / (std::sqrt(getParameters().guiding_elements_each)-1);
     vesLOG("scaling factor  " << scaling_factor);
     plane.scale(cartesian(scaling_factor, scaling_factor, 0));
-    plane.shift(cartesian(getParameters().x/2-getParameters().plane_edge/2, getParameters().y/2-getParameters().plane_edge/2, getParameters().z/2));
+    auto shift_vec = cartesian(getParameters().x/2-getParameters().plane_edge/2, getParameters().y/2-getParameters().plane_edge/2, getParameters().z/2);
+    plane.shift(shift_vec);
     // plane.shift(cartesian(getParameters().x/2, getParameters().y/2, getParameters().z/2));
 
     vesLOG(plane.points.size() << " points for " << getParameters().guiding_elements_each << " guiding elements");
     assert(plane.points.size() == getParameters().guiding_elements_each);
 
+    const auto box_min = cartesian(getParameters().x/2-getParameters().plane_edge/2, getParameters().y/2-getParameters().plane_edge/2, getParameters().z/2-getParameters().LJsigma/2);
+    const auto box_max = cartesian(getParameters().x/2+getParameters().plane_edge/2, getParameters().y/2+getParameters().plane_edge/2, getParameters().z/2+getParameters().LJsigma/2);
+    Eigen::AlignedBox<Particle::real, 3> box(box_min, box_max);
+
     auto it = range->begin();
-    
     for(const auto& point : plane.points)
     {
         Particle& particle = *(it->get());
@@ -465,7 +469,8 @@ void FrameGuidedPlaneDistributor::operator()(PARTICLERANGE* range)
         {   
             vesLOG(point.format(ROWFORMAT));
             particle.setCoords(point);
-            particle.setOffset(getParameters().LJsigma, getParameters().LJsigma, 0.3);
+            // particle.setOffset(getParameters().LJsigma, getParameters().LJsigma, 0.3);
+            particle.setBoundingBox(box);
             particle.setOrientation(cartesian::UnitZ());
         }
 

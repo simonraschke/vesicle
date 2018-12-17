@@ -15,7 +15,6 @@ import shutil
 import subprocess
 import sklearn
 import time
-import psutil
 import analysis_helper_functions as helper
 
 from mpl_toolkits.mplot3d import Axes3D
@@ -212,7 +211,7 @@ for snapshot in universe.trajectory:
     for ID, group in particledata[relevant_cond].groupby(["cluster"]):
         volume = helper.getClusterVolume(ID, group, args.clstr_eps, 4)
         particledata.loc[group.index, "volume"] = volume
-        if volume / np.cumprod(dimensions[:3])[-1] > 0.5:
+        if volume / np.cumprod(dimensions[:3])[-1] > 0.9:
             raise Exception(f"volume of cluster {ID} is {volume / np.cumprod(dimensions[:3])[-1]} of box volume")
     
     if args.timestats: print(f"volume took   {time.perf_counter()-t_volume:.4f} seconds")

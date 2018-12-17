@@ -40,9 +40,9 @@ public:
 protected:
     bool coordsSetupDone = false;
     bool orientationSetupDone = false;
-    float offsetX = 0.3;
-    float offsetY = 0.3;
-    float offsetZ = 0.3;
+    real offsetX = 0.3;
+    real offsetY = 0.3;
+    real offsetZ = 0.3;
     std::unique_ptr<cartesian> originCoords {nullptr};
     std::unique_ptr<cartesian> originOrientation {nullptr};
 };
