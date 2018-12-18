@@ -138,6 +138,7 @@ for snapshot in universe.trajectory:
     conditions = [(universe.atoms.residues.resnames == "MOBIL"),
                   (universe.atoms.residues.resnames == "FRAME"), 
                   (universe.atoms.residues.resnames == "OSMOT") ]
+
     choices = [0,1,2]
     particledata["restype"] = np.select(conditions, choices, default=-1)
 
@@ -147,7 +148,6 @@ for snapshot in universe.trajectory:
     particledata["ux"] = np.where(relevant_cond, particledata["ux"], np.nan)
     particledata["uy"] = np.where(relevant_cond, particledata["uy"], np.nan)
     particledata["uz"] = np.where(relevant_cond, particledata["uz"], np.nan)
-
 
     """
     scan for clusters
@@ -204,7 +204,7 @@ for snapshot in universe.trajectory:
         orders = helper.getOrder(ID, group)
         particledata.loc[group.index, "order"] = orders
     
-    if args.timestats: print(f"shift took    {time.perf_counter()-t_order:.4f} seconds")
+    if args.timestats: print(f"order took    {time.perf_counter()-t_order:.4f} seconds")
 
 
 
@@ -214,7 +214,7 @@ for snapshot in universe.trajectory:
     t_volume = time.perf_counter()
     particledata["volume"] = np.nan
     for ID, group in particledata[relevant_cond].groupby(["cluster"]):
-        volume = helper.getClusterVolume(ID, group, args.clstr_eps, 4)
+        volume = helper.getClusterVolume(ID, group, args.clstr_eps, 5)
         particledata.loc[group.index, "volume"] = volume
         if volume / np.cumprod(dimensions[:3])[-1] > 0.9:
             raise Exception(f"volume of cluster {ID} is {volume / np.cumprod(dimensions[:3])[-1]} of box volume")

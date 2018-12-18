@@ -120,22 +120,31 @@ def getClusterVolume(ID, group, eps, pps):
         return np.pi * (eps**3) * 4/3
     else:
         # generate meshgrid around cluster particles plus threshold
-        x_vector = np.arange(np.min(group["shiftx"])-eps, np.max(group["shiftx"])+eps+10/pps, 10/pps, dtype=np.float32)
-        y_vector = np.arange(np.min(group["shifty"])-eps, np.max(group["shifty"])+eps+10/pps, 10/pps, dtype=np.float32)
-        z_vector = np.arange(np.min(group["shiftz"])-eps, np.max(group["shiftz"])+eps+10/pps, 10/pps, dtype=np.float32)
-        xx,yy,zz = np.meshgrid(x_vector, y_vector, z_vector)
+        x_vector = np.arange(np.min(group["shiftx"])-eps, np.max(group["shiftx"])+eps+10/pps, 10/pps, dtype=np.float16)
+        y_vector = np.arange(np.min(group["shifty"])-eps, np.max(group["shifty"])+eps+10/pps, 10/pps, dtype=np.float16)
+        z_vector = np.arange(np.min(group["shiftz"])-eps, np.max(group["shiftz"])+eps+10/pps, 10/pps, dtype=np.float16)
+
+        # make it recursive if meshgrid becomes too large
+        NNN = 80
+        if len(x_vector) > NNN or len(y_vector) > NNN or len(z_vector) > NNN:
+            if pps-1 < 1:
+                return getClusterVolume(ID, group, eps, pps/2)
+            else:
+                return getClusterVolume(ID, group, eps, pps-1)
+
+        xx, yy, zz = np.meshgrid(x_vector, y_vector, z_vector)
         # stack them together as array of 3D points
         meshgrid = np.stack((xx.ravel(), yy.ravel(), zz.ravel()), axis=1)
         #calculate the distance array with centres of masses of particles
         coms_cluster = pd.concat([group['shiftx'], group['shifty'], group['shiftz']], axis=1)
-        distances_array_volume = distance_array(meshgrid, coms_cluster.values, box=None)
+        getClusterVolume.distances_array_volume = distance_array(meshgrid, coms_cluster.values, box=None).astype(np.float32)
         # check if any point in distance array row is close enough, then reshape to meshgrid
         # result is a binary meshgrid with 1 for the cluster shell region
-        isclose = np.where(distances_array_volume <= eps, True, False).any(axis=1).reshape(xx.shape[0], yy.shape[1], zz.shape[2])
+        isclose = np.where(getClusterVolume.distances_array_volume <= eps, True, False).any(axis=1).reshape(xx.shape[0], yy.shape[1], zz.shape[2])
         # fill hole inside the shell region
         isclose = ndimage.morphology.binary_fill_holes(isclose).astype(bool)
         # calc volum from all points inside cluster
-        return np.count_nonzero(isclose)*((10/pps)**3)
+        return ((10.0/pps)**3)*np.count_nonzero(isclose)
 
 
         # z,x,y = isclose.nonzero()
