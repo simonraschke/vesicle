@@ -16,10 +16,29 @@
 
 #pragma once
 
+#ifdef __clang_major__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wexceptions"
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#include "h5xx/h5xx.hpp"
+#pragma clang diagnostic pop
+#elif  __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wexceptions"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include "h5xx/h5xx.hpp"
+#pragma GCC diagnostic pop
+#else
+    #error no valid compiler
+#endif
+
 #include "definitions.hpp"
-#include "particle.hpp"
+#include "particle_mobile.hpp"
+#include "particle_frame.hpp"
+#include "particle_osmotic.hpp"
 #include "vesicleIO/parameters.hpp"
 #include "vesicleIO/gro_reader.hpp"
+#include "vesicleIO/h5_reader.hpp"
 #include "enhance/random.hpp"
 #include "systems/box.hpp"
 #include "geometries/grid.hpp"
@@ -45,6 +64,7 @@ struct Distributor
     virtual void operator()(PARTICLERANGE*) = 0;
     cartesian randomCoords() const;
     cartesian randomOrientation() const;
+    virtual double getTime();
     
     virtual ~Distributor() = default;
 
@@ -95,6 +115,24 @@ protected:
     // typedef decltype(&TrajectoryReaderGro::particleLineTokens) tokens_type;
     virtual void setupAnisotropicParticle(const tokens_type&, const tokens_type&, PARTICLERANGE::value_type::element_type&);
     virtual void setupIsotropicParticle(const tokens_type&,  PARTICLERANGE::value_type::element_type&);
+};
+
+
+
+struct TrajectoryDistributorH5
+    : public Distributor
+{
+    typedef float real;
+    typedef boost::multi_array<std::uint16_t,1> array1d_t;
+    typedef boost::multi_array<real,2> array2d_t;
+
+    virtual void operator()(PARTICLERANGE*) override;
+    virtual double getTime() override;
+
+protected:
+    h5xx::file h5file;
+    std::vector<std::string> getGroupNames();
+    Eigen::AlignedBox<Particle::real, 3> getBoundingBoxForFGAplanar() const;
 };
 
 

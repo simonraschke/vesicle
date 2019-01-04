@@ -103,6 +103,7 @@ void TrajectoryWriterH5::write(const float& time_elapsed, bool FORCE)
         h5xx::write_attribute(group, "system.box.x", getParameters().x);
         h5xx::write_attribute(group, "system.box.y", getParameters().y);
         h5xx::write_attribute(group, "system.box.z", getParameters().z);
+        h5xx::write_attribute(group, "system.actual_time", time_elapsed);
         h5xx::write_attribute(group, "system.timestep", getParameters().dt);
         h5xx::write_attribute(group, "system.time_max", getParameters().time_max);
         h5xx::write_attribute(group, "system.temperature", getParameters().temperature);

@@ -305,6 +305,7 @@ void Parameters::setup()
     {
         if(
             in_traj != "gro" &&
+            out_traj != "h5" &&
             in_traj != "none"
         )
         {

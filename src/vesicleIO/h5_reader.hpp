@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <cctype>
 #include <boost/algorithm/string.hpp>
+// #include <hdf5.h>
 
 
 
@@ -35,19 +36,17 @@ public:
     TrajectoryReaderH5();
     ~TrajectoryReaderH5() = default;
 
+    virtual void setPath(PATH) override;
+
     // read input stream and safe last frame
     virtual void readAllFrames(bool = true) override;
     virtual void readNextFrame(std::regex) override;
 
     virtual float getTime() const override;
 
-    std::size_t numParticles() const;
-    bool isAnisotropic() const;
-
-    std::map<std::string,std::string> particleLineTokens(std::string line) const;
-
 protected:
-    // void getNextRegexMatch(std::regex) const;
+    std::vector<std::string> getGroupNames() const;
+
 
 private:
 };

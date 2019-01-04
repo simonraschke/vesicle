@@ -52,6 +52,14 @@ Distributor::cartesian Distributor::randomOrientation() const
 
 
 
+double Distributor::getTime()
+{
+    throw std::logic_error("not_implemented");
+    return 0;
+}
+
+
+
 void RandomDistributor::operator()(PARTICLERANGE* range)
 {
     vesLOG(__PRETTY_FUNCTION__);
@@ -324,6 +332,171 @@ void TrajectoryDistributorGro::operator()(PARTICLERANGE* range)
 
 
 
+
+
+std::vector<std::string> TrajectoryDistributorH5::getGroupNames()
+{
+    vesLOG(__PRETTY_FUNCTION__);
+    auto file_info = [](hid_t loc_id, const char *name, const H5L_info_t * __attribute__((unused)) linfo, void *opdata) -> herr_t
+    {
+        hid_t group;
+        auto group_names=reinterpret_cast< std::vector<std::string>* >(opdata);
+        group = H5Gopen2(loc_id, name, H5P_DEFAULT);
+        //do stuff with group object, if needed
+        group_names->push_back(name);
+        // cout << "Name : " << name << endl;
+        H5Gclose(group);
+        return 0;
+    };
+    
+    if(!h5file.valid())
+        h5file.open(getParameters().in_traj_path.string(), h5xx::file::in);
+    h5xx::group root_group(h5file, "/");
+
+    std::vector<std::string> group_names;
+    herr_t  __attribute__((unused)) idx = H5Literate(root_group.hid(), H5_INDEX_NAME, H5_ITER_INC, NULL, file_info, &group_names);
+
+    std::sort(std::begin(group_names), std::end(group_names));
+    return group_names;
+}
+
+
+
+Eigen::AlignedBox<Particle::real, 3> TrajectoryDistributorH5::getBoundingBoxForFGAplanar() const
+{
+    PlaneGeometry plane(std::sqrt(getParameters().guiding_elements_each), std::sqrt(getParameters().guiding_elements_each));
+    const float scaling_factor = getParameters().plane_edge / (std::sqrt(getParameters().guiding_elements_each)-1);
+    vesLOG("scaling factor  " << scaling_factor);
+    plane.scale(cartesian(scaling_factor, scaling_factor, 0));
+    auto shift_vec = cartesian(getParameters().x/2-getParameters().plane_edge/2, getParameters().y/2-getParameters().plane_edge/2, getParameters().z/2);
+    plane.shift(shift_vec);
+    // plane.shift(cartesian(getParameters().x/2, getParameters().y/2, getParameters().z/2));
+
+    vesLOG(plane.points.size() << " points for " << getParameters().guiding_elements_each << " guiding elements");
+    assert(plane.points.size() == getParameters().guiding_elements_each);
+
+    const auto box_min = cartesian(getParameters().x/2-getParameters().plane_edge/2, getParameters().y/2-getParameters().plane_edge/2, getParameters().z/2-getParameters().LJsigma/2);
+    const auto box_max = cartesian(getParameters().x/2+getParameters().plane_edge/2, getParameters().y/2+getParameters().plane_edge/2, getParameters().z/2+getParameters().LJsigma/2);
+    return Eigen::AlignedBox<Particle::real, 3>(box_min, box_max);
+}
+
+
+
+
+double TrajectoryDistributorH5::getTime()
+{
+    vesLOG(__PRETTY_FUNCTION__);
+    if(!h5file.valid())
+        h5file.open(getParameters().in_traj_path.string(), h5xx::file::in);
+    std::string latest_group_name = getGroupNames().back();
+    h5xx::group group(h5file, latest_group_name);
+
+    double time = h5xx::read_attribute<double>(group, "system.actual_time");
+    return time;
+}
+
+
+
+void TrajectoryDistributorH5::operator()(PARTICLERANGE* range)
+{   
+    vesLOG(__PRETTY_FUNCTION__);
+    vesLOG("distributing particles from " << getParameters().in_traj_path)
+    assert(range);
+
+    range->clear();
+    
+    if(getParameters().in_traj == std::string("h5"))
+    {
+        vesLOG(getParameters().in_traj );
+        if(!h5file.valid()){
+            vesLOG("will now open " << getParameters().in_traj_path.string());
+            h5file.open(getParameters().in_traj_path.string(), h5xx::file::in);}
+        std::string latest_group_name = getGroupNames().back();
+        vesLOG("create group");
+        h5xx::group group(h5file, latest_group_name);
+        
+        array1d_t types;
+        array2d_t positions;
+        array2d_t orientations;
+
+        {
+            vesLOG("load type");
+            h5xx::dataset dataset_type(group, "type");
+            h5xx::read_dataset(dataset_type, types);
+        }
+
+        {
+            vesLOG("load pos");
+            h5xx::dataset dataset_positions(group, "position");
+            h5xx::read_dataset(dataset_positions, positions);
+        }
+
+        {
+            vesLOG("load orien");
+            h5xx::dataset dataset_orientations(group, "orientation");
+            h5xx::read_dataset(dataset_orientations, orientations);
+        }
+
+
+
+        vesLOG("switch");
+        for(std::size_t i = 0; i < types.size() ; ++i)
+        {
+            switch (types[i])
+            {
+                case PARTICLETYPE::MOBILE:
+                    range->push_back(std::make_unique<ParticleMobile>());
+                    break;
+                case PARTICLETYPE::FRAME:
+                    range->push_back(std::make_unique<ParticleFrame>());
+                    break;
+                case PARTICLETYPE::OSMOTIC:
+                    range->push_back(std::make_unique<ParticleOsmotic>());
+                    break;
+            
+                default:
+                    throw std::logic_error("undefined particle type in TrajectoryDistributorH5 in row "+std::to_string(i));
+                    break;
+            }
+        }
+
+        for(std::size_t i = 0; i < types.size() ; ++i)
+        {
+            vesLOG(i << cartesian(positions[i][0], positions[i][1], positions[i][2]).format(ROWFORMAT));
+            
+            range->back()->setCoords(cartesian(positions[i][0], positions[i][1], positions[i][2]));
+
+            switch (types[i])
+            {
+                case PARTICLETYPE::MOBILE:
+                    break;
+                case PARTICLETYPE::FRAME:
+                    if(getParameters().plane_edge > 0.001)
+                    {
+                        range->back()->setBoundingBox(getBoundingBoxForFGAplanar());
+                    }
+                    break;
+                case PARTICLETYPE::OSMOTIC:
+                    break;
+            
+                default:
+                    throw std::logic_error("undefined particle type in TrajectoryDistributorH5 in row "+std::to_string(i));
+                    break;
+            }
+
+            range->back()->setOrientation(cartesian(orientations[i][0], orientations[i][1], orientations[i][2]));
+
+        }
+    }
+    else
+    {
+        throw std::logic_error("particles cannot be distributed via " + getParameters().in_traj);
+    }
+}
+
+
+
+
 void TrajectoryDistributorGro::setupAnisotropicParticle(const tokens_type& tokens, const tokens_type& tokens2, PARTICLERANGE::value_type::element_type& particle)
 {
     {
@@ -442,7 +615,6 @@ void FrameGuidedPlaneDistributor::operator()(PARTICLERANGE* range)
 {
     vesLOG(__PRETTY_FUNCTION__);
     PlaneGeometry plane(std::sqrt(getParameters().guiding_elements_each), std::sqrt(getParameters().guiding_elements_each));
-    // const float edge_width = getParameters().LJsigma*10;
     const float scaling_factor = getParameters().plane_edge / (std::sqrt(getParameters().guiding_elements_each)-1);
     vesLOG("scaling factor  " << scaling_factor);
     plane.scale(cartesian(scaling_factor, scaling_factor, 0));

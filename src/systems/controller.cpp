@@ -146,15 +146,26 @@ void SimulationControl::setup()
         {
             system.distributeParticles<TrajectoryDistributorGro>();
         }
+        else if(GLOBAL::getInstance().mode == GLOBAL::RESTART && getParameters().in_traj == std::string("h5"))
+        {
+            system.distributeParticles<TrajectoryDistributorH5>();
+        }
 
 
-        if(GLOBAL::getInstance().mode == GLOBAL::RESTART)
+        if(GLOBAL::getInstance().mode == GLOBAL::RESTART && getParameters().in_traj == std::string("gro"))
         {
             TrajectoryReaderGro reader;
             reader.setParameters(getParameters());
             reader.setPath(getParameters().in_traj_path);
             reader.readAllFrames();
             system.setTime(reader.getTime());
+            vesLOG("set start time to " << system.getTime())
+        }
+        else if(GLOBAL::getInstance().mode == GLOBAL::RESTART && getParameters().in_traj == std::string("h5"))
+        {
+            TrajectoryDistributorH5 dist;
+            dist.setParameters(getParameters());
+            system.setTime(dist.getTime());
             vesLOG("set start time to " << system.getTime())
         }
     }
