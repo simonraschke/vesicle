@@ -80,6 +80,10 @@ void SimulationControl::make_nodes()
         { 
             vesDEBUG("system_adjust_node")
             system.addTime(system.getParameters().dt);
+            if(system.getAlgorithmAddition())
+            {
+                system.getAlgorithmAddition()->apply();
+            }
         });
 
 
@@ -170,7 +174,7 @@ void SimulationControl::setup()
 
             // if algorithm is monte carlo add acceptance criterion
             if(getParameters().acceptance == std::string("metropolis"))
-                system.getAlgorithm()->setAcceptance<Metropolis>();
+                system.getAlgorithm()->setAcceptance<MetropolisAcceptanceAdapter>();
 
             assert(system.getAlgorithm()->getAcceptance());
         }
@@ -213,6 +217,16 @@ void SimulationControl::setup()
         if(system.getTrajectoryWriter())
         {
             system.getTrajectoryWriter()->setAnisotropic(system.getInteraction()->isAnisotropic());
+        }
+    }
+
+    // OPTIONAL
+    {
+        if(getParameters().grand_canonical)
+        {
+            system.setAlgorithmAddition<GrandCanonicalAddition>();
+            assert(system.getAlgorithmAddition());
+            // vesLOG(&*system.getAlgorithmAddition())
         }
     }
     

@@ -44,6 +44,8 @@ public:
     template<typename CONTAINER>
     void deployParticles(const CONTAINER&);
 
+    void deployParticle(const std::unique_ptr<Particle>&);
+
     #ifdef __clang_major__
     auto begin() {return std::begin(cells); }
     auto end() {return std::end(cells); }
@@ -198,6 +200,20 @@ void CellContainer<CELL_MEM_T>::deployParticles(const CONTAINER& particles)
         });
         assert(done);
     });
+}
+
+
+
+template<typename CELL_MEM_T>
+void CellContainer<CELL_MEM_T>::deployParticle(const std::unique_ptr<Particle>& particle)
+{
+    bool done = false;
+    std::for_each(std::begin(cells), std::end(cells), [&](Cell<CELL_MEM_T> & cell)
+    {
+        if(done) return;
+        done = cell.try_add(*particle);
+    });
+    assert(done);
 }
 
 

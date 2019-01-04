@@ -30,15 +30,19 @@
 class MonteCarlo
     : public Algorithm
 {
-    typedef CellContainer<Particle>::cell_type cell_type;
     CellContainer<Particle> cells {};
 
 public: 
     virtual void setup() override;
     virtual void step(const unsigned long& = 1) override;
+    virtual std::size_t getCurrentStep() const override;
+
+    virtual cell_container_type& getCells() final;
     
     StepwidhtAlignmentUnit sw_position;
     StepwidhtAlignmentUnit sw_orientation;
+
+    float getEnergyMatrixSum();
     
 protected:
     void doMCmove(const cell_type&);
@@ -47,8 +51,8 @@ protected:
 
     // float potentialEnergy(const std::unique_ptr<Particle>&) const;
     // float potentialEnergyInRegion(const cell_type&, const Particle&) const;
-
-
+    std::size_t current_step {0}
+;
     std::unique_ptr<enhance::TriangularMatrix<float>> energy_work {};
     std::unique_ptr<enhance::TriangularMatrix<float>> energy_old {};
 };

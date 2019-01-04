@@ -31,6 +31,21 @@ void MonteCarlo::setup()
 
 
 
+MonteCarlo::cell_container_type& MonteCarlo::getCells()
+{
+    return cells;
+}
+
+
+
+std::size_t MonteCarlo::getCurrentStep() const
+{
+    return current_step;
+}
+
+
+
+
 void MonteCarlo::step(const unsigned long& steps)
 {
     vesDEBUG(__PRETTY_FUNCTION__)
@@ -60,6 +75,7 @@ void MonteCarlo::step(const unsigned long& steps)
         }
         assert(num_members_is==num_members_should);
         assert(cells.membersContained()==target_range->size());
+        ++current_step;
     }
 }
 
@@ -86,11 +102,21 @@ void MonteCarlo::doMCmove(const cell_type& cell)
             float delta_energy = 0.f;
             for(const auto& region_cell : cell.getRegion())
             {
-                #pragma clang loop vectorize(enable) interleave(enable)
+                // #pragma clang loop vectorize(enable) interleave(enable)
+                // for(const Particle& other : region_cell.get())
+                // {
+                //     if( particle == other ) continue;
+                //     (*energy_work)(particle.ID, other.ID) = getInteraction()->potential(particle, other);
+                // }
+                // #pragma clang loop vectorize(enable) interleave(enable)
+                for(std::size_t i = 0; i < region_cell.get().size(); ++i)
+                {
+                    if( i == particle.ID) continue;
+                    (*energy_work)(particle.ID, (region_cell.get().begin()+i)->get().ID) = getInteraction()->potential(particle, (*(region_cell.get().begin()+i)));
+                }
                 for(const Particle& other : region_cell.get())
                 {
                     if( particle == other ) continue;
-                    (*energy_work)(particle.ID, other.ID) = getInteraction()->potential(particle, other);
                     delta_energy += (*energy_work)(particle.ID, other.ID) - (*energy_old)(particle.ID, other.ID);
                 }
             }
@@ -102,7 +128,7 @@ void MonteCarlo::doMCmove(const cell_type& cell)
                 particle.setCoords(particle.coordsOld());
                 for(const auto& region_cell : cell.getRegion())
                 {
-                    #pragma clang loop vectorize(enable) interleave(enable)
+                    // #pragma clang loop vectorize(enable) interleave(enable)
                     for(const Particle& other : region_cell.get())
                     {
                         if( particle == other ) continue;
@@ -131,11 +157,15 @@ void MonteCarlo::doMCmove(const cell_type& cell)
             float delta_energy = 0.f;
             for(const auto& region_cell : cell.getRegion())
             {
-                #pragma clang loop vectorize(enable) interleave(enable)
+                // #pragma clang loop vectorize(enable) interleave(enable)
                 for(const Particle& other : region_cell.get())
                 {
                     if( particle == other ) continue;
                     (*energy_work)(particle.ID, other.ID) = getInteraction()->potential(particle, other);
+                }
+                for(const Particle& other : region_cell.get())
+                {
+                    if( particle == other ) continue;
                     delta_energy += (*energy_work)(particle.ID, other.ID) - (*energy_old)(particle.ID, other.ID);
                 }
             }
@@ -147,7 +177,7 @@ void MonteCarlo::doMCmove(const cell_type& cell)
                 particle.setOrientation(particle.orientationOld());
                 for(const auto& region_cell : cell.getRegion())
                 {
-                    #pragma clang loop vectorize(enable) interleave(enable)
+                    // #pragma clang loop vectorize(enable) interleave(enable)
                     for(const Particle& other : region_cell.get())
                     {
                         if( particle == other ) continue;
@@ -160,4 +190,11 @@ void MonteCarlo::doMCmove(const cell_type& cell)
                 sw_orientation.accepted();
         }
     }
+}
+
+
+
+float MonteCarlo::getEnergyMatrixSum()
+{
+    return energy_work->sum();
 }

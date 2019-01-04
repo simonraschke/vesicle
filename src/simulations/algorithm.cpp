@@ -39,6 +39,22 @@ void Algorithm::setTarget(PARTICLERANGE* range)
 
 
 
+Algorithm::cell_container_type& Algorithm::getCells()
+{
+    vesCRITICAL("Algorithm base class cant return cells");
+    // return cell_container_type();
+}
+
+
+
+std::size_t Algorithm::getCurrentStep() const
+{
+    vesCRITICAL(__PRETTY_FUNCTION__ << " not implemented for Algorithm base class");
+    return 0;
+}
+
+
+
 const std::unique_ptr<Interaction>& Algorithm::getInteraction() const
 {
     assert(interaction);

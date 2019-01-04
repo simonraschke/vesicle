@@ -45,6 +45,7 @@ struct Parameters
     std::string acceptance {};
     std::string interaction {};
     std::string thermostat {};
+    bool grand_canonical {};
 
     // SYSTEM
     std::size_t mobile {};

@@ -28,6 +28,7 @@
 #include "simulations/shake_verlet.hpp"
 #include "simulations/langevin.hpp"
 #include "simulations/monte_carlo.hpp"
+#include "simulations/algorithm_addition.hpp"
 #include "interactions/lennard_jones.hpp"
 #include "interactions/angular_lennard_jones.hpp"
 #include "vesicleIO/parameters.hpp"
@@ -97,6 +98,14 @@ public:
     const std::unique_ptr<TrajectoryWriter>& getTrajectoryWriter() const;
 
 
+    // set trajectory writer
+    template<typename ADD,typename ENABLER = typename std::enable_if<std::is_base_of<AlgorithmAddition,ADD>::value>::type>
+    void setAlgorithmAddition();
+
+    // get Thermostat pointer
+    const std::unique_ptr<AlgorithmAddition>& getAlgorithmAddition() const;
+
+
     // calculate the kinetic energy
     // complexity O(n²)
     float kineticEnergy() const;
@@ -121,6 +130,7 @@ private:
     std::unique_ptr<Algorithm> algorithm {nullptr};
     std::unique_ptr<Thermostat> thermostat {nullptr};
     std::unique_ptr<TrajectoryWriter> trajectory_writer {nullptr};
+    std::unique_ptr<AlgorithmAddition> algorithm_addition {nullptr};
     
     // IMPORTATNT mus be double https://stackoverflow.com/a/12598343
     double time_elapsed {0.0};
@@ -214,4 +224,17 @@ void System::setTrajectoryWriter()
     trajectory_writer->setParameters(getParameters());
     trajectory_writer->setTarget(&particles);
     trajectory_writer->setPath("trajectory.gro");
+}
+
+
+
+template<typename ADD,typename ENABLER>
+void System::setAlgorithmAddition()
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    algorithm_addition = std::make_unique<ADD>();
+    assert(algorithm_addition);
+    algorithm_addition->setParameters(getParameters());
+    algorithm_addition->setup();
+    algorithm_addition->setParentSystem(this);
 }

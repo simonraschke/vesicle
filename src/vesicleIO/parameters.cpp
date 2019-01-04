@@ -34,6 +34,7 @@ void Parameters::read(int argc, const char* argv[])
         ("general.acceptance",  po::value<std::string>(&acceptance)->default_value("metropolis"), "[metropolis]")
         ("general.interaction",  po::value<std::string>(&interaction)->default_value("alj"), "[lj,alj]")
         ("general.thermostat",  po::value<std::string>(&thermostat)->default_value("none"), "[none,andersen]")
+        ("general.grand_canonical", po::value<bool>(&grand_canonical)->default_value(false), "flag for adding a grand canonical step to the algorithm")
     ;
     
     po::options_description systemOptions("System Options");
@@ -41,7 +42,7 @@ void Parameters::read(int argc, const char* argv[])
         ("system.mobile,m", po::value<std::size_t>(), "number of mobile particles")
         ("system.guiding_elements_each", po::value<std::size_t>(), "number of guiding elements per frame guide")
         ("system.frame_guides_grid_edge", po::value<std::size_t>(), "number of frame guides per dimension")
-        ("system.guiding_elements_plane", po::value<bool>(&guiding_elements_plane)->default_value(false), "number of guiding elements in plane")
+        ("system.guiding_elements_plane", po::value<bool>(&guiding_elements_plane)->default_value(false), "flag in order to make planar frame guide")
         ("system.plane_edge", po::value<float>(), "number of guiding elements in plane")
         // ("system.osmotic", po::value<std::size_t>(), "number of osmotic particles")
         ("system.osmotic_density_inside", po::value<float>(&osmotic_density_inside), "density of osmotic particles in bulk")
@@ -142,8 +143,12 @@ void Parameters::setup()
 
 
     if(
-        acceptance != "metropolis"
+        acceptance == "metropolis"
     )
+    {
+        // yeah i know
+    }
+    else
     {
         vesWARNING("general.acceptance not defined, choosing metropolis")
         acceptance = "metropolis";
@@ -334,6 +339,7 @@ void Parameters::setup()
         vesLOG("general.acceptance                  " << acceptance )
         vesLOG("general.interaction                 " << interaction )
         vesLOG("general.thermostat                  " << thermostat )
+        vesLOG("general.grand_canonical             " << grand_canonical )
         vesLOG("system.mobile                       " << mobile )
         vesLOG("system.frame_guides_grid_edge       " << frame_guides_grid_edge )
         vesLOG("system.guiding_elements_each        " << guiding_elements_each )
@@ -403,11 +409,15 @@ void ParameterDependentComponent::setParameters(Parameters prms)
 }
 
 
-
+#include "enhance/stacktrace.cxx"
 const Parameters& ParameterDependentComponent::getParameters() const
 {
     if(!parameters)
     {
+        #if defined(NDEBUG)
+        vesLOG(Backtrace());
+        #endif // NDEBUG
+        
         throw std::invalid_argument("parameters is nullptr");
     }
     return *parameters;
@@ -420,6 +430,10 @@ Parameters& ParameterDependentComponent::mutableAccess()
     vesDEBUG(__PRETTY_FUNCTION__)
     if(!parameters)
     {
+        #if defined(NDEBUG)
+        vesLOG(Backtrace());
+        #endif // NDEBUG
+        
         throw std::invalid_argument("parameters is nullptr");
     }
     return *parameters;

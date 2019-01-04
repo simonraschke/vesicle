@@ -21,7 +21,7 @@
 
 
 
-class Metropolis
+class MetropolisAcceptanceAdapter
     : public AcceptanceAdapter
 {
 public:
@@ -30,7 +30,7 @@ public:
 
 
 
-inline bool Metropolis::isValid(float energy_difference) const
+inline bool MetropolisAcceptanceAdapter::isValid(float energy_difference) const
 {
     #ifndef NDEBUG
         const float tem = getParameters().temperature;
@@ -44,3 +44,12 @@ inline bool Metropolis::isValid(float energy_difference) const
         return energy_difference < 0.f ? true : std::exp(-energy_difference/getParameters().temperature) > enhance::random<float>(0.0,1.0);
     #endif
 }
+
+
+
+class GrandCanonicalAcceptanceAdapter
+    : public MetropolisAcceptanceAdapter
+{
+public:
+    // virtual bool isValid(float) const override;
+};

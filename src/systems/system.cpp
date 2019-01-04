@@ -78,11 +78,18 @@ const std::unique_ptr<Thermostat>& System::getThermostat() const
 
 
 
-
 const std::unique_ptr<TrajectoryWriter>& System::getTrajectoryWriter() const
 {
     vesDEBUG(__PRETTY_FUNCTION__)
     return trajectory_writer;
+}
+
+
+
+const std::unique_ptr<AlgorithmAddition>& System::getAlgorithmAddition() const
+{
+    vesDEBUG(__PRETTY_FUNCTION__)
+    return algorithm_addition;
 }
 
 
@@ -111,6 +118,7 @@ float System::potentialEnergy() const
     });
     return !std::isnan(energy_sum.load()) ? energy_sum.load() : throw std::runtime_error("potential Energy is NAN");
 }
+
 
 
 float System::kineticEnergy() const

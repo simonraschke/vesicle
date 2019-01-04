@@ -22,6 +22,7 @@
 #include "particles/particle.hpp"
 #include "interactions/interaction.hpp"
 #include "monte_carlo_utility/acceptance_adapter.hpp"
+#include "monte_carlo_utility/cell_container.hpp"
 #include <tbb/tbb.h>
 
 
@@ -32,8 +33,13 @@
 class Algorithm
     : public ParameterDependentComponent
 {
+protected:
+    typedef CellContainer<Particle> cell_container_type;
+    typedef cell_container_type::cell_type cell_type;
+
 public:
     virtual void setup();
+    virtual std::size_t getCurrentStep() const;
 
     // set Parameters
     void setTarget(PARTICLERANGE*);
@@ -46,6 +52,7 @@ public:
     template<typename A>
     void setAcceptance();
     const std::unique_ptr<AcceptanceAdapter>& getAcceptance() const;
+    virtual cell_container_type& getCells();
 
     // execute
     virtual void step(const unsigned long& = 1) = 0;

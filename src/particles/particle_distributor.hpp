@@ -48,10 +48,10 @@ struct Distributor
     
     virtual ~Distributor() = default;
 
+    bool conflicting_placement(PARTICLERANGE*, const PARTICLERANGE::value_type&) const;
 protected:
     Distributor() = default;
 
-    bool conflicting_placement(PARTICLERANGE*, const PARTICLERANGE::value_type&) const;
 };
 
 
