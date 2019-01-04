@@ -12,6 +12,7 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 # Building the libraries
 add_subdirectory(enhance)
 add_subdirectory(src)
+# add_subdirectory(lib/h5xx)
 # add_subdirectory(analysis)
 
 # specific flags

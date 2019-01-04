@@ -69,7 +69,7 @@ void Parameters::read(int argc, const char* argv[])
     
     po::options_description outputOptions("Output Options");
     outputOptions.add_options()
-        ("output.traj",  po::value<std::string>(&out_traj)->default_value("gro"), "[gro]")
+        ("output.traj",  po::value<std::string>(&out_traj)->default_value("h5"), "[gro,h5]")
         ("output.skip",  po::value<std::size_t>(&out_traj_skip)->default_value(10000), "print every .. steps")
     ;
     
@@ -292,6 +292,7 @@ void Parameters::setup()
     {
         if(
             out_traj != "gro" &&
+            out_traj != "h5" &&
             out_traj != "none"
         )
         {

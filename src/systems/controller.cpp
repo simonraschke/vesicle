@@ -212,6 +212,12 @@ void SimulationControl::setup()
             assert(system.getTrajectoryWriter());
         }
 
+        if(getParameters().out_traj == "h5")
+        {
+            system.setTrajectoryWriter<TrajectoryWriterH5>();
+            assert(system.getTrajectoryWriter());
+        }
+
         // tell the trajectory writer if potential is anisotropic
         assert(system.getTrajectoryWriter());
         if(system.getTrajectoryWriter())

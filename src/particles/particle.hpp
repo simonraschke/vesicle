@@ -37,7 +37,7 @@ class ParticleIDGenerator : public enhance::IncrementalNumberGenerator<ParticleI
 
 
 
-enum PARTICLETYPE { UNDEFINED, MOBILE, FRAME, OSMOTIC };
+enum PARTICLETYPE {MOBILE, FRAME, OSMOTIC, UNDEFINED=-1};
 
 
 /*

@@ -33,6 +33,7 @@
 #include "interactions/angular_lennard_jones.hpp"
 #include "vesicleIO/parameters.hpp"
 #include "vesicleIO/gro_writer.hpp"
+#include "vesicleIO/h5_writer.hpp"
 #include "thermostats/andersen.hpp"
 
 
@@ -223,7 +224,7 @@ void System::setTrajectoryWriter()
     assert(trajectory_writer);
     trajectory_writer->setParameters(getParameters());
     trajectory_writer->setTarget(&particles);
-    trajectory_writer->setPath("trajectory.gro");
+    trajectory_writer->setPath("trajectory."+getParameters().out_traj);
 }
 
 
